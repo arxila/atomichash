@@ -24,8 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashMapKeySetTest {
 
@@ -55,10 +55,10 @@ public class AtomicHashMapKeySetTest {
         }
 
         final Set<String> keySet = m.keySet();
-        Assert.assertEquals(kvs.length, keySet.size());
+        Assertions.assertEquals(kvs.length, keySet.size());
 
         for (int i = 0; i < kvs.length; i++) {
-            Assert.assertTrue(keySet.contains(kvs[i].getKey()));
+            Assertions.assertTrue(keySet.contains(kvs[i].getKey()));
         }
 
 
@@ -66,7 +66,7 @@ public class AtomicHashMapKeySetTest {
         m.put(null, "some null");
         // The keySet of a Store is not affected by modifications on that store (because it is immutable). Note this
         // is the contrary of what should happen with a Map
-        Assert.assertEquals(oldSize, keySet.size());
+        Assertions.assertEquals(oldSize, keySet.size());
 
         testIterator(kvs, keySet);
     }
@@ -88,7 +88,7 @@ public class AtomicHashMapKeySetTest {
             obtainedKeys.add(key);
         }
 
-        Assert.assertEquals(expectedKeys, obtainedKeys);
+        Assertions.assertEquals(expectedKeys, obtainedKeys);
 
     }
 

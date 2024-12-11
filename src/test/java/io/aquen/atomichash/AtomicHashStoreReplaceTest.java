@@ -19,16 +19,16 @@
  */
 package io.aquen.atomichash;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreReplaceTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -45,36 +45,36 @@ public class AtomicHashStoreReplaceTest {
 
         st2 = st.replace("one", "ONE", "[x]ONE");
 
-        Assert.assertTrue(st2.isEmpty());
+        Assertions.assertTrue(st2.isEmpty());
 
         st2 = st.replace("one", "ONE", "[x]ONE", b -> ref.b = b);
 
-        Assert.assertTrue(st2.isEmpty());
-        Assert.assertFalse(ref.b);
+        Assertions.assertTrue(st2.isEmpty());
+        Assertions.assertFalse(ref.b);
 
         st = st2.put("one", "ONE");
 
         st2 = st.replace("one", "ONE", "[x]ONE");
 
-        Assert.assertEquals(1, st2.size());
-        Assert.assertEquals("[x]ONE", st2.get("one"));
+        Assertions.assertEquals(1, st2.size());
+        Assertions.assertEquals("[x]ONE", st2.get("one"));
 
         st2 = st.replace("one", "ONE", "[x]ONE", b -> ref.b = b);
 
-        Assert.assertEquals(1, st2.size());
-        Assert.assertEquals("[x]ONE", st2.get("one"));
-        Assert.assertTrue(ref.b);
+        Assertions.assertEquals(1, st2.size());
+        Assertions.assertEquals("[x]ONE", st2.get("one"));
+        Assertions.assertTrue(ref.b);
 
         st = st2.replace("one", "ONE", "[y]ONE");
 
-        Assert.assertEquals(1, st.size());
-        Assert.assertEquals("[x]ONE", st.get("one"));
+        Assertions.assertEquals(1, st.size());
+        Assertions.assertEquals("[x]ONE", st.get("one"));
 
         st = st2.replace("one", "ONE", "[y]ONE", b -> ref.b = b);
 
-        Assert.assertEquals(1, st.size());
-        Assert.assertEquals("[x]ONE", st.get("one"));
-        Assert.assertFalse(ref.b);
+        Assertions.assertEquals(1, st.size());
+        Assertions.assertEquals("[x]ONE", st.get("one"));
+        Assertions.assertFalse(ref.b);
 
     }
 
@@ -90,36 +90,36 @@ public class AtomicHashStoreReplaceTest {
 
         st2 = st.replace("one", "[x]ONE");
 
-        Assert.assertTrue(st2.isEmpty());
+        Assertions.assertTrue(st2.isEmpty());
 
         st2 = st.replace("one", "[x]ONE", v -> ref.val = v);
 
-        Assert.assertTrue(st2.isEmpty());
-        Assert.assertNull(ref.val);
+        Assertions.assertTrue(st2.isEmpty());
+        Assertions.assertNull(ref.val);
 
         st = st2.put("one", "ONE");
 
         st2 = st.replace("one", "[x]ONE");
 
-        Assert.assertEquals(1, st2.size());
-        Assert.assertEquals("[x]ONE", st2.get("one"));
+        Assertions.assertEquals(1, st2.size());
+        Assertions.assertEquals("[x]ONE", st2.get("one"));
 
         st2 = st.replace("one", "[x]ONE", v -> ref.val = v);
 
-        Assert.assertEquals(1, st2.size());
-        Assert.assertEquals("[x]ONE", st2.get("one"));
-        Assert.assertEquals("ONE", ref.val);
+        Assertions.assertEquals(1, st2.size());
+        Assertions.assertEquals("[x]ONE", st2.get("one"));
+        Assertions.assertEquals("ONE", ref.val);
 
         st = st2.replace("one", "[y]ONE");
 
-        Assert.assertEquals(1, st.size());
-        Assert.assertEquals("[y]ONE", st.get("one"));
+        Assertions.assertEquals(1, st.size());
+        Assertions.assertEquals("[y]ONE", st.get("one"));
 
         st = st2.replace("one", "[y]ONE", v -> ref.val = v);
 
-        Assert.assertEquals(1, st.size());
-        Assert.assertEquals("[y]ONE", st.get("one"));
-        Assert.assertEquals("[x]ONE", ref.val);
+        Assertions.assertEquals(1, st.size());
+        Assertions.assertEquals("[y]ONE", st.get("one"));
+        Assertions.assertEquals("[x]ONE", ref.val);
 
     }
 

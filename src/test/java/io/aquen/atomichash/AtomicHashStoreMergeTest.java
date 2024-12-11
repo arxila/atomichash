@@ -22,16 +22,16 @@ package io.aquen.atomichash;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreMergeTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -42,28 +42,28 @@ public class AtomicHashStoreMergeTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
-        Assert.assertNull(st.get(null));
+        Assertions.assertEquals(0, st.size());
+        Assertions.assertNull(st.get(null));
         st = add(st, "one", "ONE");
         st = add(st, "one", "ONE");
         st = add(st, new String("one"), "ONE"); // Different String with same value checked on purpose
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         st = add(st, "two", "ANOTHER VALUE");
         st = add(st, "three", "A THIRD ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = add(st, "one", "ONE");
         st = add(st, "one", "ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = add(st, "pOe", "ONE COLLISION");
-        Assert.assertEquals(4, st.size());
+        Assertions.assertEquals(4, st.size());
         st = add(st, "q0e", "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = add(st, "pOe", "ONE COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = add(st, "pOe", "ONE COLLISION, BUT NEW ENTRY");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = add(st, new String("q0e"), "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
 
     }
 
@@ -73,12 +73,12 @@ public class AtomicHashStoreMergeTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = add(st, "one", "ONE");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
         st = add(st, "one", "ONE");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
     }
 
@@ -90,11 +90,11 @@ public class AtomicHashStoreMergeTest {
 
         try {
             st = add(st, null, null);
-            Assert.assertTrue(false);
+            Assertions.assertTrue(false);
         } catch (final NullPointerException e) {
-            Assert.assertTrue(true);
+            Assertions.assertTrue(true);
         } catch (final Throwable t) {
-            Assert.assertTrue(false);
+            Assertions.assertTrue(false);
         }
 
     }
@@ -109,7 +109,7 @@ public class AtomicHashStoreMergeTest {
         final V oldValue = store.get(key);
 
         if (!oldContainsKey) {
-            Assert.assertNull(oldValue);
+            Assertions.assertNull(oldValue);
         }
 
         final String snap11 = PrettyPrinter.prettyPrint(store);
@@ -119,19 +119,19 @@ public class AtomicHashStoreMergeTest {
 
         String expected = (oldContainsKey) ? (String) oldValue + (String) value : (String)value;
 
-        Assert.assertEquals(expected, m.get("VALUE"));
-        Assert.assertEquals(expected, store2.get(key));
+        Assertions.assertEquals(expected, m.get("VALUE"));
+        Assertions.assertEquals(expected, store2.get(key));
 
 
         store2 = store.merge(key, value, (oldv,newv) -> (V)((String)oldv+(String)newv));
 
 
         final String snap12 = PrettyPrinter.prettyPrint(store);
-        Assert.assertEquals(snap11, snap12);
+        Assertions.assertEquals(snap11, snap12);
 
         TestUtils.validateStoreWellFormed(store2);
 
-        Assert.assertEquals(expected, store2.get(key));
+        Assertions.assertEquals(expected, store2.get(key));
 
         return store2;
 

@@ -19,16 +19,16 @@
  */
 package io.aquen.atomichash;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashMapReadWriteTest {
 
     private AtomicHashMap<String,String> map;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.map = new AtomicHashMap<>();
     }
@@ -39,47 +39,47 @@ public class AtomicHashMapReadWriteTest {
 
         AtomicHashMap<String,String> m = this.map;
         AtomicHashMap<String,String> m2 = new AtomicHashMap<>();
-        Assert.assertTrue(m.equals(m2));
-        Assert.assertTrue(m2.equals(m));
+        Assertions.assertTrue(m.equals(m2));
+        Assertions.assertTrue(m2.equals(m));
 
-        Assert.assertEquals(0, m.size());
-        Assert.assertTrue(m.isEmpty());
-        Assert.assertNull(m.get(null));
+        Assertions.assertEquals(0, m.size());
+        Assertions.assertTrue(m.isEmpty());
+        Assertions.assertNull(m.get(null));
         add(m, "one", "ONE");
-        Assert.assertFalse(m.isEmpty());
+        Assertions.assertFalse(m.isEmpty());
         add(m, "one", "ONE");
         add(m, new String("one"), "ONE"); // Different String with same value checked on purpose
-        Assert.assertEquals(1, m.size());
+        Assertions.assertEquals(1, m.size());
         add(m, "two", "ANOTHER VALUE");
         add(m, "three", "A THIRD ONE");
-        Assert.assertEquals(3, m.size());
+        Assertions.assertEquals(3, m.size());
         add(m, "one", "ONE");
         add(m, "one", "ONE");
-        Assert.assertEquals(3, m.size());
+        Assertions.assertEquals(3, m.size());
         add(m, "pOe", "ONE COLLISION");
-        Assert.assertEquals(4, m.size());
+        Assertions.assertEquals(4, m.size());
         add(m, "q0e", "ANOTHER COLLISION");
-        Assert.assertEquals(5, m.size());
+        Assertions.assertEquals(5, m.size());
         add(m, "pOe", "ONE COLLISION");
-        Assert.assertEquals(5, m.size());
+        Assertions.assertEquals(5, m.size());
         add(m, "pOe", "ONE COLLISION, BUT NEW ENTRY");
-        Assert.assertEquals(5, m.size());
+        Assertions.assertEquals(5, m.size());
         add(m, new String("q0e"), "ANOTHER COLLISION");
-        Assert.assertEquals(5, m.size());
+        Assertions.assertEquals(5, m.size());
         remove(m, "one");
-        Assert.assertEquals(4, m.size());
+        Assertions.assertEquals(4, m.size());
         remove(m, "three");
-        Assert.assertEquals(3, m.size());
+        Assertions.assertEquals(3, m.size());
         add(m, "three", "A THIRD ONE");
-        Assert.assertEquals(4, m.size());
+        Assertions.assertEquals(4, m.size());
         remove(m, "three");
-        Assert.assertEquals(3, m.size());
+        Assertions.assertEquals(3, m.size());
         remove(m, "three");
-        Assert.assertEquals(3, m.size());
+        Assertions.assertEquals(3, m.size());
         remove(m, "pOe");
-        Assert.assertEquals(2, m.size());
+        Assertions.assertEquals(2, m.size());
         remove(m, "q0e");
-        Assert.assertEquals(1, m.size());
+        Assertions.assertEquals(1, m.size());
 
     }
 
@@ -89,17 +89,17 @@ public class AtomicHashMapReadWriteTest {
 
         AtomicHashMap<String,String> st = this.map;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         remove(st, "one");
         add(st, "one", "ONE");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         remove(st, "pOe");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
         add(st, "one", "ONE");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         remove(st, "one");
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
 
     }
 
@@ -109,12 +109,12 @@ public class AtomicHashMapReadWriteTest {
 
         AtomicHashMap<String,String> st = this.map;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         remove(st, null);
         add(st, null, null);
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         remove(st, null);
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
 
     }
 
@@ -143,7 +143,7 @@ public class AtomicHashMapReadWriteTest {
             if (exists) {
                 size--;
             }
-            Assert.assertEquals(size, st.size());
+            Assertions.assertEquals(size, st.size());
         }
 
     }
@@ -154,11 +154,11 @@ public class AtomicHashMapReadWriteTest {
 
         AtomicHashMap<String,String> st = this.map;
 
-        Assert.assertTrue(st.isEmpty());
+        Assertions.assertTrue(st.isEmpty());
         add(st, "one", "ONE");
-        Assert.assertFalse(st.isEmpty());
+        Assertions.assertFalse(st.isEmpty());
         remove(st, "one");
-        Assert.assertTrue(st.isEmpty());
+        Assertions.assertTrue(st.isEmpty());
 
     }
 
@@ -168,9 +168,9 @@ public class AtomicHashMapReadWriteTest {
 
         AtomicHashMap<String,String> st = this.map;
 
-        Assert.assertTrue(st.isEmpty());
+        Assertions.assertTrue(st.isEmpty());
         st.clear();
-        Assert.assertTrue(st.isEmpty());
+        Assertions.assertTrue(st.isEmpty());
 
         add(st, "one", "ONE");
         add(st, "two", "TWO");
@@ -178,9 +178,9 @@ public class AtomicHashMapReadWriteTest {
         add(st, "four", "FOUR");
         add(st, "five", "FIVE");
 
-        Assert.assertFalse(st.isEmpty());
+        Assertions.assertFalse(st.isEmpty());
         st.clear();
-        Assert.assertTrue(st.isEmpty());
+        Assertions.assertTrue(st.isEmpty());
 
     }
 
@@ -193,12 +193,12 @@ public class AtomicHashMapReadWriteTest {
         final int oldSize = map.size();
 
         if (!oldContainsKey) {
-            Assert.assertNull(oldValue);
+            Assertions.assertNull(oldValue);
         }
 
         V x = map.put(key, value);
 
-        Assert.assertEquals(x,oldValue);
+        Assertions.assertEquals(x,oldValue);
 
         final boolean newContainsKey = map.containsKey(key);
         final boolean newContainsValue = map.containsValue(value);
@@ -206,22 +206,22 @@ public class AtomicHashMapReadWriteTest {
         final int newSize = map.size();
 
         if (oldContainsKey) {
-            Assert.assertEquals(oldSize, newSize);
+            Assertions.assertEquals(oldSize, newSize);
         }
 
-        Assert.assertTrue(newContainsKey);
-        Assert.assertTrue(newContainsValue);
-        Assert.assertEquals((oldContainsKey) ? oldSize : (oldSize + 1), newSize);
-        Assert.assertSame(value, newValue);
+        Assertions.assertTrue(newContainsKey);
+        Assertions.assertTrue(newContainsValue);
+        Assertions.assertEquals((oldContainsKey) ? oldSize : (oldSize + 1), newSize);
+        Assertions.assertSame(value, newValue);
 
         final AtomicHashMap<K,V> map2 = AtomicHashMap.copyOf(map);
         x = map2.remove(key);
 
-        Assert.assertEquals(value, x);
+        Assertions.assertEquals(value, x);
 
-        Assert.assertFalse(map2.containsKey(key));
-        Assert.assertEquals(newSize - 1, map2.size());
-        Assert.assertNull(map2.get(key));
+        Assertions.assertFalse(map2.containsKey(key));
+        Assertions.assertEquals(newSize - 1, map2.size());
+        Assertions.assertNull(map2.get(key));
 
     }
 
@@ -237,7 +237,7 @@ public class AtomicHashMapReadWriteTest {
         final int oldSize = map.size();
 
         if (!oldContainsKey) {
-            Assert.assertNull(oldValue);
+            Assertions.assertNull(oldValue);
         }
 
         AtomicHashMap<K,V> map2 = AtomicHashMap.copyOf(map);
@@ -245,19 +245,19 @@ public class AtomicHashMapReadWriteTest {
         V x1 = map.remove(key);
         boolean x2 = map2.remove(key, oldValue);
 
-        Assert.assertEquals(oldValue, x1);
-        Assert.assertEquals(oldContainsKey, x2);
+        Assertions.assertEquals(oldValue, x1);
+        Assertions.assertEquals(oldContainsKey, x2);
 
-        Assert.assertTrue(map.equals(map2));
-        Assert.assertTrue(map2.equals(map));
+        Assertions.assertTrue(map.equals(map2));
+        Assertions.assertTrue(map2.equals(map));
 
         final boolean newContainsKey = map.containsKey(key);
         final V newValue = map.get(key);
         final int newSize = map.size();
 
-        Assert.assertFalse(newContainsKey);
-        Assert.assertEquals((!oldContainsKey) ? oldSize : (oldSize - 1), newSize);
-        Assert.assertNull(newValue);
+        Assertions.assertFalse(newContainsKey);
+        Assertions.assertEquals((!oldContainsKey) ? oldSize : (oldSize - 1), newSize);
+        Assertions.assertNull(newValue);
 
     }
 

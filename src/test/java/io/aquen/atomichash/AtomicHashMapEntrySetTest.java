@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashMapEntrySetTest {
 
@@ -56,17 +56,17 @@ public class AtomicHashMapEntrySetTest {
         }
 
         final Set<Map.Entry<String,String>> entrySet = m.entrySet();
-        Assert.assertEquals(kvs.length, entrySet.size());
+        Assertions.assertEquals(kvs.length, entrySet.size());
 
         for (int i = 0; i < kvs.length; i++) {
-            Assert.assertTrue(entrySet.contains(new DataEntry(kvs[i].getKey(), kvs[i].getValue())));
+            Assertions.assertTrue(entrySet.contains(new DataEntry(kvs[i].getKey(), kvs[i].getValue())));
         }
 
         final int oldSize = entrySet.size();
         m.put(null, "some null");
         // The entrySet of a Store is not affected by modifications on that store (because it is immutable). Note this
         // is the contrary of what should happen with a Map
-        Assert.assertEquals(oldSize, entrySet.size());
+        Assertions.assertEquals(oldSize, entrySet.size());
 
         testIterator(kvs, entrySet);
     }
@@ -83,7 +83,7 @@ public class AtomicHashMapEntrySetTest {
             obtainedEntries.add(new KeyValue<>(entry.getKey(), entry.getValue()));
         }
 
-        Assert.assertEquals(expectedEntries, obtainedEntries);
+        Assertions.assertEquals(expectedEntries, obtainedEntries);
 
     }
 

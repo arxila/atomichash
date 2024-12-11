@@ -22,16 +22,16 @@ package io.aquen.atomichash;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStorePutAllTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -42,28 +42,28 @@ public class AtomicHashStorePutAllTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
-        Assert.assertNull(st.get(null));
+        Assertions.assertEquals(0, st.size());
+        Assertions.assertNull(st.get(null));
         st = addAll(st, "one", "ONE");
         st = addAll(st, "one", "ONE");
         st = addAll(st, new String("one"), "ONE"); // Different String with same value checked on purpose
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         st = addAll(st, "two", "ANOTHER VALUE");
         st = addAll(st, "three", "A THIRD ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = addAll(st, "one", "ONE");
         st = addAll(st, "one", "ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = addAll(st, "pOe", "ONE COLLISION");
-        Assert.assertEquals(4, st.size());
+        Assertions.assertEquals(4, st.size());
         st = addAll(st, "q0e", "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = addAll(st, "pOe", "ONE COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = addAll(st, "pOe", "ONE COLLISION, BUT NEW ENTRY");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = addAll(st, new String("q0e"), "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
 
     }
 
@@ -73,18 +73,18 @@ public class AtomicHashStorePutAllTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
-        Assert.assertNull(st.get(null));
+        Assertions.assertEquals(0, st.size());
+        Assertions.assertNull(st.get(null));
         st = addAll(st, "one", "ONE", "one", "ONE", "two", "ANOTHER VALUE", "three", "A THIRD ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = addAll(st, "pOe", "ONE COLLISION", "q0e", "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = addAll(st, "pOe", "ONE COLLISION, BUT NEW ENTRY", new String("q0e"), "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = addAll(st, "three", "SOMETHING ELSE", "q0e", "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = addAll(st, "q0e", "ANOTHER COLLISION", "four", "SOMETHING ELSE 4");
-        Assert.assertEquals(6, st.size());
+        Assertions.assertEquals(6, st.size());
 
     }
 
@@ -94,9 +94,9 @@ public class AtomicHashStorePutAllTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = addAll(st, null, null, "one", "ONE", "two", "TWO");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
 
     }
 
@@ -121,8 +121,8 @@ public class AtomicHashStorePutAllTest {
         int pos;
         for (int i = 0; i < accesses.length; i++) {
             pos = accesses[i];
-            Assert.assertTrue(st.containsKey(entries[pos].getKey()));
-            Assert.assertEquals(entriesMap.get(entries[pos].getKey()), st.get(entries[pos].getKey()));
+            Assertions.assertTrue(st.containsKey(entries[pos].getKey()));
+            Assertions.assertEquals(entriesMap.get(entries[pos].getKey()), st.get(entries[pos].getKey()));
         }
 
     }
@@ -139,7 +139,7 @@ public class AtomicHashStorePutAllTest {
 
         oldStatus.forEach((k,st) -> {
             if (!st.containsKey) {
-                Assert.assertNull(st.value);
+                Assertions.assertNull(st.value);
             }
         });
 
@@ -150,12 +150,12 @@ public class AtomicHashStorePutAllTest {
         store2 = store.putAll(map);
 
         final String snap12 = PrettyPrinter.prettyPrint(store);
-        Assert.assertEquals(snap11, snap12);
+        Assertions.assertEquals(snap11, snap12);
 
         TestUtils.validateStoreWellFormed(store2);
 
-        Assert.assertEquals(oldContainedKeysCount, containsHowManyKeys(map, store));
-        Assert.assertEquals(map.size(), containsHowManyKeys(map, store2));
+        Assertions.assertEquals(oldContainedKeysCount, containsHowManyKeys(map, store));
+        Assertions.assertEquals(map.size(), containsHowManyKeys(map, store2));
 
         store3 = store;
         final String snap31 = PrettyPrinter.prettyPrint(store2);
@@ -165,42 +165,42 @@ public class AtomicHashStorePutAllTest {
         }
 
         final String snap32 = PrettyPrinter.prettyPrint(store3);
-        Assert.assertEquals(snap31, snap32); // Result of putAll is the same as many put
+        Assertions.assertEquals(snap31, snap32); // Result of putAll is the same as many put
 
 
         final Map<K,TestStatus<V>> newStatus = createTestStatusMap(map, store2);
 
         if (existAllEntriesByReference(store, map)) {
-            Assert.assertSame(store, store2);
+            Assertions.assertSame(store, store2);
         } else {
-            Assert.assertNotSame(store, store2);
+            Assertions.assertNotSame(store, store2);
         }
 
         oldStatus.forEach((ok,ost) -> {
             if (ost.containsKey) {
                 final TestStatus<V> nst = newStatus.get(ok);
                 if (existsEntryByReference(store, ok, map.get(ok))) {
-                    Assert.assertSame(ost.value, nst.value);
+                    Assertions.assertSame(ost.value, nst.value);
                 }
             }
         });
 
         oldStatus.forEach((ok,ost) -> {
-            Assert.assertEquals(ost.containsKey, store.containsKey(ok));
-            Assert.assertEquals(ost.containsValue, store.containsValue(map.get(ok)));
-            Assert.assertSame(ost.value, store.get(ok));
+            Assertions.assertEquals(ost.containsKey, store.containsKey(ok));
+            Assertions.assertEquals(ost.containsValue, store.containsValue(map.get(ok)));
+            Assertions.assertSame(ost.value, store.get(ok));
         });
-        Assert.assertEquals(oldSize, store.size());
+        Assertions.assertEquals(oldSize, store.size());
 
 
         newStatus.forEach((nk,nst) -> {
             final TestStatus<V> ost = oldStatus.get(nk);
-            Assert.assertTrue(nst.containsKey);
-            Assert.assertTrue(nst.containsValue);
-            Assert.assertSame(nst.value, map.get(nk));
+            Assertions.assertTrue(nst.containsKey);
+            Assertions.assertTrue(nst.containsValue);
+            Assertions.assertSame(nst.value, map.get(nk));
         });
 
-        Assert.assertEquals(store.size() + (map.size() - oldContainedKeysCount), store2.size());
+        Assertions.assertEquals(store.size() + (map.size() - oldContainedKeysCount), store2.size());
 
         final String snap21 = PrettyPrinter.prettyPrint(store2);
 
@@ -210,26 +210,26 @@ public class AtomicHashStorePutAllTest {
         }
 
         final String snap22 = PrettyPrinter.prettyPrint(store2);
-        Assert.assertEquals(snap21, snap22);
+        Assertions.assertEquals(snap21, snap22);
 
         TestUtils.validateStoreWellFormed(store3);
 
         newStatus.forEach((nk,nst) -> {
             final TestStatus<V> ost = oldStatus.get(nk);
-            Assert.assertTrue(nst.containsKey);
-            Assert.assertTrue(nst.containsValue);
-            Assert.assertSame(nst.value, map.get(nk));
+            Assertions.assertTrue(nst.containsKey);
+            Assertions.assertTrue(nst.containsValue);
+            Assertions.assertSame(nst.value, map.get(nk));
         });
 
-        Assert.assertEquals(store.size() + (map.size() - oldContainedKeysCount), store2.size());
-        Assert.assertEquals(store.size() - oldContainedKeysCount, store3.size());
+        Assertions.assertEquals(store.size() + (map.size() - oldContainedKeysCount), store2.size());
+        Assertions.assertEquals(store.size() - oldContainedKeysCount, store3.size());
 
 
         final Map<K,TestStatus<V>> thirdStatus = createTestStatusMap(map, store3);
 
         thirdStatus.forEach((tk,tst) -> {
-            Assert.assertFalse(tst.containsKey);
-            Assert.assertNull(tst.value);
+            Assertions.assertFalse(tst.containsKey);
+            Assertions.assertNull(tst.value);
         });
 
         return store2;

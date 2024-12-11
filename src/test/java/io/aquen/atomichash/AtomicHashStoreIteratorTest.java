@@ -24,8 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreIteratorTest {
 
@@ -67,10 +67,10 @@ public class AtomicHashStoreIteratorTest {
             obtained.add(new KeyValue<>(entry.getKey(), entry.getValue()));
         }
 
-        Assert.assertEquals(expected, obtained);
+        Assertions.assertEquals(expected, obtained);
 
         final String snap12 = PrettyPrinter.prettyPrint(store);
-        Assert.assertEquals(snap11, snap12);
+        Assertions.assertEquals(snap11, snap12);
 
     }
 

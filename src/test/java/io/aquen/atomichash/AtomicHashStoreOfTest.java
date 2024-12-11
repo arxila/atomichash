@@ -19,8 +19,8 @@
  */
 package io.aquen.atomichash;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreOfTest {
 
@@ -203,9 +203,9 @@ public class AtomicHashStoreOfTest {
 
     private static void test(final AtomicHashStore<String,Integer> st, final int size, final String[] keys, final Integer[] values) {
 
-        Assert.assertEquals(size, st.size());
+        Assertions.assertEquals(size, st.size());
         for (int i = 0; i < size; i++) {
-            Assert.assertEquals(values[i], st.get(keys[i]));
+            Assertions.assertEquals(values[i], st.get(keys[i]));
         }
 
         AtomicHashStore<String,Integer> aux = new AtomicHashStore<>();
@@ -213,7 +213,7 @@ public class AtomicHashStoreOfTest {
             aux = aux.put(keys[i], values[i]);
         }
 
-        Assert.assertEquals(aux, st);
+        Assertions.assertEquals(aux, st);
 
     }
 

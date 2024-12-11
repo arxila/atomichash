@@ -24,16 +24,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreEqualsHashCodeTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -44,40 +44,40 @@ public class AtomicHashStoreEqualsHashCodeTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
-        Assert.assertNull(st.get(null));
+        Assertions.assertEquals(0, st.size());
+        Assertions.assertNull(st.get(null));
         st = st.put("one", "ONE");
         check(st);
         st = st.put("one", "ONE");
         check(st);
         st = st.put( new String("one"), "ONE"); // Different String with same value checked on purpose
         check(st);
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         st = st.put("two", "ANOTHER VALUE");
         check(st);
         st = st.put("three", "A THIRD ONE");
         check(st);
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = st.put("one", "ONE");
         check(st);
         st = st.put("one", "ONE");
         check(st);
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = st.put("pOe", "ONE COLLISION");
         check(st);
-        Assert.assertEquals(4, st.size());
+        Assertions.assertEquals(4, st.size());
         st = st.put("q0e", "ANOTHER COLLISION");
         check(st);
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = st.put("pOe", "ONE COLLISION");
         check(st);
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = st.put("pOe", "ONE COLLISION, BUT NEW ENTRY");
         check(st);
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = st.put(new String("q0e"), "ANOTHER COLLISION");
         check(st);
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
 
     }
 
@@ -87,14 +87,14 @@ public class AtomicHashStoreEqualsHashCodeTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = st.put("one", "ONE");
         check(st);
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
         st = st.put("one", "ONE");
         check(st);
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
     }
 
@@ -105,10 +105,10 @@ public class AtomicHashStoreEqualsHashCodeTest {
         AtomicHashStore<String,String> st = this.store;
         check(st);
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = st.put(null, null);
         check(st);
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
     }
 
@@ -150,14 +150,14 @@ public class AtomicHashStoreEqualsHashCodeTest {
             store2 = store2.put(entry.getKey(), entry.getValue());
         }
 
-        Assert.assertTrue(store.equals(store2));
+        Assertions.assertTrue(store.equals(store2));
 
         if (entries.size() > 0) {
 
             final int rand = RandomUtils.nextInt(0, entries.size());
             AtomicHashStore<String,String> store3 = store2.remove(entries.get(rand).getKey());
 
-            Assert.assertFalse(store.equals(store3));
+            Assertions.assertFalse(store.equals(store3));
 
         }
 
@@ -166,7 +166,7 @@ public class AtomicHashStoreEqualsHashCodeTest {
 
         AtomicHashStore<String,String> store3 = store2.put(key, value);
 
-        Assert.assertFalse(store.equals(store3));
+        Assertions.assertFalse(store.equals(store3));
 
 
     }

@@ -25,16 +25,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreReplaceAllTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -49,15 +49,15 @@ public class AtomicHashStoreReplaceAllTest {
         st = st.replaceAll((k,v) -> "[x]" + v);
         st.forEach((k,v) -> vals.add(new KeyValue<>(k, v)));
 
-        Assert.assertTrue(vals.isEmpty());
+        Assertions.assertTrue(vals.isEmpty());
 
         st = st.put("one", "ONE");
 
         st = st.replaceAll((k,v) -> "[x]" + v);
         st.forEach((k,v) -> vals.add(new KeyValue<>(k, v)));
 
-        Assert.assertEquals(1, vals.size());
-        Assert.assertTrue(vals.iterator().next().getValue().equals("[x]ONE"));
+        Assertions.assertEquals(1, vals.size());
+        Assertions.assertTrue(vals.iterator().next().getValue().equals("[x]ONE"));
 
         st = st.clear();
 
@@ -67,8 +67,8 @@ public class AtomicHashStoreReplaceAllTest {
         st = st.replaceAll((k,v) -> "[x]" + v);
         st.forEach((k,v) -> vals.add(new KeyValue<>(k, v)));
 
-        Assert.assertEquals(1, vals.size());
-        Assert.assertTrue(vals.iterator().next().getValue().equals("[x]null"));
+        Assertions.assertEquals(1, vals.size());
+        Assertions.assertTrue(vals.iterator().next().getValue().equals("[x]null"));
 
     }
 
@@ -97,8 +97,8 @@ public class AtomicHashStoreReplaceAllTest {
         final KeyValue<String,String>[] iteratedKVsArr = iteratedKVs.toArray(new KeyValue[iteratedKVs.size()]);
 
         for (int i = 0; i < entries.length; i++) {
-            Assert.assertEquals(entries[i].getKey(), iteratedKVsArr[i].getKey());
-            Assert.assertEquals("[x]" + entries[i].getValue(), iteratedKVsArr[i].getValue());
+            Assertions.assertEquals(entries[i].getKey(), iteratedKVsArr[i].getKey());
+            Assertions.assertEquals("[x]" + entries[i].getValue(), iteratedKVsArr[i].getValue());
         }
 
     }

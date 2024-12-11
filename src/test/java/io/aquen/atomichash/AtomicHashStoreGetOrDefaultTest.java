@@ -19,16 +19,16 @@
  */
 package io.aquen.atomichash;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreGetOrDefaultTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -39,12 +39,12 @@ public class AtomicHashStoreGetOrDefaultTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals("buh", st.getOrDefault("one", "buh"));
-        Assert.assertNull(st.getOrDefault("one", null));
+        Assertions.assertEquals("buh", st.getOrDefault("one", "buh"));
+        Assertions.assertNull(st.getOrDefault("one", null));
 
         st = st.put("one", "ONE");
 
-        Assert.assertEquals("ONE", st.getOrDefault("one", "buh"));
+        Assertions.assertEquals("ONE", st.getOrDefault("one", "buh"));
 
     }
 

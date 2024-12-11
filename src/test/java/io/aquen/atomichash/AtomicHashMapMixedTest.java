@@ -23,16 +23,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashMapMixedTest {
 
     private AtomicHashMap<String,String> map;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.map = new AtomicHashMap<>();
     }
@@ -41,17 +41,17 @@ public class AtomicHashMapMixedTest {
     @Test
     public void test00() throws Exception {
 
-        Assert.assertEquals(0, map.size());
-        Assert.assertTrue(map.isEmpty());
-        Assert.assertFalse(map.containsKey("one"));
-        map.forEach((k,v) -> Assert.assertTrue(false));
+        Assertions.assertEquals(0, map.size());
+        Assertions.assertTrue(map.isEmpty());
+        Assertions.assertFalse(map.containsKey("one"));
+        map.forEach((k,v) -> Assertions.assertTrue(false));
 
         map.put("one", "ONE");
-        Assert.assertEquals("ONE", map.get("one"));
-        Assert.assertEquals("ONE", map.putIfAbsent("one","TWO"));
-        Assert.assertEquals("ONE", map.get("one"));
+        Assertions.assertEquals("ONE", map.get("one"));
+        Assertions.assertEquals("ONE", map.putIfAbsent("one","TWO"));
+        Assertions.assertEquals("ONE", map.get("one"));
 
-        Assert.assertFalse(map.isEmpty());
+        Assertions.assertFalse(map.isEmpty());
 
         final Map<String,String> m = new HashMap<>();
         m.put("two", "TWO");
@@ -59,68 +59,68 @@ public class AtomicHashMapMixedTest {
         m.put("four", "FOUR");
 
         map.putAll(m);
-        Assert.assertEquals(4, map.size());
-        Assert.assertEquals("TWO", map.get("two"));
-        Assert.assertEquals("THREE", map.get("three"));
-        Assert.assertEquals("FOUR", map.get("four"));
+        Assertions.assertEquals(4, map.size());
+        Assertions.assertEquals("TWO", map.get("two"));
+        Assertions.assertEquals("THREE", map.get("three"));
+        Assertions.assertEquals("FOUR", map.get("four"));
 
-        Assert.assertEquals(map.store().hashCode(), map.hashCode());
+        Assertions.assertEquals(map.store().hashCode(), map.hashCode());
 
-        Assert.assertTrue(map.containsKey("one"));
-        Assert.assertFalse(map.containsKey("five"));
+        Assertions.assertTrue(map.containsKey("one"));
+        Assertions.assertFalse(map.containsKey("five"));
 
-        map.forEach((k,v) -> Assert.assertTrue(map.containsKey(k)));
-        map.forEach((k,v) -> Assert.assertTrue(map.containsValue(v)));
-        map.forEach((k,v) -> Assert.assertTrue(map.get(k) == v));
+        map.forEach((k,v) -> Assertions.assertTrue(map.containsKey(k)));
+        map.forEach((k,v) -> Assertions.assertTrue(map.containsValue(v)));
+        map.forEach((k,v) -> Assertions.assertTrue(map.get(k) == v));
 
-        Assert.assertEquals("FOUR", map.getOrDefault("four", "NOTHING"));
-        Assert.assertEquals("NOTHING", map.getOrDefault("nothing", "NOTHING"));
+        Assertions.assertEquals("FOUR", map.getOrDefault("four", "NOTHING"));
+        Assertions.assertEquals("NOTHING", map.getOrDefault("nothing", "NOTHING"));
 
-        Assert.assertNull("FIVE", map.putIfAbsent("five","FIVE"));
-        Assert.assertEquals("FIVE", map.get("five"));
+        Assertions.assertNull("FIVE", map.putIfAbsent("five","FIVE"));
+        Assertions.assertEquals("FIVE", map.get("five"));
 
-        Assert.assertNull(map.remove("six"));
-        Assert.assertEquals("FIVE", map.remove("five"));
+        Assertions.assertNull(map.remove("six"));
+        Assertions.assertEquals("FIVE", map.remove("five"));
 
-        Assert.assertFalse(map.remove("seven", "SEVEN"));
-        Assert.assertFalse(map.remove("four", "FIVE"));
-        Assert.assertTrue(map.remove("four", "FOUR"));
+        Assertions.assertFalse(map.remove("seven", "SEVEN"));
+        Assertions.assertFalse(map.remove("four", "FIVE"));
+        Assertions.assertTrue(map.remove("four", "FOUR"));
         map.put("four", "FOUR");
 
-        Assert.assertNull(map.replace("five", "FIVE"));
-        Assert.assertNull(map.get("five"));
+        Assertions.assertNull(map.replace("five", "FIVE"));
+        Assertions.assertNull(map.get("five"));
         map.put("five", "FIVE");
-        Assert.assertEquals("FIVE", map.replace("five", "FIVER"));
-        Assert.assertEquals("FIVER", map.get("five"));
+        Assertions.assertEquals("FIVE", map.replace("five", "FIVER"));
+        Assertions.assertEquals("FIVER", map.get("five"));
 
-        Assert.assertFalse(map.replace("five", "FIVE", "FIVEST"));
-        Assert.assertTrue(map.replace("five", "FIVER", "FIVEST"));
-        Assert.assertEquals("FIVEST", map.get("five"));
+        Assertions.assertFalse(map.replace("five", "FIVE", "FIVEST"));
+        Assertions.assertTrue(map.replace("five", "FIVER", "FIVEST"));
+        Assertions.assertEquals("FIVEST", map.get("five"));
 
-        Assert.assertEquals("fiveFIVESTx", map.compute("five", (k,v) -> k + v + "x"));
-        Assert.assertEquals("fiveFIVESTx", map.get("five"));
-        Assert.assertNull(map.compute("five", (k,v) -> null));
-        Assert.assertFalse(map.containsKey("five"));
+        Assertions.assertEquals("fiveFIVESTx", map.compute("five", (k,v) -> k + v + "x"));
+        Assertions.assertEquals("fiveFIVESTx", map.get("five"));
+        Assertions.assertNull(map.compute("five", (k,v) -> null));
+        Assertions.assertFalse(map.containsKey("five"));
 
-        Assert.assertEquals("FOUR", map.computeIfAbsent("four", (k) -> k + "x"));
-        Assert.assertEquals("FOUR", map.get("four"));
-        Assert.assertEquals("fivex", map.computeIfAbsent("five", (k) -> k + "x"));
-        Assert.assertEquals("fivex", map.get("five"));
+        Assertions.assertEquals("FOUR", map.computeIfAbsent("four", (k) -> k + "x"));
+        Assertions.assertEquals("FOUR", map.get("four"));
+        Assertions.assertEquals("fivex", map.computeIfAbsent("five", (k) -> k + "x"));
+        Assertions.assertEquals("fivex", map.get("five"));
 
-        Assert.assertNull(map.computeIfPresent("six", (k,v) -> k + v + "x"));
-        Assert.assertNull(map.get("six"));
-        Assert.assertEquals("fivefivexx", map.computeIfPresent("five", (k,v) -> k + v + "x"));
-        Assert.assertEquals("fivefivexx", map.get("five"));
+        Assertions.assertNull(map.computeIfPresent("six", (k,v) -> k + v + "x"));
+        Assertions.assertNull(map.get("six"));
+        Assertions.assertEquals("fivefivexx", map.computeIfPresent("five", (k,v) -> k + v + "x"));
+        Assertions.assertEquals("fivefivexx", map.get("five"));
 
 
-        Assert.assertEquals("SEVEN", map.merge("seven", "SEVEN", (v1,v2) -> v1+v2));
-        Assert.assertEquals("SEVEN", map.get("seven"));
-        Assert.assertEquals("SEVENELEVEN", map.merge("seven", "ELEVEN", (v1,v2) -> v1+v2));
-        Assert.assertEquals("SEVENELEVEN", map.get("seven"));
+        Assertions.assertEquals("SEVEN", map.merge("seven", "SEVEN", (v1,v2) -> v1+v2));
+        Assertions.assertEquals("SEVEN", map.get("seven"));
+        Assertions.assertEquals("SEVENELEVEN", map.merge("seven", "ELEVEN", (v1,v2) -> v1+v2));
+        Assertions.assertEquals("SEVENELEVEN", map.get("seven"));
 
         map.clear();
-        Assert.assertEquals(0, map.size());
-        Assert.assertTrue(map.isEmpty());
+        Assertions.assertEquals(0, map.size());
+        Assertions.assertTrue(map.isEmpty());
 
     }
 
@@ -129,14 +129,14 @@ public class AtomicHashMapMixedTest {
     public void test01() throws Exception {
 
         this.map.put(null, null);
-        Assert.assertFalse(this.map.isEmpty());
+        Assertions.assertFalse(this.map.isEmpty());
         final AtomicInteger ai = new AtomicInteger(0);
         map.forEach((k,v) -> ai.incrementAndGet());
-        Assert.assertEquals(1, ai.get());
+        Assertions.assertEquals(1, ai.get());
 
         this.map.put(null, "SOMETHING");
-        Assert.assertFalse(this.map.isEmpty());
-        Assert.assertEquals("SOMETHING", this.map.get(null));
+        Assertions.assertFalse(this.map.isEmpty());
+        Assertions.assertEquals("SOMETHING", this.map.get(null));
 
     }
 
@@ -154,7 +154,7 @@ public class AtomicHashMapMixedTest {
 
         final AtomicHashMap<String,Integer> map2 = new AtomicHashMap<>(map);
 
-        Assert.assertEquals(map, map2);
+        Assertions.assertEquals(map, map2);
 
         final HashMap<String,Integer> map3 = new HashMap<>();
         map3.put("one", 1);
@@ -166,27 +166,27 @@ public class AtomicHashMapMixedTest {
 
         AtomicHashMap<String,Integer> map4 = new AtomicHashMap<>(map3);
 
-        Assert.assertEquals(map, map4);
-        Assert.assertEquals(map3, map4);
-        Assert.assertEquals(map4, map3);
+        Assertions.assertEquals(map, map4);
+        Assertions.assertEquals(map3, map4);
+        Assertions.assertEquals(map4, map3);
 
         map4.remove("five");
 
-        Assert.assertNotEquals(map, map4);
-        Assert.assertNotEquals(map3, map4);
-        Assert.assertNotEquals(map4, map3);
+        Assertions.assertNotEquals(map, map4);
+        Assertions.assertNotEquals(map3, map4);
+        Assertions.assertNotEquals(map4, map3);
 
         map4.put("five", 6);
 
-        Assert.assertNotEquals(map, map4);
-        Assert.assertNotEquals(map3, map4);
-        Assert.assertNotEquals(map4, map3);
+        Assertions.assertNotEquals(map, map4);
+        Assertions.assertNotEquals(map3, map4);
+        Assertions.assertNotEquals(map4, map3);
 
         map4.put("five", 5);
 
-        Assert.assertEquals(map, map4);
-        Assert.assertEquals(map3, map4);
-        Assert.assertEquals(map4, map3);
+        Assertions.assertEquals(map, map4);
+        Assertions.assertEquals(map3, map4);
+        Assertions.assertEquals(map4, map3);
 
     }
 

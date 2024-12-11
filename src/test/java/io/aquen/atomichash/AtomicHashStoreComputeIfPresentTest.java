@@ -22,16 +22,16 @@ package io.aquen.atomichash;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreComputeIfPresentTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -42,32 +42,32 @@ public class AtomicHashStoreComputeIfPresentTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
-        Assert.assertNull(st.get(null));
+        Assertions.assertEquals(0, st.size());
+        Assertions.assertNull(st.get(null));
         st = st.put("one", "ONE");
         st = add(st, "one", "ONE");
         st = add(st, new String("one"), "ONE"); // Different String with same value checked on purpose
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         st = st.put("two", "TWO");
         st = st.put("three", "THREE");
         st = add(st, "two", "ANOTHER VALUE");
         st = add(st, "three", "A THIRD ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = add(st, "one", "ONE");
         st = add(st, "one", "ONE");
-        Assert.assertEquals(3, st.size());
+        Assertions.assertEquals(3, st.size());
         st = st.put("p0e", "COL");
         st = add(st, "pOe", "ONE COLLISION");
-        Assert.assertEquals(4, st.size());
+        Assertions.assertEquals(4, st.size());
         st = st.put("q0e", "COL");
         st = add(st, "q0e", "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = add(st, "pOe", "ONE COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = add(st, "pOe", "ONE COLLISION, BUT NEW ENTRY");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
         st = add(st, new String("q0e"), "ANOTHER COLLISION");
-        Assert.assertEquals(5, st.size());
+        Assertions.assertEquals(5, st.size());
 
     }
 
@@ -77,13 +77,13 @@ public class AtomicHashStoreComputeIfPresentTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = remove(st, "one");
         st = st.put("one", "TO BE REMOVED");
         st = add(st, "one", "ONE");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
         st = add(st, "one", "ONE");
-        Assert.assertEquals(1, st.size());
+        Assertions.assertEquals(1, st.size());
 
     }
 
@@ -93,12 +93,12 @@ public class AtomicHashStoreComputeIfPresentTest {
 
         AtomicHashStore<String,String> st = this.store;
 
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = remove(st, null);
         st = add(st, null, null);
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
         st = remove(st, null);
-        Assert.assertEquals(0, st.size());
+        Assertions.assertEquals(0, st.size());
 
     }
 
@@ -127,7 +127,7 @@ public class AtomicHashStoreComputeIfPresentTest {
             if (exists) {
                 size--;
             }
-            Assert.assertEquals(size, st.size());
+            Assertions.assertEquals(size, st.size());
         }
 
     }
@@ -144,7 +144,7 @@ public class AtomicHashStoreComputeIfPresentTest {
         final int oldSize = store.size();
 
         if (!oldContainsKey) {
-            Assert.assertNull(oldValue);
+            Assertions.assertNull(oldValue);
         }
 
         final String snap11 = PrettyPrinter.prettyPrint(store);
@@ -152,11 +152,11 @@ public class AtomicHashStoreComputeIfPresentTest {
         final Map<String,V> m = new HashMap<>();
         store2 = store.computeIfPresent(key, (k,v) -> value, (v) -> { m.put("VALUE", v);});
         if (oldContainsKey) {
-            Assert.assertEquals(value, m.get("VALUE"));
-            Assert.assertEquals(value, store2.get(key));
+            Assertions.assertEquals(value, m.get("VALUE"));
+            Assertions.assertEquals(value, store2.get(key));
         } else {
-            Assert.assertEquals(oldValue, m.get("VALUE"));
-            Assert.assertEquals(oldValue, store2.get(key));
+            Assertions.assertEquals(oldValue, m.get("VALUE"));
+            Assertions.assertEquals(oldValue, store2.get(key));
         }
 
 
@@ -164,7 +164,7 @@ public class AtomicHashStoreComputeIfPresentTest {
 
 
         final String snap12 = PrettyPrinter.prettyPrint(store);
-        Assert.assertEquals(snap11, snap12);
+        Assertions.assertEquals(snap11, snap12);
 
         TestUtils.validateStoreWellFormed(store2);
 
@@ -174,28 +174,28 @@ public class AtomicHashStoreComputeIfPresentTest {
         final int newSize = store2.size();
 
         if (oldContainsKey && oldValue != null) {
-            Assert.assertEquals(oldSize, newSize);
+            Assertions.assertEquals(oldSize, newSize);
             if (existsEntryByReference(store, key, value)) {
-                Assert.assertSame(store, store2);
-                Assert.assertSame(oldValue, newValue);
+                Assertions.assertSame(store, store2);
+                Assertions.assertSame(oldValue, newValue);
             }
         } else {
-            Assert.assertEquals(store, store2);
+            Assertions.assertEquals(store, store2);
         }
 
-        Assert.assertEquals(oldContainsKey, store.containsKey(key));
-        Assert.assertEquals(oldContainsValue, store.containsValue(value));
-        Assert.assertEquals(oldSize, store.size());
-        Assert.assertSame(oldValue, store.get(key));
+        Assertions.assertEquals(oldContainsKey, store.containsKey(key));
+        Assertions.assertEquals(oldContainsValue, store.containsValue(value));
+        Assertions.assertEquals(oldSize, store.size());
+        Assertions.assertSame(oldValue, store.get(key));
 
-        Assert.assertTrue((oldContainsKey && newContainsKey) || (!oldContainsKey && !newContainsKey));
+        Assertions.assertTrue((oldContainsKey && newContainsKey) || (!oldContainsKey && !newContainsKey));
 
         final String snap21 = PrettyPrinter.prettyPrint(store2);
 
         store3 = store2.remove(key);
 
         final String snap22 = PrettyPrinter.prettyPrint(store2);
-        Assert.assertEquals(snap21, snap22);
+        Assertions.assertEquals(snap21, snap22);
 
         TestUtils.validateStoreWellFormed(store3);
 
@@ -217,7 +217,7 @@ public class AtomicHashStoreComputeIfPresentTest {
         final int oldSize = store.size();
 
         if (!oldContainsKey) {
-            Assert.assertNull(oldValue);
+            Assertions.assertNull(oldValue);
         }
 
         final String snap11 = PrettyPrinter.prettyPrint(store);
@@ -225,7 +225,7 @@ public class AtomicHashStoreComputeIfPresentTest {
         store2 = store.remove(key);
 
         final String snap12 = PrettyPrinter.prettyPrint(store);
-        Assert.assertEquals(snap11, snap12);
+        Assertions.assertEquals(snap11, snap12);
 
         TestUtils.validateStoreWellFormed(store2);
 
@@ -234,33 +234,33 @@ public class AtomicHashStoreComputeIfPresentTest {
         final int newSize = store2.size();
 
         if (!oldContainsKey) {
-            Assert.assertSame(store, store2);
+            Assertions.assertSame(store, store2);
         }
 
-        Assert.assertEquals(oldContainsKey, store.containsKey(key));
-        Assert.assertEquals(oldSize, store.size());
-        Assert.assertSame(oldValue, store.get(key));
+        Assertions.assertEquals(oldContainsKey, store.containsKey(key));
+        Assertions.assertEquals(oldSize, store.size());
+        Assertions.assertSame(oldValue, store.get(key));
 
-        Assert.assertFalse(newContainsKey);
-        Assert.assertEquals((!oldContainsKey) ? oldSize : (oldSize - 1), newSize);
-        Assert.assertNull(newValue);
+        Assertions.assertFalse(newContainsKey);
+        Assertions.assertEquals((!oldContainsKey) ? oldSize : (oldSize - 1), newSize);
+        Assertions.assertNull(newValue);
 
         final String snap21 = PrettyPrinter.prettyPrint(store2);
 
         store3 = store2.put(key, null);
 
         final String snap22 = PrettyPrinter.prettyPrint(store2);
-        Assert.assertEquals(snap21, snap22);
+        Assertions.assertEquals(snap21, snap22);
 
         TestUtils.validateStoreWellFormed(store3);
 
-        Assert.assertFalse(store2.containsKey(key));
-        Assert.assertEquals(newSize, store2.size());
-        Assert.assertNull(store2.get(key));
+        Assertions.assertFalse(store2.containsKey(key));
+        Assertions.assertEquals(newSize, store2.size());
+        Assertions.assertNull(store2.get(key));
 
-        Assert.assertTrue(store3.containsKey(key));
-        Assert.assertEquals((oldContainsKey)? oldSize : (oldSize + 1), store3.size());
-        Assert.assertNull(store3.get(key));
+        Assertions.assertTrue(store3.containsKey(key));
+        Assertions.assertEquals((oldContainsKey)? oldSize : (oldSize + 1), store3.size());
+        Assertions.assertNull(store3.get(key));
 
 
         return store2;

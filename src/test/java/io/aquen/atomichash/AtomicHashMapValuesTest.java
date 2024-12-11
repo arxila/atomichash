@@ -24,8 +24,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashMapValuesTest {
 
@@ -57,7 +57,7 @@ public class AtomicHashMapValuesTest {
         final Collection<String> values = m.values();
 
         for (int i = 0; i < kvs.length; i++) {
-            Assert.assertTrue(values.contains(kvs[i].getValue()));
+            Assertions.assertTrue(values.contains(kvs[i].getValue()));
         }
 
 
@@ -65,7 +65,7 @@ public class AtomicHashMapValuesTest {
         m.put(null, "some null");
         // The values of a Store are not affected by modifications on that store (because it is immutable). Note this
         // is the contrary of what should happen with a Map
-        Assert.assertEquals(oldSize, values.size());
+        Assertions.assertEquals(oldSize, values.size());
 
         testIterator(kvs, values);
     }
@@ -87,7 +87,7 @@ public class AtomicHashMapValuesTest {
             obtainedValues.add(value);
         }
 
-        Assert.assertEquals(expectedValues, obtainedValues);
+        Assertions.assertEquals(expectedValues, obtainedValues);
 
     }
 

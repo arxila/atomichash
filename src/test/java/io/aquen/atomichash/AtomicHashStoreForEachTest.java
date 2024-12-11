@@ -25,16 +25,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashStoreForEachTest {
 
     private AtomicHashStore<String,String> store;
 
 
-    @Before
+    @BeforeEach
     public void initStore() {
         this.store = new AtomicHashStore<>();
     }
@@ -48,14 +48,14 @@ public class AtomicHashStoreForEachTest {
         final List<KeyValue<String,String>> vals = new ArrayList<>();
         st.forEach((k,v) -> vals.add(new KeyValue<>(k, v)));
 
-        Assert.assertTrue(vals.isEmpty());
+        Assertions.assertTrue(vals.isEmpty());
 
         st = st.put("one", "ONE");
 
         st.forEach((k,v) -> vals.add(new KeyValue<>(k, v)));
 
-        Assert.assertEquals(1, vals.size());
-        Assert.assertTrue(vals.iterator().next().getKey().equals("one"));
+        Assertions.assertEquals(1, vals.size());
+        Assertions.assertTrue(vals.iterator().next().getKey().equals("one"));
 
         st = st.clear();
 
@@ -64,8 +64,8 @@ public class AtomicHashStoreForEachTest {
         vals.clear();
         st.forEach((k,v) -> vals.add(new KeyValue<>(k, v)));
 
-        Assert.assertEquals(1, vals.size());
-        Assert.assertTrue(vals.iterator().next().getKey() == null);
+        Assertions.assertEquals(1, vals.size());
+        Assertions.assertTrue(vals.iterator().next().getKey() == null);
 
     }
 
@@ -92,7 +92,7 @@ public class AtomicHashStoreForEachTest {
 
         final KeyValue<String,String>[] iteratedKVsArr = iteratedKVs.toArray(new KeyValue[iteratedKVs.size()]);
 
-        Assert.assertTrue(Arrays.equals(entries, iteratedKVsArr));
+        Assertions.assertTrue(Arrays.equals(entries, iteratedKVsArr));
 
     }
 
@@ -106,14 +106,14 @@ public class AtomicHashStoreForEachTest {
         final List<KeyValue<String,String>> vals = new ArrayList<>();
         st.forEach((entry) -> vals.add(new KeyValue<>(entry.getKey(), entry.getValue())));
 
-        Assert.assertTrue(vals.isEmpty());
+        Assertions.assertTrue(vals.isEmpty());
 
         st = st.put("one", "ONE");
 
         st.forEach((entry) -> vals.add(new KeyValue<>(entry.getKey(), entry.getValue())));
 
-        Assert.assertEquals(1, vals.size());
-        Assert.assertTrue(vals.iterator().next().getKey().equals("one"));
+        Assertions.assertEquals(1, vals.size());
+        Assertions.assertTrue(vals.iterator().next().getKey().equals("one"));
 
         st = st.clear();
 
@@ -122,8 +122,8 @@ public class AtomicHashStoreForEachTest {
         vals.clear();
         st.forEach((entry) -> vals.add(new KeyValue<>(entry.getKey(), entry.getValue())));
 
-        Assert.assertEquals(1, vals.size());
-        Assert.assertTrue(vals.iterator().next().getKey() == null);
+        Assertions.assertEquals(1, vals.size());
+        Assertions.assertTrue(vals.iterator().next().getKey() == null);
 
     }
 
@@ -150,7 +150,7 @@ public class AtomicHashStoreForEachTest {
 
         final KeyValue<String,String>[] iteratedKVsArr = iteratedKVs.toArray(new KeyValue[iteratedKVs.size()]);
 
-        Assert.assertTrue(Arrays.equals(entries, iteratedKVsArr));
+        Assertions.assertTrue(Arrays.equals(entries, iteratedKVsArr));
 
     }
 

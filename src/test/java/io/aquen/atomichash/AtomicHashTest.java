@@ -19,19 +19,19 @@
  */
 package io.aquen.atomichash;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class AtomicHashTest {
 
 
     @Test
     public void testVersion() {
-        Assert.assertNotNull(AtomicHash.VERSION);
-        Assert.assertTrue(AtomicHash.VERSION_MAJOR >= 0);
-        Assert.assertTrue(AtomicHash.VERSION_MINOR >= 0);
-        Assert.assertTrue(AtomicHash.VERSION_BUILD >= 0);
-        Assert.assertTrue(AtomicHash.BUILD_TIMESTAMP != null && AtomicHash.BUILD_TIMESTAMP.trim().length() > 0);
+        Assertions.assertNotNull(AtomicHash.VERSION);
+        Assertions.assertTrue(AtomicHash.VERSION_MAJOR >= 0);
+        Assertions.assertTrue(AtomicHash.VERSION_MINOR >= 0);
+        Assertions.assertTrue(AtomicHash.VERSION_BUILD >= 0);
+        Assertions.assertTrue(AtomicHash.BUILD_TIMESTAMP != null && AtomicHash.BUILD_TIMESTAMP.trim().length() > 0);
     }
 
 
