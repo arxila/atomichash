@@ -43,7 +43,7 @@
 
   <developers>
     <developer>
-      <name>Aquen OSS</name>
+      <name>Aquen</name>
       <organization>Aquen OSS</organization>
       <organizationUrl>https://aquen.io</organizationUrl>
     </developer>
@@ -283,7 +283,7 @@
           <release>${maven.javadoc.release}</release>
           <overview>${basedir}/src/main/javadoc/overview.html</overview>
           <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-          <reportOutputDirectory>${project.build.directory}/apidocs</reportOutputDirectory>
+          <outputDirectory>${project.build.directory}</outputDirectory>
           <doclint>all,-missing</doclint>
         </configuration>
         <executions>
@@ -360,8 +360,8 @@
             </goals>
             <configuration>
               <target name="copy javadocs element-list to package-list">
-                <copy file="${project.build.directory}/reports/apidocs/element-list"
-                      tofile="${project.build.directory}/reports/apidocs/package-list"
+                <copy file="${project.build.directory}/apidocs/element-list"
+                      tofile="${project.build.directory}/apidocs/package-list"
                       failonerror="false" />
               </target>
             </configuration>
