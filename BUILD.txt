@@ -1,0 +1,35 @@
+
+ Building atomichash
+ -------------------
+ 
+ To build atomichash you will need Maven 2. You can get it at:
+ 
+     http://maven.apache.org
+
+ Build and install the project executing, from the atomichash
+ project root folder:
+ 
+     mvn clean:clean install
+     
+ And you will get a fresh target/atomichash-{version}.jar file.
+ You will also get it installed in your local repository at:
+ 
+     $M2_REPO/io/aquen/atomichash/{version}/atomichash-{version}.jar
+
+
+
+ Generating Javadoc for atomichash
+ ---------------------------------
+ 
+ If you wish to generate the javadoc for atomichash, execute this from the
+ atomichash root folder:
+ 
+     mvn javadoc:javadoc
+     
+ This will generate the javadoc documentation in HTML format in:
+ 
+     target/site/apidocs
+ 
+
+
+ 

@@ -1,0 +1,14 @@
+ 
+ Using atomichash from Maven 2+
+ ------------------------------
+ 
+ 
+ To use it in your Maven 2+ applications, you will need to add it as
+ a dependency with:
+
+     <dependency>
+       <groupId>io.aquen</groupId>
+       <artifactId>atomichash</artifactId>
+       <version>{version}</version>
+       <scope>compile</scope>
+     </dependency>
