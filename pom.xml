@@ -1,6 +1,6 @@
 <!-- ========================================================================= -->
 <!--                                                                           -->
-<!--   Copyright (c) 2019-2024, Aquen OSS (https://aquen.io)                   -->
+<!--   Copyright (c) 2019-2024, Aquen (https://aquen.io)                       -->
 <!--                                                                           -->
 <!--   Licensed under the Apache License, Version 2.0 (the "License");         -->
 <!--   you may not use this file except in compliance with the License.        -->
@@ -29,7 +29,7 @@
   <url>https://aquen.io</url>
 
   <organization>
-    <name>Aquen OSS</name>
+    <name>Aquen</name>
     <url>https://aquen.io</url>
   </organization>
 
@@ -44,7 +44,7 @@
   <developers>
     <developer>
       <name>Aquen</name>
-      <organization>Aquen OSS</organization>
+      <organization>Aquen</organization>
       <organizationUrl>https://aquen.io</organizationUrl>
     </developer>
   </developers>
