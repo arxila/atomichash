@@ -323,6 +323,9 @@
             <goals>
               <goal>sign</goal>
             </goals>
+            <configuration>
+              <keyname>releases@aquen.io</keyname>
+            </configuration>
           </execution>
         </executions>
       </plugin>
