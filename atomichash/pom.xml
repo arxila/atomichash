@@ -171,7 +171,7 @@
       </resource>
 
       <resource>
-        <directory>.</directory>
+        <directory>..</directory>
         <targetPath>META-INF</targetPath>
         <includes>
           <include>LICENSE.txt</include>
@@ -246,7 +246,7 @@
           </execution>
         </executions>
         <configuration>
-          <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+          <classesDirectory>../target/classes</classesDirectory>
         </configuration>
       </plugin>
 
@@ -287,9 +287,9 @@
           <noqualifier>java.lang</noqualifier>
           <source>${maven.javadoc.source}</source>
           <release>${maven.javadoc.release}</release>
-          <overview>${basedir}/src/main/javadoc/overview.html</overview>
-          <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-          <outputDirectory>${project.build.directory}</outputDirectory>
+          <overview>src/main/javadoc/overview.html</overview>
+          <javadocDirectory>src/main/javadoc</javadocDirectory>
+          <outputDirectory>../target</outputDirectory>
           <doclint>all,-missing</doclint>
         </configuration>
         <executions>
@@ -391,7 +391,7 @@
             </goals>
             <configuration>
               <descriptors>
-                <descriptor>${project.basedir}/src/assembly/dist.xml</descriptor>
+                <descriptor>src/assembly/dist.xml</descriptor>
               </descriptors>
               <appendAssemblyId>true</appendAssemblyId>
               <finalName>${project.artifactId}-${project.version}</finalName>
