@@ -57,7 +57,7 @@
 
   <scm>
     <url>scm:git:git@github.com:aquendev/atomichash.git</url>
-    <developerConnection>scm:git:git@github.com:aquendev/atomichash.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:aquendev/atomichash</developerConnection>
   </scm>
 
   <distributionManagement>
