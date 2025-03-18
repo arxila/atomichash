@@ -17,7 +17,7 @@
  *                                                                          
  * =========================================================================
  */
-package io.aquen.atomichash;
+package io.aquen.atomichash.old;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -293,7 +293,7 @@ public class AtomicHashMap<K,V> implements Map<K,V>, Serializable {
 
 
     @Override
-    public Set<Map.Entry<K,V>> entrySet() {
+    public Set<Entry<K,V>> entrySet() {
         return new Sets.MapEntrySet<>(this.innerMap.get());
     }
 

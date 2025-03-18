@@ -17,7 +17,7 @@
  *                                                                          
  * =========================================================================
  */
-package io.aquen.atomichash;
+package io.aquen.atomichash.old;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
