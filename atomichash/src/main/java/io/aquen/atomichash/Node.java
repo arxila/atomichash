@@ -20,10 +20,13 @@
 package io.aquen.atomichash;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 final class Node<K,V> implements Serializable {
 
     private static final long serialVersionUID = 5892440116260222326L;
+
+    private static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 positions into negative
 
     final int level;
     final long bitMap;
@@ -37,11 +40,11 @@ final class Node<K,V> implements Serializable {
         this.values = values;
     }
 
-    Node(final int level, final int bitMap, final Object[] values) {
+    Node(final int level, final long bitMap, final Object[] values) {
         super();
         this.level = level;
         this.bitMap = bitMap;
-        this.values = values;
+        this.values = values;+
     }
 
     /*
@@ -56,8 +59,14 @@ final class Node<K,V> implements Serializable {
     private int valuePos(final Key<K> key) {
         final long indexMask = 1L << key.indices[this.level];
         final int pos = Long.bitCount(this.bitMap & (indexMask - 1L));
-        return ((this.bitMap & indexMask) == 0L) ? -pos : pos; // negative if absent, positive if present
+        return ((this.bitMap & indexMask) == 0L) ? (pos ^ NEG_MASK) : pos; // negative if absent, positive if present
     }
+
+
+    public boolean contains(final Key<K> key) {
+        return valuePos(key) >= 0;
+    }
+
 
     @SuppressWarnings("unchecked")
     public KeyValue<K,V> get(final Key<K> key) {
@@ -72,6 +81,30 @@ final class Node<K,V> implements Serializable {
         return ((Node<K,V>)value).get(key);
     }
 
+
+    public Node<K,V> put(final KeyValue<K,V> keyValue) {
+        final int pos = valuePos(keyValue.key);
+        return (pos < 0) ? putNew((pos ^ NEG_MASK), keyValue) : modify(pos, keyValue);
+    }
+
+    // TODO In multis, check whether there are several KVs for the same key.
+    
+    @SuppressWarnings("unchecked")
+    private Node<K,V> modify(final int pos, final KeyValue<K,V> keyValue) {
+        final KeyValue<K,V> existing = (KeyValue<K, V>) this.values[pos];
+
+    }
+
+    // These methods can be modified for putAll so that the newBitMap and newValues are passed along to all executions
+    // of insert, set, setExpand, setExpandMulti, delegate and delegateMulti
+    private Node<K,V> putNew(final int pos, final KeyValue<K,V> keyValue) {
+        final long newBitMap = this.bitMap | (1L << pos);
+        final Object[] newValues = new Object[this.values.length + 1];
+        System.arraycopy(this.values, 0, newValues, 0, pos);
+        newValues[pos] = keyValue;
+        System.arraycopy(this.values, pos, newValues, pos + 1, this.values.length - pos);
+        return new Node<K,V>(this.level, newBitMap, newValues);
+    }
 
 
 
