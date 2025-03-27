@@ -33,18 +33,11 @@ final class Node<K,V> implements Serializable {
     final Object[] values;
 
 
-    Node(final int level, final KeyValue<K,V> keyValue) {
-        super();
-        this.level = level;
-        this.bitMap = bitMap;
-        this.values = values;
-    }
-
     Node(final int level, final long bitMap, final Object[] values) {
         super();
         this.level = level;
         this.bitMap = bitMap;
-        this.values = values;+
+        this.values = values;
     }
 
     /*
@@ -84,25 +77,29 @@ final class Node<K,V> implements Serializable {
 
     public Node<K,V> put(final KeyValue<K,V> keyValue) {
         final int pos = valuePos(keyValue.key);
-        return (pos < 0) ? putNew((pos ^ NEG_MASK), keyValue) : modify(pos, keyValue);
+        return (pos < 0) ? add((pos ^ NEG_MASK), keyValue) : modify(pos, keyValue);
     }
 
     // TODO In multis, check whether there are several KVs for the same key.
-    
+
     @SuppressWarnings("unchecked")
     private Node<K,V> modify(final int pos, final KeyValue<K,V> keyValue) {
-        final KeyValue<K,V> existing = (KeyValue<K, V>) this.values[pos];
-
+        final KeyValue<K,V> existingKV = (KeyValue<K, V>) this.values[pos];
+        if (existingKV.key.equals(keyValue.key)) {
+            final Object[] newValues = Arrays.copyOf(this.values, this.values.length, Object[].class);
+            newValues[pos] = keyValue;
+            return new Node<K,V>(this.level, this.bitMap, newValues);
+        }
+return null;
     }
 
     // These methods can be modified for putAll so that the newBitMap and newValues are passed along to all executions
     // of insert, set, setExpand, setExpandMulti, delegate and delegateMulti
-    private Node<K,V> putNew(final int pos, final KeyValue<K,V> keyValue) {
+    private Node<K,V> add(final int pos, final KeyValue<K,V> keyValue) {
         final long newBitMap = this.bitMap | (1L << pos);
-        final Object[] newValues = new Object[this.values.length + 1];
-        System.arraycopy(this.values, 0, newValues, 0, pos);
+        final Object[] newValues = Arrays.copyOf(this.values, this.values.length + 1, Object[].class);
+        System.arraycopy(newValues, pos, newValues, pos + 1, this.values.length - pos);
         newValues[pos] = keyValue;
-        System.arraycopy(this.values, pos, newValues, pos + 1, this.values.length - pos);
         return new Node<K,V>(this.level, newBitMap, newValues);
     }
 
