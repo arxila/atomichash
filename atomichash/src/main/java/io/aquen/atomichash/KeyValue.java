@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class KeyValue<K,V> implements Serializable {
 
     private static final long serialVersionUID = -4410811831138689524L;
+    static final KeyValueHashComparator<Object,Object> COMPARATOR = new KeyValueHashComparator<>();
 
     final Key<K> key;
     final V value;
