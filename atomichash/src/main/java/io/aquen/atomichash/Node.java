@@ -126,39 +126,10 @@ final class Node implements Serializable {
 
         final Object oldValue = this.values[pos];
 
-        final Object newValue; // will be set to null if no changes are needed
-        if (oldValue instanceof Node) {
-
-            final Node oldNode = (Node) oldValue;
-            final Node newNode = oldNode.put(dataEntry, replaceIfPresent);
-            newValue = (oldNode != newNode) ? newNode : null;
-
-        } else if (oldValue instanceof DataEntry) {
-
-            final DataEntry oldEntry = (DataEntry) oldValue;
-            if (oldEntry.matches(dataEntry.keyValue.key)) {
-                // A match was found and entry should be replaced (if flagged to do so)
-                final DataEntry newEntry = oldEntry.replaceKeyValue(dataEntry.keyValue, replaceIfPresent);
-                newValue = (oldEntry != newEntry) ? newEntry : null;
-            } else if (this.level == Hash.MAX_LEVEL) {
-                // No match and at the deepest level, so a MultiDataEntry should be created
-                newValue = oldEntry.addKeyValue(dataEntry.keyValue);
-            } else {
-                // There is no match, a new level can be created
-                newValue = new Node(this.level + 1, oldEntry, dataEntry);
-            }
-
-        } else { // oldValue instanceof MultiDataEntry
-
-            // At this point, level is known to be Hash.MAX_LEVEL
-            final MultiDataEntry oldEntry = (MultiDataEntry) oldValue;
-            final MultiDataEntry newEntry = oldEntry.addOrReplaceKeyValue(dataEntry.keyValue, replaceIfPresent);
-            newValue = (oldEntry != newEntry) ? newEntry : null;
-
-        }
-
+        // Will be returned as null if no changes are needed
+        final Object newValue = computeNewValueForPut(this.level, oldValue, dataEntry, replaceIfPresent);
         if (newValue == null) {
-            // Nothing needed to be changed due to replaceIfPresent flag
+            // Nothing needs to be changed
             return this;
         }
 
@@ -166,6 +137,43 @@ final class Node implements Serializable {
         newValues[pos] = newValue;
 
         return new Node(this.level, this.bitMap, newValues);
+
+    }
+
+
+    private static Object computeNewValueForPut(
+            final int level, final Object oldValue, final DataEntry dataEntry, final boolean replaceIfPresent) {
+
+        if (oldValue instanceof Node) {
+            final Node oldNode = (Node) oldValue;
+
+            final Node newNode = oldNode.put(dataEntry, replaceIfPresent);
+            return (oldNode != newNode) ? newNode : null;
+
+        }
+
+        if (oldValue instanceof DataEntry) {
+            final DataEntry oldEntry = (DataEntry) oldValue;
+
+            if (oldEntry.matches(dataEntry.keyValue.key)) {
+                // A match was found and entry should be replaced (if flagged to do so)
+                final DataEntry newEntry = oldEntry.replaceKeyValue(dataEntry.keyValue, replaceIfPresent);
+                return (oldEntry != newEntry) ? newEntry : null;
+            }
+            if (level == Hash.MAX_LEVEL) {
+                // No match and at the deepest level, so a MultiDataEntry should be created
+                return oldEntry.addKeyValue(dataEntry.keyValue);
+            }
+
+            // There is no match, a new level can be created
+            return new Node(level + 1, oldEntry, dataEntry);
+
+        }
+
+        // oldValue instanceof MultiDataEntry and level is Hash.MAX_LEVEL
+        final MultiDataEntry oldEntry = (MultiDataEntry) oldValue;
+        final MultiDataEntry newEntry = oldEntry.addOrReplaceKeyValue(dataEntry.keyValue, replaceIfPresent);
+        return (oldEntry != newEntry) ? newEntry : null;
 
     }
 
@@ -188,68 +196,26 @@ final class Node implements Serializable {
             final boolean inThis = (this.bitMap & mask) != 0;
             final boolean inOther = (other.bitMap & mask) != 0;
 
-            final Object newValue; // will be set to null if no changes are needed
+            if (!inThis && !inOther) {
+                // Not found in any of the nodes, we should skip
+                continue;
+            }
+
+            final Object newValue;
             if (inThis && inOther) {
                 // Both nodes contain an entry for this position so we need to merge
 
                 final Object thisValue = this.values[thisIndex++];
                 final Object otherValue = other.values[otherIndex++];
 
-                final Node thisNode = (thisValue instanceof Node) ? (Node) thisValue : null;
-                final Node otherNode = (otherValue instanceof Node) ? (Node) otherValue : null;
-
-                if (thisNode != null && otherNode != null) {
-                    newValue = thisNode.putAll(otherNode);
-                } else if (thisNode != null) {
-                    // Node and MultiDataEntry cannot live at the same level, so otherValue is a DataEntry
-                    final DataEntry otherEntry = (DataEntry)otherValue;
-                    newValue = thisNode.put(otherEntry, true);
-                } else if (otherNode != null) {
-                    // Node and MultiDataEntry cannot live at the same level, so thisValue is a DataEntry
-                    final DataEntry thisEntry = (DataEntry)thisValue;
-                    newValue = otherNode.put(thisEntry, false);  // switch the replaceIfPresent flag
-                } else if (this.level < Hash.MAX_LEVEL){
-                    // Both thisValue and otherValue are DataEntry
-                    final DataEntry thisEntry = (DataEntry)thisValue;
-                    final DataEntry otherEntry = (DataEntry)otherValue;
-                    if (thisEntry.matches(otherEntry.keyValue)) {
-                        newValue = thisEntry.replaceKeyValue(otherEntry.keyValue, true);
-                    } else {
-                        newValue = new Node(this.level + 1, thisEntry, otherEntry);
-                    }
-                } else {
-                    // level == Hash.MAX_LEVEL, both thisValue and otherValue are entries and might be MultiDataEntry
-
-                    final DataEntry thisEntry = (thisValue instanceof DataEntry) ? (DataEntry) thisValue : null;
-                    final DataEntry otherEntry = (otherValue instanceof DataEntry) ? (DataEntry) otherValue : null;
-
-                    if (thisEntry != null && otherEntry != null) {
-                        if (thisEntry.matches(otherEntry.keyValue)) {
-                            newValue = thisEntry.replaceKeyValue(otherEntry.keyValue, true);
-                        } else {
-                            newValue = thisEntry.addKeyValue(otherEntry.keyValue);
-                        }
-                    } else if (thisEntry != null) {
-                        final MultiDataEntry otherMultiEntry = (MultiDataEntry)otherValue;
-                        newValue = otherMultiEntry.addOrReplaceKeyValue(thisEntry.keyValue, false);
-                    } else if (otherEntry != null) {
-                        final MultiDataEntry thisMultiEntry = (MultiDataEntry)thisValue;
-                        newValue = thisMultiEntry.addOrReplaceKeyValue(otherEntry.keyValue, true);
-                    } else { // Both are MultiDataEntry
-                        final MultiDataEntry thisMultiEntry = (MultiDataEntry)thisValue;
-                        final MultiDataEntry otherMultiEntry = (MultiDataEntry)otherValue;
-                        newValue = thisMultiEntry.addOrReplaceKeyValues(otherMultiEntry.keyValues);
-                    }
-
-                }
+                newValue = (this.level < Hash.MAX_LEVEL) ?
+                                computeNewValueForPutAllInterLevel(this.level, thisValue, otherValue)
+                              : computeNewValueForPutAllMaxLevel(thisValue, otherValue);
 
             } else if (inThis) {
                 newValue = this.values[thisIndex++];
-            } else if (inOther) {
+            } else { // inOther
                 newValue = other.values[otherIndex++];
-            } else {
-                // Not found in any of the nodes, we should skip
-                continue;
             }
             newValues[newIndex++] = newValue;
 
@@ -259,6 +225,72 @@ final class Node implements Serializable {
 
     }
 
+
+    private static Object computeNewValueForPutAllInterLevel(
+            final int level, final Object thisValue, final Object otherValue) {
+        // At an intermediate level, Node values can exist but MultiDataEntry values cannot
+
+        final Node thisNode = (thisValue instanceof Node) ? (Node) thisValue : null;
+        final Node otherNode = (otherValue instanceof Node) ? (Node) otherValue : null;
+
+        if (thisNode != null && otherNode != null) {
+            return thisNode.putAll(otherNode);
+        }
+
+        if (thisNode != null) {
+            final DataEntry otherEntry = (DataEntry)otherValue;
+            return thisNode.put(otherEntry, true);
+        }
+
+        if (otherNode != null) {
+            final DataEntry thisEntry = (DataEntry)thisValue;
+            return otherNode.put(thisEntry, false);  // !replaceIfPresent because "other" has precedence
+        }
+
+        // Both thisValue and otherValue are DataEntry
+        final DataEntry thisDataEntry = (DataEntry)thisValue;
+        final DataEntry otherDataEntry = (DataEntry)otherValue;
+
+        if (thisDataEntry.matches(otherDataEntry.keyValue)) {
+            return thisDataEntry.replaceKeyValue(otherDataEntry.keyValue, true);
+        }
+        return new Node(level + 1, thisDataEntry, otherDataEntry);
+
+    }
+
+
+
+
+    private static Object computeNewValueForPutAllMaxLevel(final Object thisValue, final Object otherValue) {
+        // At Hash.MAX_LEVEL level, MultiDataEntry values can exist but Node values cannot
+
+        final MultiDataEntry thisMultiEntry = (thisValue instanceof MultiDataEntry) ? (MultiDataEntry) thisValue : null;
+        final MultiDataEntry otherMultiEntry = (otherValue instanceof MultiDataEntry) ? (MultiDataEntry) otherValue : null;
+
+        if (thisMultiEntry != null && otherMultiEntry != null) {
+            return thisMultiEntry.addOrReplaceKeyValues(otherMultiEntry.keyValues);
+        }
+
+        if (thisMultiEntry != null) {
+            final DataEntry otherDataEntry = (DataEntry)otherValue;
+            return thisMultiEntry.addOrReplaceKeyValue(otherDataEntry.keyValue, true);
+        }
+
+        if (otherMultiEntry != null) {
+            final DataEntry thisDataEntry = (DataEntry)thisValue;
+            return otherMultiEntry.addOrReplaceKeyValue(thisDataEntry.keyValue, false);  // !replaceIfPresent because "other" has precedence
+        }
+
+        // Both thisValue and otherValue are DataEntry
+        final DataEntry thisDataEntry = (DataEntry)thisValue;
+        final DataEntry otherDataEntry = (DataEntry)otherValue;
+
+        if (thisDataEntry.matches(otherDataEntry.keyValue)) {
+            return thisDataEntry.replaceKeyValue(otherDataEntry.keyValue, true);
+        }
+        return thisDataEntry.addKeyValue(otherDataEntry.keyValue);
+
+    }
 
 
 }
