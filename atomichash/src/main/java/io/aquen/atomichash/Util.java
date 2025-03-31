@@ -21,19 +21,7 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 
-final class KeyValue implements Serializable {
-
-    private static final long serialVersionUID = -8350047565445169270L;
-
-    final Object key;
-    final Object value;
-
-    KeyValue(final Object key, final Object value) {
-        super();
-        this.key = key;
-        this.value = value;
-    }
-
+final class Util implements Serializable {
 
 
     /*
@@ -43,15 +31,16 @@ final class KeyValue implements Serializable {
      * Implementing a comparator here is preferable to making the KeyValue class directly implement the Comparable
      * interface because we are sorting only on the hash of the Key object.
      */
-    static class KeyValueHashComparator implements java.util.Comparator<KeyValue> {
+    static class DataEntryHashComparator implements java.util.Comparator<DataEntry> {
 
-        // TODO Most probably we will not be interested in sorting DataEntries but KeyValues (in order to create DataEntries)
+        // TODO This class most probably should not be here but wherever a list of KeyValues is turned into a Node
 
         @Override
-        public int compare(final MultiDataEntry o1, final MultiDataEntry o2) {
+        public int compare(final DataEntry o1, final DataEntry o2) {
             return Hash.hashCompare(o1.hash, o2.hash);
         }
 
     }
+
 
 }

@@ -1,28 +1,54 @@
+/*
+ * =========================================================================
+ *
+ *   Copyright (c) 2019-2025 Aquen (https://aquen.io)
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ *   implied. See the License for the specific language governing
+ *   permissions and limitations under the License.
+ *
+ * =========================================================================
+ */
 package io.aquen.atomichash;
 
 import java.io.Serializable;
 
-public class Key<K> implements Serializable {
+public final class Hash implements Serializable {
 
-    private static final long serialVersionUID = -652313031611727623L;
+    private static final long serialVersionUID = 5018497257745964899L;
+
+    public static final int MAX_LEVEL = 5;
 
     final int hash;
     final int[] indices;
-    final K key;
 
 
-    public Key(final K key) {
-        super();
-        this.key = key;
-        this.hash = hash(key);
-        this.indices = new int[] {
-            this.hash & 0b111111,
-            (this.hash >>> 6) & 0b111111,
-            (this.hash >>> 12) & 0b111111,
-            (this.hash >>> 18) & 0b111111,
-            (this.hash >>> 24) & 0b111111,
-            (this.hash >>> 30) & 0b11
+    public static Hash of(final Object object) {
+        final int hash = hash(object);
+        final int[] indices = new int[] {
+                hash & 0b111111,
+                (hash >>> 6) & 0b111111,
+                (hash >>> 12) & 0b111111,
+                (hash >>> 18) & 0b111111,
+                (hash >>> 24) & 0b111111,
+                (hash >>> 30) & 0b11
         };
+        return new Hash(hash, indices);
+    }
+
+
+    private Hash(final int hash, final int[] indices) {
+        super();
+        this.hash = hash;
+        this.indices = indices;
     }
 
 
@@ -37,21 +63,9 @@ public class Key<K> implements Serializable {
      * assuming that due to how memory assignment works in the JVM, in cases when the identity hash code is used,
      * the 16 most significant ones will probably show a higher entropy.
      */
-    static int hash(final Object key) {
+    static int hash(final Object object) {
         int h;
-        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
-    }
-
-
-    /*
-     * Equivalent to Objects.equals(), but by being called only from
-     * this class we might benefit from runtime profile information on the
-     * type of o1. See java.util.AbstractMap#eq().
-     *
-     * Do not replace with Object.equals() until JDK-8015417 is resolved.
-     */
-    private static boolean eq(final Object o1, final Object o2) {
-        return o1 == null ? o2 == null : o1.equals(o2);
+        return (object == null) ? 0 : (h = object.hashCode()) ^ (h >>> 16);
     }
 
 
@@ -60,21 +74,20 @@ public class Key<K> implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Key)) {
+        if (!(o instanceof Hash)) {
             return false;
         }
-        final Key<?> e = (Key<?>)o;
-        return this.hash == e.hash && eq(this.key, e.key);
+        return this.hash == ((Hash)o).hash;
     }
 
 
     /*
-     * Will sort keys in the same way that entries would be returned by an iterator (tree inorder). The aim of this
+     * Will sort hashes in the same way that entries would be returned by an iterator (tree inorder). The aim of this
      * sorting algorithm is to be used when performing multiple insertions, allowing the easy segmenting of
      * the array of new entries so that each segment is easily sent to its corresponding subtree.
      *
      * The use of this comparison algorithm should be restricted to sorting during multi-insertion. Other uses could
-     * lead to issues because the algorithm is NOT compatible with the natural order of keys, i.e., even if two Key
+     * lead to issues because the algorithm is NOT compatible with the natural order of objects, i.e., even if two Hash
      * objects that are .equals() are guaranteed to return .compareTo() == 0, the contrary cannot be guaranteed
      * because the comparison algorithm is only based on the hash value and not the key itself.
      *
@@ -82,12 +95,10 @@ public class Key<K> implements Serializable {
      * which is specific to this class and thus may not be compatible with other sorting mechanisms present in the
      * key objects themselves (such as e.g. the key objects implementing Comparable).
      */
-    static <K> int hashCompare(final Key<K> o1, final Key<K> o2) {
-
-        if (o1.key == o2.key || o1.hash == o2.hash) {
+    static <K> int hashCompare(final Hash o1, final Hash o2) {
+        if (o1.hash == o2.hash) {
             return 0;
         }
-
         if (o1.indices[0] != o2.indices[0]) {
             return Integer.compare(o1.indices[0], o2.indices[0]);
         }
