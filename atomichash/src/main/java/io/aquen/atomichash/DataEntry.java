@@ -21,7 +21,7 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 
-final class DataEntry implements Serializable {
+final class DataEntry implements Entry, Serializable {
 
     private static final long serialVersionUID = -5401891463106165174L;
 
@@ -34,13 +34,18 @@ final class DataEntry implements Serializable {
     }
 
 
-    // Should only be called from DataEntry or MultiDataEntry
+    // Should only be called from DataEntry or CollisionEntry
     DataEntry(final Hash hash, final KeyValue keyValue) {
         super();
         this.hash = hash;
         this.keyValue = keyValue;
     }
 
+
+    @Override
+    public Hash getHash() {
+        return this.hash;
+    }
 
     KeyValue get(final Object key) {
         return eq(this.keyValue.key, key) ? this.keyValue : null;
@@ -53,12 +58,15 @@ final class DataEntry implements Serializable {
 
 
     DataEntry replaceKeyValue(final KeyValue keyValue, final boolean replaceIfPresent) {
-        return (replaceIfPresent) ? new DataEntry(this.hash, keyValue) : this;
+        if (!replaceIfPresent || (this.keyValue.key == keyValue.key && this.keyValue.value == keyValue.value)) {
+            return this;
+        }
+        return new DataEntry(this.hash, keyValue);
     }
 
 
-    MultiDataEntry addKeyValue(final KeyValue keyValue) {
-        return new MultiDataEntry(this.hash, new KeyValue[]{ this.keyValue, keyValue });
+    CollisionEntry addKeyValue(final KeyValue keyValue) {
+        return new CollisionEntry(this.hash, new KeyValue[]{ this.keyValue, keyValue });
     }
 
 

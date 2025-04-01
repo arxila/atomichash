@@ -23,7 +23,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class MultiDataEntry implements Serializable {
+final class CollisionEntry implements Entry, Serializable {
 
     private static final long serialVersionUID = 5847401436093096621L;
 
@@ -31,11 +31,17 @@ final class MultiDataEntry implements Serializable {
     final KeyValue[] keyValues;
 
 
-    // Should only be called from DataEntry or MultiDataEntry
-    MultiDataEntry(final Hash hash, final KeyValue[] keyValues) {
+    // Should only be called from DataEntry or CollisionEntry
+    CollisionEntry(final Hash hash, final KeyValue[] keyValues) {
         super();
         this.hash = hash;
         this.keyValues = keyValues;
+    }
+
+
+    @Override
+    public Hash getHash() {
+        return this.hash;
     }
 
 
@@ -49,26 +55,26 @@ final class MultiDataEntry implements Serializable {
     }
 
 
-    MultiDataEntry addOrReplaceKeyValue(final KeyValue keyValue, final boolean replaceIfPresent) {
+    CollisionEntry addOrReplaceKeyValue(final KeyValue keyValue, final boolean replaceIfPresent) {
         for (int i = 0; i < this.keyValues.length; i++) {
             if (Objects.equals(this.keyValues[i].key, keyValue.key)) {
                 // We have a match, so we will need to replace (if flagged to do so)
-                if (!replaceIfPresent) {
+                if (!replaceIfPresent || (this.keyValues[i].key == keyValue.key && this.keyValues[i].value == keyValue.value)) {
                     return this;
                 }
                 final KeyValue[] newKeyValues = Arrays.copyOf(this.keyValues, this.keyValues.length, KeyValue[].class);
                 newKeyValues[i] = keyValue;
-                return new MultiDataEntry(this.hash, newKeyValues);
+                return new CollisionEntry(this.hash, newKeyValues);
             }
         }
         final KeyValue[] newKeyValues = new KeyValue[this.keyValues.length + 1];
         System.arraycopy(this.keyValues, 0, newKeyValues, 0, this.keyValues.length);
         newKeyValues[this.keyValues.length] = keyValue;
-        return new MultiDataEntry(this.hash, newKeyValues);
+        return new CollisionEntry(this.hash, newKeyValues);
     }
 
 
-    MultiDataEntry addOrReplaceKeyValues(final KeyValue[] keyValues) {
+    CollisionEntry addOrReplaceKeyValues(final KeyValue[] keyValues) {
 
         final boolean[] processed = new boolean[keyValues.length];
         Arrays.fill(processed, false);
@@ -94,7 +100,7 @@ final class MultiDataEntry implements Serializable {
             }
         }
 
-        return new MultiDataEntry(this.hash, newKeyValues);
+        return new CollisionEntry(this.hash, newKeyValues);
 
     }
 

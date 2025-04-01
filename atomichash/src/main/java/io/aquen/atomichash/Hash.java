@@ -95,7 +95,7 @@ public final class Hash implements Serializable {
      * which is specific to this class and thus may not be compatible with other sorting mechanisms present in the
      * key objects themselves (such as e.g. the key objects implementing Comparable).
      */
-    static <K> int hashCompare(final Hash o1, final Hash o2) {
+    static int hashCompare(final Hash o1, final Hash o2) {
         if (o1.hash == o2.hash) {
             return 0;
         }

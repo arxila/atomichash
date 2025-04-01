@@ -52,7 +52,7 @@ final class Node implements Serializable {
         } else {
             // We have an index match at this level, so we will need to (try) to create a new level
             if (this.level == Hash.MAX_LEVEL) {
-                // We have no more levels, so we need a MultiDataEntry
+                // We have no more levels, so we need a CollisionEntry
                 this.values = new Object[] { dataEntry0.addKeyValue(dataEntry1.keyValue) };
             } else {
                 // We need an additional level to further differentiate entries
@@ -92,13 +92,15 @@ final class Node implements Serializable {
             return null;
         }
         final Object value = this.values[pos];
+        // Casts to specific classes are used in order to allow for static method resolution
+        if (value instanceof DataEntry) {
+            return ((DataEntry)value).get(key);
+        }
         if (value instanceof Node) {
             return ((Node)value).get(hash, key);
-        } else if (value instanceof DataEntry) {
-            return ((DataEntry)value).get(key);
-        } else { // value instanceof MultiDataEntry
-            return ((MultiDataEntry)value).get(key);
         }
+        // value instanceof CollisionEntry
+        return ((CollisionEntry)value).get(key);
     }
 
 
@@ -161,7 +163,7 @@ final class Node implements Serializable {
                 return (oldEntry != newEntry) ? newEntry : null;
             }
             if (level == Hash.MAX_LEVEL) {
-                // No match and at the deepest level, so a MultiDataEntry should be created
+                // No match and at the deepest level, so a CollisionEntry should be created
                 return oldEntry.addKeyValue(dataEntry.keyValue);
             }
 
@@ -170,9 +172,9 @@ final class Node implements Serializable {
 
         }
 
-        // oldValue instanceof MultiDataEntry and level is Hash.MAX_LEVEL
-        final MultiDataEntry oldEntry = (MultiDataEntry) oldValue;
-        final MultiDataEntry newEntry = oldEntry.addOrReplaceKeyValue(dataEntry.keyValue, replaceIfPresent);
+        // oldValue instanceof CollisionEntry and level is Hash.MAX_LEVEL
+        final CollisionEntry oldEntry = (CollisionEntry) oldValue;
+        final CollisionEntry newEntry = oldEntry.addOrReplaceKeyValue(dataEntry.keyValue, replaceIfPresent);
         return (oldEntry != newEntry) ? newEntry : null;
 
     }
@@ -228,7 +230,7 @@ final class Node implements Serializable {
 
     private static Object computeNewValueForPutAllInterLevel(
             final int level, final Object thisValue, final Object otherValue) {
-        // At an intermediate level, Node values can exist but MultiDataEntry values cannot
+        // At an intermediate level, Node values can exist but CollisionEntry values cannot
 
         final Node thisNode = (thisValue instanceof Node) ? (Node) thisValue : null;
         final Node otherNode = (otherValue instanceof Node) ? (Node) otherValue : null;
@@ -262,23 +264,23 @@ final class Node implements Serializable {
 
 
     private static Object computeNewValueForPutAllMaxLevel(final Object thisValue, final Object otherValue) {
-        // At Hash.MAX_LEVEL level, MultiDataEntry values can exist but Node values cannot
+        // At Hash.MAX_LEVEL level, CollisionEntry values can exist but Node values cannot
 
-        final MultiDataEntry thisMultiEntry = (thisValue instanceof MultiDataEntry) ? (MultiDataEntry) thisValue : null;
-        final MultiDataEntry otherMultiEntry = (otherValue instanceof MultiDataEntry) ? (MultiDataEntry) otherValue : null;
+        final CollisionEntry thisCollisionEntry = (thisValue instanceof CollisionEntry) ? (CollisionEntry) thisValue : null;
+        final CollisionEntry otherCollisionEntry = (otherValue instanceof CollisionEntry) ? (CollisionEntry) otherValue : null;
 
-        if (thisMultiEntry != null && otherMultiEntry != null) {
-            return thisMultiEntry.addOrReplaceKeyValues(otherMultiEntry.keyValues);
+        if (thisCollisionEntry != null && otherCollisionEntry != null) {
+            return thisCollisionEntry.addOrReplaceKeyValues(otherCollisionEntry.keyValues);
         }
 
-        if (thisMultiEntry != null) {
+        if (thisCollisionEntry != null) {
             final DataEntry otherDataEntry = (DataEntry)otherValue;
-            return thisMultiEntry.addOrReplaceKeyValue(otherDataEntry.keyValue, true);
+            return thisCollisionEntry.addOrReplaceKeyValue(otherDataEntry.keyValue, true);
         }
 
-        if (otherMultiEntry != null) {
+        if (otherCollisionEntry != null) {
             final DataEntry thisDataEntry = (DataEntry)thisValue;
-            return otherMultiEntry.addOrReplaceKeyValue(thisDataEntry.keyValue, false);  // !replaceIfPresent because "other" has precedence
+            return otherCollisionEntry.addOrReplaceKeyValue(thisDataEntry.keyValue, false);  // !replaceIfPresent because "other" has precedence
         }
 
         // Both thisValue and otherValue are DataEntry

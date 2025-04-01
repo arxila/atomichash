@@ -48,7 +48,7 @@ final class KeyValue implements Serializable {
         // TODO Most probably we will not be interested in sorting DataEntries but KeyValues (in order to create DataEntries)
 
         @Override
-        public int compare(final MultiDataEntry o1, final MultiDataEntry o2) {
+        public int compare(final CollisionEntry o1, final CollisionEntry o2) {
             return Hash.hashCompare(o1.hash, o2.hash);
         }
 
