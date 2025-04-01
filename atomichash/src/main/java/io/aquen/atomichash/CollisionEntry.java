@@ -23,7 +23,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class CollisionEntry implements Entry, Serializable {
+final class CollisionEntry implements Serializable {
 
     private static final long serialVersionUID = 5847401436093096621L;
 
@@ -36,12 +36,6 @@ final class CollisionEntry implements Entry, Serializable {
         super();
         this.hash = hash;
         this.keyValues = keyValues;
-    }
-
-
-    @Override
-    public Hash getHash() {
-        return this.hash;
     }
 
 

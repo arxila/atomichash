@@ -21,7 +21,7 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 
-final class DataEntry implements Entry, Serializable {
+final class DataEntry implements Serializable {
 
     private static final long serialVersionUID = -5401891463106165174L;
 
@@ -41,11 +41,6 @@ final class DataEntry implements Entry, Serializable {
         this.keyValue = keyValue;
     }
 
-
-    @Override
-    public Hash getHash() {
-        return this.hash;
-    }
 
     KeyValue get(final Object key) {
         return eq(this.keyValue.key, key) ? this.keyValue : null;
