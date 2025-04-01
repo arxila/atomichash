@@ -34,24 +34,4 @@ final class KeyValue implements Serializable {
         this.value = value;
     }
 
-
-
-    /*
-     * Will sort KeyValue objects entirely based on the hash-based ordering of their keys. Values are explicitly
-     * ignored because this will only be used for segmenting entries during multi-insertion.
-     *
-     * Implementing a comparator here is preferable to making the KeyValue class directly implement the Comparable
-     * interface because we are sorting only on the hash of the Key object.
-     */
-    static class KeyValueHashComparator implements java.util.Comparator<KeyValue> {
-
-        // TODO Most probably we will not be interested in sorting DataEntries but KeyValues (in order to create DataEntries)
-
-        @Override
-        public int compare(final CollisionEntry o1, final CollisionEntry o2) {
-            return Hash.hashCompare(o1.hash, o2.hash);
-        }
-
-    }
-
 }
