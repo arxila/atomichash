@@ -107,14 +107,15 @@ final class Node implements Serializable {
 
     public Node put(final DataEntry dataEntry, final boolean replaceIfPresent) {
 
-        final int pos = valuePos(this.level, this.bitMap, dataEntry.hash);
+        final Hash hash = dataEntry.hash;
+        final int pos = valuePos(this.level, this.bitMap, hash);
 
         if (pos < 0) {
             // There was nothing at this position before
 
             final int newPos = (pos ^ NEG_MASK);
 
-            final long newBitMap = this.bitMap | (1L << newPos);
+            final long newBitMap = this.bitMap | (1L << hash.indices[this.level]);
             final Object[] newValues = new Object[this.values.length + 1];
             System.arraycopy(this.values, 0, newValues, 0, newPos);
             newValues[newPos] = dataEntry;
