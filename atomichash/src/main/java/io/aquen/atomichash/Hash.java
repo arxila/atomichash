@@ -21,34 +21,51 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 
-public final class Hash implements Serializable {
+final class Hash implements Serializable {
 
     private static final long serialVersionUID = 5018497257745964899L;
 
     public static final int MAX_LEVEL = 5;
 
+    private static final int[] SHIFTS = new int[] { 0, 6, 12, 18, 24, 30 };
+    private static final int MASK = 0b111111;
+    static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 int positions into negative
+
     final int hash;
-    final int[] indices;
 
 
     public static Hash of(final Object object) {
-        final int hash = hash(object);
-        final int[] indices = new int[] {
-                hash & 0b111111,
-                (hash >>> 6) & 0b111111,
-                (hash >>> 12) & 0b111111,
-                (hash >>> 18) & 0b111111,
-                (hash >>> 24) & 0b111111,
-                (hash >>> 30) & 0b11
-        };
-        return new Hash(hash, indices);
+        return new Hash(hash(object));
     }
 
 
-    private Hash(final int hash, final int[] indices) {
+    private Hash(final int hash) {
         super();
         this.hash = hash;
-        this.indices = indices;
+    }
+
+
+    int index(final int level) {
+        return (this.hash >>> SHIFTS[level]) & MASK;
+    }
+
+    long mask(final int level) {
+        return 1L << ((this.hash >>> SHIFTS[level]) & MASK);
+    }
+
+    /*
+     * Computes the position in a compact array by using a bitmap. This bitmap will contain 1's for
+     * every position of the possible 64 (max size of the values array) that can contain an element. The
+     * position in the array will correspond to the number of positions occupied before the index, i.e. the
+     * number of bits to the right of the bit corresponding to the index for this level.
+     *
+     * This algorithm benefits from the fact that Long.bitCount is an intrinsic candidate typically implemented
+     * as a single "population count" CPU instruction, and thus the computation will be O(1).
+     */
+    int pos(final int level, final long bitMap) {
+        final long indexMask = mask(level);
+        final int pos = Long.bitCount(bitMap & (indexMask - 1L));
+        return ((bitMap & indexMask) != 0L) ? pos : (pos ^ NEG_MASK); // negative if absent, positive if present
     }
 
 
@@ -99,22 +116,27 @@ public final class Hash implements Serializable {
         if (o1.hash == o2.hash) {
             return 0;
         }
-        if (o1.indices[0] != o2.indices[0]) {
-            return Integer.compare(o1.indices[0], o2.indices[0]);
+        final int index0 = Integer.compare(o1.index(0), o2.index(0));
+        if (index0 != 0) {
+            return index0;
         }
-        if (o1.indices[1] != o2.indices[1]) {
-            return Integer.compare(o1.indices[1], o2.indices[1]);
+        final int index1 = Integer.compare(o1.index(1), o2.index(1));
+        if (index1 != 0) {
+            return index1;
         }
-        if (o1.indices[2] != o2.indices[2]) {
-            return Integer.compare(o1.indices[2], o2.indices[2]);
+        final int index2 = Integer.compare(o1.index(2), o2.index(2));
+        if (index2 != 0) {
+            return index2;
         }
-        if (o1.indices[3] != o2.indices[3]) {
-            return Integer.compare(o1.indices[3], o2.indices[3]);
+        final int index3 = Integer.compare(o1.index(3), o2.index(3));
+        if (index3 != 0) {
+            return index3;
         }
-        if (o1.indices[4] != o2.indices[4]) {
-            return Integer.compare(o1.indices[4], o2.indices[4]);
+        final int index4 = Integer.compare(o1.index(4), o2.index(4));
+        if (index4 != 0) {
+            return index4;
         }
-        return Integer.compare(o1.indices[5], o2.indices[5]);
+        return Integer.compare(o1.index(5), o2.index(5));
     }
 
 }

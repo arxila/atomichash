@@ -26,8 +26,6 @@ final class Node implements Serializable {
 
     private static final long serialVersionUID = 5892440116260222326L;
 
-    private static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 positions into negative
-
     final int level;
     final long bitMap;
     final Object[] values;
@@ -44,10 +42,12 @@ final class Node implements Serializable {
     private Node(final int level, final DataEntry dataEntry0, final DataEntry dataEntry1) {
         super();
         this.level = level;
-        final int index0 = dataEntry0.hash.indices[this.level];
-        final int index1 = dataEntry1.hash.indices[this.level];
-        this.bitMap = (1L << index0) | (1L << index1);
-        if (index0 != index1) {
+        final long mask0 = dataEntry0.hash.mask(this.level);
+        final long mask1 = dataEntry1.hash.mask(this.level);
+        this.bitMap = mask0 | mask1;
+        if (mask0 != mask1) {
+            final int index0 = dataEntry0.hash.index(this.level);
+            final int index1 = dataEntry1.hash.index(this.level);
             this.values = (index0 < index1) ? new Object[] { dataEntry0, dataEntry1 } : new Object[] { dataEntry1, dataEntry0 };
         } else {
             // We have an index match at this level, so we will need to (try) to create a new level
@@ -82,25 +82,27 @@ final class Node implements Serializable {
 
 
     boolean contains(final Hash hash) {
-        return valuePos(this.level, this.bitMap, hash) >= 0;
+        // TODO Wrong! It only checks the current level
+        return hash.pos(this.level, this.bitMap) >= 0;
     }
 
 
     KeyValue get(final Hash hash, final Object key) {
-        final int pos = valuePos(this.level, this.bitMap, hash);
-        if (pos < 0) {
-            return null;
+        Node currentNode = this;
+        while (true) {
+            final int pos = hash.pos(currentNode.level, currentNode.bitMap);
+            if (pos < 0) {
+                return null; // Not found
+            }
+            final Object value = currentNode.values[pos];
+            if (value instanceof DataEntry) {
+                return ((DataEntry) value).get(key);
+            }
+            if (value instanceof CollisionEntry) {
+                return ((CollisionEntry) value).get(key);
+            }
+            currentNode = (Node) value;
         }
-        final Object value = this.values[pos];
-        // Casts to specific classes are used in order to allow for static method resolution
-        if (value instanceof DataEntry) {
-            return ((DataEntry)value).get(key);
-        }
-        if (value instanceof Node) {
-            return ((Node)value).get(hash, key);
-        }
-        // value instanceof CollisionEntry
-        return ((CollisionEntry)value).get(key);
     }
 
 
@@ -108,14 +110,14 @@ final class Node implements Serializable {
     public Node put(final DataEntry dataEntry, final boolean replaceIfPresent) {
 
         final Hash hash = dataEntry.hash;
-        final int pos = valuePos(this.level, this.bitMap, hash);
+        final int pos = hash.pos(this.level, this.bitMap);
 
         if (pos < 0) {
             // There was nothing at this position before
 
-            final int newPos = (pos ^ NEG_MASK);
+            final int newPos = (pos ^ Hash.NEG_MASK);
 
-            final long newBitMap = this.bitMap | (1L << hash.indices[this.level]);
+            final long newBitMap = this.bitMap | hash.mask(this.level);
             final Object[] newValues = new Object[this.values.length + 1];
             System.arraycopy(this.values, 0, newValues, 0, newPos);
             newValues[newPos] = dataEntry;
