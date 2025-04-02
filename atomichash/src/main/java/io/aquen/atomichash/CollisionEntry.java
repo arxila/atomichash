@@ -23,7 +23,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class CollisionEntry implements Serializable {
+final class CollisionEntry implements Entry, Serializable {
 
     private static final long serialVersionUID = 5847401436093096621L;
 
@@ -39,7 +39,22 @@ final class CollisionEntry implements Serializable {
     }
 
 
-    KeyValue get(final Object key) {
+    @Override
+    public boolean containsKey(final Hash hash, final Object key) {
+        if (this.hash.hash != hash.hash) {
+            return false;
+        }
+        for (final KeyValue thisKeyValue : this.keyValues) {
+            if (Objects.equals(thisKeyValue.key, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
+    public KeyValue get(final Object key) {
         for (final KeyValue keyValue : this.keyValues) {
             if (Objects.equals(keyValue.key, key)) {
                 return keyValue;
@@ -49,11 +64,13 @@ final class CollisionEntry implements Serializable {
     }
 
 
-    CollisionEntry addOrReplaceKeyValue(final KeyValue keyValue, final boolean replaceIfPresent) {
+    @Override
+    public Entry set(final KeyValue keyValue) {
         for (int i = 0; i < this.keyValues.length; i++) {
-            if (Objects.equals(this.keyValues[i].key, keyValue.key)) {
-                // We have a match, so we will need to replace (if flagged to do so)
-                if (!replaceIfPresent || (this.keyValues[i].key == keyValue.key && this.keyValues[i].value == keyValue.value)) {
+            final KeyValue thisKeyValue = this.keyValues[i];
+            if (Objects.equals(thisKeyValue.key, keyValue.key)) {
+                // We have a match, so we will need to replace (if objects are truly different)
+                if (thisKeyValue.key == keyValue.key && thisKeyValue.value == keyValue.value) {
                     return this;
                 }
                 final KeyValue[] newKeyValues = Arrays.copyOf(this.keyValues, this.keyValues.length, KeyValue[].class);
@@ -61,6 +78,13 @@ final class CollisionEntry implements Serializable {
                 return new CollisionEntry(this.hash, newKeyValues);
             }
         }
+        // Should never happen as all calls should be protected by a previous call to containsKey()
+        throw new IllegalStateException("Setting a key that does not exist");
+    }
+
+
+    @Override
+    public CollisionEntry add(final KeyValue keyValue) {
         final KeyValue[] newKeyValues = new KeyValue[this.keyValues.length + 1];
         System.arraycopy(this.keyValues, 0, newKeyValues, 0, this.keyValues.length);
         newKeyValues[this.keyValues.length] = keyValue;

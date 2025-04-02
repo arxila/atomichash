@@ -20,8 +20,62 @@
 package io.aquen.atomichash;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 final class Util implements Serializable {
+
+    private static final DataEntryHashComparator COMPARATOR = new DataEntryHashComparator();
+
+
+//    public static Node createNode(final KeyValue[] keyValues) {
+//
+//        final DataEntry[] dataEntries = new DataEntry[keyValues.length];
+//        for (int i = 0; i < keyValues.length; i++) {
+//            dataEntries[i] = new DataEntry(Hash.of(keyValues[i].key), keyValues[i]);
+//        }
+//        // Sort the DataEntry objects by hash
+//        Arrays.sort(dataEntries, COMPARATOR);
+//
+//        // Transform the sorted list into a new list of DataEntry or MultiDataEntry objects
+//        final List<Object> processedEntries = new ArrayList<Object>(dataEntries.length);
+//        Object previous = null;
+//        Hash previousHash = null;
+//
+//        boolean process;
+//        for (DataEntry current : dataEntries) {
+//
+//            process = true;
+//
+//            if (previousHash != null && previousHash.equals(current.hash)) {
+//                if (previous instanceof DataEntry) {
+//                    final DataEntry previousDataEntry = (DataEntry) previous;
+//                    if (previousDataEntry.matches(current.keyValue.key)) {
+//                        previous = previousDataEntry.replaceKeyValue(current.keyValue, true);
+//                    } else {
+//                        previous = previousDataEntry.addKeyValue(current.keyValue);
+//                    }
+//                } else if (previous instanceof CollisionEntry) {
+//                    previous = ((CollisionEntry) previous).addOrReplaceKeyValue(current.keyValue, true);
+//                }
+//                processedEntries.set(processedEntries.size() - 1, previous); // Replace the last element
+//                process = false;
+//            }
+//
+//            if (process) {
+//                processedEntries.add(current);
+//                previous = current;
+//                previousHash = current.hash;
+//            }
+//
+//        }
+//
+//        // At this point processedEntries contains all new entries ordered and grouped into collisions if needed
+//        return null;
+//
+//    }
+
 
 
     /*
@@ -32,8 +86,6 @@ final class Util implements Serializable {
      * interface because we are sorting only on the hash of the Key object.
      */
     static class DataEntryHashComparator implements java.util.Comparator<DataEntry> {
-
-        // TODO This class most probably should not be here but wherever a list of KeyValues is turned into a Node
 
         @Override
         public int compare(final DataEntry o1, final DataEntry o2) {

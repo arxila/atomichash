@@ -65,7 +65,7 @@ final class Hash implements Serializable {
     int pos(final int level, final long bitMap) {
         final long indexMask = mask(level);
         final int pos = Long.bitCount(bitMap & (indexMask - 1L));
-        return ((bitMap & indexMask) != 0L) ? pos : (pos ^ NEG_MASK); // negative if absent, positive if present
+        return ((bitMap & indexMask) != 0L) ? pos : (pos ^ NEG_MASK); // positive if present, negative if absent
     }
 
 
