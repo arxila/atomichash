@@ -248,118 +248,170 @@ final class Node implements Serializable {
 
 
 
-//    Node putAll(final Node other) {
-//        // this.level and other.level will always be the same
-//
-//        // The bitmap for the new compressed array will contain the bits in both nodes
-//        final long newBitMap = this.nodeBitMap | other.nodeBitMap;
-//        // We will need as many new values as bits set in the new bitmap
-//        final Object[] newValues = new Object[Long.bitCount(newBitMap)];
-//
-//        // Three indices needed to traverse this, the other's and the new compressed array
-//        int thisIndex = 0, otherIndex = 0, newIndex = 0;
-//
-//        // We need to iterate all the positions the array can have (64 bits in a long)
-//        for (long mask = 1L; mask != 0; mask <<= 1) {
-//
-//            final boolean inThis = (this.nodeBitMap & mask) != 0;
-//            final boolean inOther = (other.nodeBitMap & mask) != 0;
-//
-//            if (!inThis && !inOther) {
-//                // Not found in any of the nodes, we should skip
-//                continue;
-//            }
-//
-//            final Object newValue;
-//            if (inThis && inOther) {
-//                // Both nodes contain an entry for this position so we need to merge
-//
-//                final Object thisValue = this.nodes[thisIndex++];
-//                final Object otherValue = other.nodes[otherIndex++];
-//
-//                newValue = (this.level < Hash.MAX_LEVEL) ?
-//                                computeNewValueForPutAllInterLevel(this.level, thisValue, otherValue)
-//                              : computeNewValueForPutAllMaxLevel(thisValue, otherValue);
-//
-//            } else if (inThis) {
-//                newValue = this.nodes[thisIndex++];
-//            } else { // inOther
-//                newValue = other.nodes[otherIndex++];
-//            }
-//            newValues[newIndex++] = newValue;
-//
-//        }
-//
-//        return new Node(this.level, newBitMap, newValues);
-//
-//    }
-//
-//
-//    private static Object computeNewValueForPutAllInterLevel(
-//            final int level, final Object thisValue, final Object otherValue) {
-//        // At an intermediate level, Node values can exist but CollisionEntry values cannot
-//
-//        final Node thisNode = (thisValue instanceof Node) ? (Node) thisValue : null;
-//        final Node otherNode = (otherValue instanceof Node) ? (Node) otherValue : null;
-//
-//        if (thisNode != null && otherNode != null) {
-//            return thisNode.putAll(otherNode);
-//        }
-//
-//        if (thisNode != null) {
-//            final DataEntry otherEntry = (DataEntry)otherValue;
-//            return thisNode.put(otherEntry, true);
-//        }
-//
-//        if (otherNode != null) {
-//            final DataEntry thisEntry = (DataEntry)thisValue;
-//            return otherNode.put(thisEntry, false);  // !replaceIfPresent because "other" has precedence
-//        }
-//
-//        // Both thisValue and otherValue are DataEntry
-//        final DataEntry thisDataEntry = (DataEntry)thisValue;
-//        final DataEntry otherDataEntry = (DataEntry)otherValue;
-//
-//        if (thisDataEntry.matches(otherDataEntry.keyValue)) {
-//            return thisDataEntry.replaceKeyValue(otherDataEntry.keyValue, true);
-//        }
-//        return new Node(level + 1, thisDataEntry, otherDataEntry);
-//
-//    }
-//
-//
-//
-//
-//    private static Object computeNewValueForPutAllMaxLevel(final Object thisValue, final Object otherValue) {
-//        // At Hash.MAX_LEVEL level, CollisionEntry values can exist but Node values cannot
-//
-//        final CollisionEntry thisCollisionEntry = (thisValue instanceof CollisionEntry) ? (CollisionEntry) thisValue : null;
-//        final CollisionEntry otherCollisionEntry = (otherValue instanceof CollisionEntry) ? (CollisionEntry) otherValue : null;
-//
-//        if (thisCollisionEntry != null && otherCollisionEntry != null) {
-//            return thisCollisionEntry.addOrReplaceKeyValues(otherCollisionEntry.keyValues);
-//        }
-//
-//        if (thisCollisionEntry != null) {
-//            final DataEntry otherDataEntry = (DataEntry)otherValue;
-//            return thisCollisionEntry.addOrReplaceKeyValue(otherDataEntry.keyValue, true);
-//        }
-//
-//        if (otherCollisionEntry != null) {
-//            final DataEntry thisDataEntry = (DataEntry)thisValue;
-//            return otherCollisionEntry.addOrReplaceKeyValue(thisDataEntry.keyValue, false);  // !replaceIfPresent because "other" has precedence
-//        }
-//
-//        // Both thisValue and otherValue are DataEntry
-//        final DataEntry thisDataEntry = (DataEntry)thisValue;
-//        final DataEntry otherDataEntry = (DataEntry)otherValue;
-//
-//        if (thisDataEntry.matches(otherDataEntry.keyValue)) {
-//            return thisDataEntry.replaceKeyValue(otherDataEntry.keyValue, true);
-//        }
-//        return thisDataEntry.addKeyValue(otherDataEntry.keyValue);
-//
-//    }
+    Node putAll(final Node other) {
+        // this.level and other.level will always be the same
+
+        // The new bitmaps will need to be considered temporary, as during processing some entries could turn to nodes
+        long newNodesBitMap = this.nodesBitMap | other.nodesBitMap;
+        long newEntriesBitMap = this.entriesBitMap | other.entriesBitMap;
+
+        // New nodes and entries arrays will also be considered temporary, for the same reason as bitmaps
+        Object[] newNodes = new Node[Long.bitCount(newNodesBitMap)];
+        Object[] newEntries = new Entry[Long.bitCount(newEntriesBitMap)];
+
+        // Three indices needed for nodes and other three for entries
+        int thisNodesIndex = 0, otherNodesIndex = 0, newNodesIndex = 0;
+        int thisEntriesIndex = 0, otherEntriesIndex = 0, newEntriesIndex = 0;
+
+        // Iteration performed bit-by-bit for all the 64 possible bits in the bitmap
+        boolean inThisNodes, inOtherNodes, inThisEntries, inOtherEntries;
+        Node thisNode, otherNode;
+        Entry thisEntry, otherEntry;
+        for (long mask = 1L; mask != 0; mask <<= 1) {
+
+            inThisNodes = (this.nodesBitMap & mask) != 0;
+            inOtherNodes = (other.nodesBitMap & mask) != 0;
+            inThisEntries = (this.entriesBitMap & mask) != 0;
+            inOtherEntries = (other.entriesBitMap & mask) != 0;
+
+            if (!inThisNodes && !inOtherNodes && !inThisEntries && !inOtherEntries) {
+                // Not found in this or other: skip
+                continue;
+            }
+
+            if (inThisNodes && inOtherNodes) {
+                thisNode = this.nodes[thisNodesIndex++];
+                otherNode = other.nodes[otherNodesIndex++];
+                newNodes[newNodesIndex++] = thisNode.putAll(otherNode);
+                continue;
+            }
+
+            if (inThisNodes && inOtherEntries) {
+                thisNode = this.nodes[thisNodesIndex++];
+                otherEntry = other.entries[otherEntriesIndex++];
+                newNodes[newNodesIndex++] = thisNode.put((DataEntry)otherEntry, true);
+                newEntriesBitMap ^= mask;
+                newEntries = Arrays.copyOf(newEntries, newEntries.length - 1, Entry[].class);
+                continue;
+            }
+
+            if (inThisEntries && inOtherNodes) {
+                thisEntry = this.entries[thisEntriesIndex++];
+                otherNode = other.nodes[otherNodesIndex++];
+                newNodes[newNodesIndex++] = otherNode.put((DataEntry)thisEntry, false);
+                newEntriesBitMap ^= mask;
+                newEntries = Arrays.copyOf(newEntries, newEntries.length - 1, Entry[].class);
+                continue;
+            }
+
+            if (inThisEntries && inOtherEntries) {
+
+                thisEntry = this.entries[thisEntriesIndex++];
+                otherEntry = other.entries[otherEntriesIndex++];
+
+                if (this.level == Hash.MAX_LEVEL) {
+
+                    if (thisEntry.containsKey(otherEntry.))
+
+                }
+
+                // no collisions here: new levels could be created
+
+            }
+
+            if (inThisNodes) {
+                newNodes[newNodesIndex++] = this.nodes[thisNodesIndex++];
+                continue;
+            }
+
+            if (inOtherNodes) {
+                newNodes[newNodesIndex++] = other.nodes[otherNodesIndex++];
+                continue;
+            }
+
+            if (inThisEntries) {
+                newEntries[newEntriesIndex++] = this.entries[thisEntriesIndex++];
+                continue;
+            }
+
+            if (inOtherEntries) {
+                newEntries[newEntriesIndex++] = other.entries[otherEntriesIndex++];
+                continue;
+            }
+
+
+        }
+
+        return new Node(this.level, newBitMap, newValues);
+
+    }
+
+
+    private static Object computeNewValueForPutAllInterLevel(
+            final int level, final Object thisValue, final Object otherValue) {
+        // At an intermediate level, Node values can exist but CollisionEntry values cannot
+
+        final Node thisNode = (thisValue instanceof Node) ? (Node) thisValue : null;
+        final Node otherNode = (otherValue instanceof Node) ? (Node) otherValue : null;
+
+        if (thisNode != null && otherNode != null) {
+            return thisNode.putAll(otherNode);
+        }
+
+        if (thisNode != null) {
+            final DataEntry otherEntry = (DataEntry)otherValue;
+            return thisNode.put(otherEntry, true);
+        }
+
+        if (otherNode != null) {
+            final DataEntry thisEntry = (DataEntry)thisValue;
+            return otherNode.put(thisEntry, false);  // !replaceIfPresent because "other" has precedence
+        }
+
+        // Both thisValue and otherValue are DataEntry
+        final DataEntry thisDataEntry = (DataEntry)thisValue;
+        final DataEntry otherDataEntry = (DataEntry)otherValue;
+
+        if (thisDataEntry.matches(otherDataEntry.keyValue)) {
+            return thisDataEntry.replaceKeyValue(otherDataEntry.keyValue, true);
+        }
+        return new Node(level + 1, thisDataEntry, otherDataEntry);
+
+    }
+
+
+
+
+    private static Object computeNewValueForPutAllMaxLevel(final Object thisValue, final Object otherValue) {
+        // At Hash.MAX_LEVEL level, CollisionEntry values can exist but Node values cannot
+
+        final CollisionEntry thisCollisionEntry = (thisValue instanceof CollisionEntry) ? (CollisionEntry) thisValue : null;
+        final CollisionEntry otherCollisionEntry = (otherValue instanceof CollisionEntry) ? (CollisionEntry) otherValue : null;
+
+        if (thisCollisionEntry != null && otherCollisionEntry != null) {
+            return thisCollisionEntry.addOrReplaceKeyValues(otherCollisionEntry.keyValues);
+        }
+
+        if (thisCollisionEntry != null) {
+            final DataEntry otherDataEntry = (DataEntry)otherValue;
+            return thisCollisionEntry.addOrReplaceKeyValue(otherDataEntry.keyValue, true);
+        }
+
+        if (otherCollisionEntry != null) {
+            final DataEntry thisDataEntry = (DataEntry)thisValue;
+            return otherCollisionEntry.addOrReplaceKeyValue(thisDataEntry.keyValue, false);  // !replaceIfPresent because "other" has precedence
+        }
+
+        // Both thisValue and otherValue are DataEntry
+        final DataEntry thisDataEntry = (DataEntry)thisValue;
+        final DataEntry otherDataEntry = (DataEntry)otherValue;
+
+        if (thisDataEntry.matches(otherDataEntry.keyValue)) {
+            return thisDataEntry.replaceKeyValue(otherDataEntry.keyValue, true);
+        }
+        return thisDataEntry.addKeyValue(otherDataEntry.keyValue);
+
+    }
 
 
 }
