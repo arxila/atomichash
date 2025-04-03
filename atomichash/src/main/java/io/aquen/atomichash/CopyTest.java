@@ -1,7 +1,9 @@
 package io.aquen.atomichash;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CopyTest {
@@ -14,13 +16,24 @@ public class CopyTest {
                 keys[i] = "Key " + i;
             }
 
-            Node node = new Node(0, 0L, new Node[0], 0L, new Entry[0]);
+            Node node = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
 
             for (int j = 0; j < 1000000; j++) {
                 final KeyValue keyValue0 = new KeyValue(keys[j], "Value zero");
                 final DataEntry dataEntry0 = new DataEntry(Hash.of(keyValue0.key), keyValue0);
                 node = node.put(dataEntry0, true);
             }
+
+            boolean allFound = true;
+            for (int j = 0; j < 1000000; j++) {
+                final String key = keys[j];
+                final Hash hash = Hash.of(key);
+                if (!node.contains(hash, key)) {
+                    allFound = false;
+                }
+            }
+            System.out.println(allFound);
+            System.out.println(node.size);
 
             long startTime0 = System.nanoTime();
 
@@ -35,7 +48,6 @@ public class CopyTest {
                     }
                 }
 
-
             }
 
             long endTime0 = System.nanoTime();
@@ -43,7 +55,7 @@ public class CopyTest {
 
 
 
-            final ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
+            final Map<String, String> map = Collections.synchronizedMap(new HashMap<>());
 
 
             for (int j = 0; j < 1000000; j++) {
