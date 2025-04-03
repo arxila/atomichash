@@ -29,7 +29,6 @@ final class Hash implements Serializable {
 
     private static final int[] SHIFTS = new int[] { 0, 6, 12, 18, 24, 30 };
     private static final int MASK = 0b111111;
-    static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 int positions into negative
 
     final int hash;
 
@@ -51,21 +50,6 @@ final class Hash implements Serializable {
 
     long mask(final int level) {
         return 1L << ((this.hash >>> SHIFTS[level]) & MASK);
-    }
-
-    /*
-     * Computes the position in a compact array by using a bitmap. This bitmap will contain 1's for
-     * every position of the possible 64 (max size of the values array) that can contain an element. The
-     * position in the array will correspond to the number of positions occupied before the index, i.e. the
-     * number of bits to the right of the bit corresponding to the index for this level.
-     *
-     * This algorithm benefits from the fact that Long.bitCount is an intrinsic candidate typically implemented
-     * as a single "population count" CPU instruction, and thus the computation will be O(1).
-     */
-    int pos(final int level, final long bitMap) {
-        final long indexMask = mask(level);
-        final int pos = Long.bitCount(bitMap & (indexMask - 1L));
-        return ((bitMap & indexMask) != 0L) ? pos : (pos ^ NEG_MASK); // positive if present, negative if absent
     }
 
 

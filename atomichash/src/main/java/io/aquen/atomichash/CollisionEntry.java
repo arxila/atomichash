@@ -40,6 +40,12 @@ final class CollisionEntry implements Entry, Serializable {
 
 
     @Override
+    public int size() {
+        return this.keyValues.length;
+    }
+
+
+    @Override
     public boolean containsKey(final Hash hash, final Object key) {
         if (this.hash.hash != hash.hash) {
             return false;
@@ -60,7 +66,7 @@ final class CollisionEntry implements Entry, Serializable {
                 return keyValue;
             }
         }
-        return null;
+        return KeyValue.NOT_FOUND;
     }
 
 

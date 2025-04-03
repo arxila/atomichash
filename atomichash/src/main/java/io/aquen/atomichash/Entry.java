@@ -25,5 +25,6 @@ interface Entry {
     KeyValue get(final Object key);
     Entry set(final KeyValue keyValue);
     CollisionEntry add(final KeyValue keyValue);
+    int size();
 
 }

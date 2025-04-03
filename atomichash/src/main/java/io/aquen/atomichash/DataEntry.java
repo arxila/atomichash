@@ -43,6 +43,12 @@ final class DataEntry implements Entry, Serializable {
 
 
     @Override
+    public int size() {
+        return 1;
+    }
+
+
+    @Override
     public boolean containsKey(final Hash hash, final Object key) {
         return this.hash.hash == hash.hash && eq(this.keyValue.key, key);
     }
@@ -50,7 +56,7 @@ final class DataEntry implements Entry, Serializable {
 
     @Override
     public KeyValue get(final Object key) {
-        return eq(this.keyValue.key, key) ? this.keyValue : null;
+        return eq(this.keyValue.key, key) ? this.keyValue : KeyValue.NOT_FOUND;
     }
 
 

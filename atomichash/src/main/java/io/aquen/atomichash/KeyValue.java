@@ -25,6 +25,8 @@ final class KeyValue implements Serializable {
 
     private static final long serialVersionUID = -8350047565445169270L;
 
+    static final KeyValue NOT_FOUND = new KeyValue(null, null); // Checked for reference equality
+
     final Object key;
     final Object value;
 

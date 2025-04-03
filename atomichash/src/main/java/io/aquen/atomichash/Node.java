@@ -26,22 +26,25 @@ final class Node implements Serializable {
 
     private static final long serialVersionUID = 5892440116260222326L;
 
+    private static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 int positions into negative
     private static final Node[] EMPTY_NODES = new Node[0];
     private static final Entry[] EMPTY_ENTRIES = new Entry[0];
 
     final int level;
-    final long nodeBitMap;
+    final int size;
+    final long nodesBitMap;
     final Node[] nodes;
-    final long entryBitMap;
+    final long entriesBitMap;
     final Entry[] entries;
 
 
-    Node(final int level, final long nodeBitMap, final Node[] nodes, final long entryBitMap, final Entry[] entries) {
+    Node(final int level, final int size, final long nodesBitMap, final Node[] nodes, final long entriesBitMap, final Entry[] entries) {
         super();
         this.level = level;
-        this.nodeBitMap = nodeBitMap;
+        this.size = size;
+        this.nodesBitMap = nodesBitMap;
         this.nodes = nodes;
-        this.entryBitMap = entryBitMap;
+        this.entriesBitMap = entriesBitMap;
         this.entries = entries;
     }
 
@@ -51,6 +54,7 @@ final class Node implements Serializable {
         super();
 
         this.level = level;
+        this.size = 2;
 
         final long mask0 = dataEntry0.hash.mask(this.level);
         final long mask1 = dataEntry1.hash.mask(this.level);
@@ -60,9 +64,10 @@ final class Node implements Serializable {
             final int index0 = dataEntry0.hash.index(this.level);
             final int index1 = dataEntry1.hash.index(this.level);
 
-            this.nodeBitMap = 0L;
+            this.nodesBitMap = 0L;
             this.nodes = EMPTY_NODES;
-            this.entryBitMap = mask0 | mask1;
+
+            this.entriesBitMap = (mask0 | mask1);
             this.entries = (index0 < index1) ? new Entry[] { dataEntry0, dataEntry1 } : new Entry[] { dataEntry1, dataEntry0 };
 
         } else {
@@ -70,17 +75,19 @@ final class Node implements Serializable {
             if (this.level == Hash.MAX_LEVEL) {
                 // We have no more levels, so we need a CollisionEntry
 
-                this.nodeBitMap = 0L;
+                this.nodesBitMap = 0L;
                 this.nodes = EMPTY_NODES;
-                this.entryBitMap = mask0;
+
+                this.entriesBitMap = mask0;
                 this.entries = new Entry[] { dataEntry0.add(dataEntry1.keyValue) };
 
             } else {
                 // We need an additional level to further differentiate entries
 
-                this.nodeBitMap = mask0;
+                this.nodesBitMap = mask0;
                 this.nodes = new Node[]{ new Node(this.level + 1, dataEntry0, dataEntry1) };
-                this.entryBitMap = 0L;
+
+                this.entriesBitMap = 0L;
                 this.entries = EMPTY_ENTRIES;
 
             }
@@ -97,25 +104,49 @@ final class Node implements Serializable {
     //  4. 
 
 
-    boolean contains(final Hash hash) {
-        // TODO Wrong! It only checks the current level
-        return hash.pos(this.level, this.nodeBitMap) >= 0;
+    /*
+     * Computes the position in a compact array by using a bitmap. This bitmap will contain 1's for
+     * every position of the possible 64 (max size of the values array) that can contain an element. The
+     * position in the array will correspond to the number of positions occupied before the index, i.e. the
+     * number of bits to the right of the bit corresponding to the index for this level.
+     *
+     * This algorithm benefits from the fact that Long.bitCount is an intrinsic candidate typically implemented
+     * as a single "population count" CPU instruction, and thus the computation will be O(1).
+     */
+    static int pos(final long mask, final long bitMap) {
+        final int pos = Long.bitCount(bitMap & (mask - 1L));
+        return ((bitMap & mask) != 0L) ? pos : (pos ^ NEG_MASK); // positive if present, negative if absent
     }
 
 
-    KeyValue get(final Hash hash, final Object key) {
-        Node currentNode = this;
-        int level = 0;
-        long bitMap, hashMask = 0L;
+    boolean contains(final Hash hash, final Object key) {
+        long bitMap, mask;
+        Node node = this;
         while (true) {
-            level = currentNode.level;
-            hashMask = hash.mask(level);
-            if (((bitMap = currentNode.nodeBitMap) & hashMask) != 0) {
-                currentNode = currentNode.nodes[hash.pos(level, bitMap)];
-            } else if (((bitMap = currentNode.entryBitMap) & hashMask) != 0) {
-                return currentNode.entries[hash.pos(level, bitMap)].get(key);
+            mask = hash.mask(node.level);
+            if (((bitMap = node.nodesBitMap) & mask) != 0) {
+                node = node.nodes[pos(mask, bitMap)];
+            } else if (((bitMap = node.entriesBitMap) & mask) != 0) {
+                return node.entries[pos(mask, bitMap)].containsKey(hash, key);
             } else {
-                return null; // Not found
+                return false;
+            }
+        }
+    }
+
+
+    // May return KeyValue.NOT_FOUND if not found (so that it can be differentiated from a null value)
+    KeyValue get(final Hash hash, final Object key) {
+        long bitMap, mask;
+        Node node = this;
+        while (true) {
+            mask = hash.mask(node.level);
+            if (((bitMap = node.nodesBitMap) & mask) != 0) {
+                node = node.nodes[pos(mask, bitMap)];
+            } else if (((bitMap = node.entriesBitMap) & mask) != 0) {
+                return node.entries[pos(mask, bitMap)].get(key);
+            } else {
+                return KeyValue.NOT_FOUND;
             }
         }
     }
@@ -125,21 +156,22 @@ final class Node implements Serializable {
     public Node put(final DataEntry dataEntry, final boolean replaceIfPresent) {
 
         final Hash hash = dataEntry.hash;
-        final int nodePos = hash.pos(this.level, this.nodeBitMap);
-        final int entryPos = hash.pos(this.level, this.entryBitMap);
+        final long mask = hash.mask(this.level);
+        final int nodePos = pos(mask, this.nodesBitMap);
+        final int entryPos = pos(mask, this.entriesBitMap);
 
         if (nodePos < 0 && entryPos < 0) {
             // There was nothing at the selected position: an entry will be created
 
-            final int newEntryPos = (entryPos ^ Hash.NEG_MASK);
+            final int newEntryPos = (entryPos ^ NEG_MASK);
 
-            final long newEntryBitMap = this.entryBitMap | hash.mask(this.level);
+            final long newEntriesBitMap = this.entriesBitMap | mask;
             final Entry[] newEntries = new Entry[this.entries.length + 1];
             System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
             newEntries[newEntryPos] = dataEntry;
             System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
 
-            return new Node(this.level, this.nodeBitMap, this.nodes, newEntryBitMap, newEntries);
+            return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
 
         }
 
@@ -153,10 +185,10 @@ final class Node implements Serializable {
                 return this;
             }
 
-            final Node[] newNodes = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
-            newNodes[nodePos] = newNode;
+            final Node[] newNodeValues = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
+            newNodeValues[nodePos] = newNode;
 
-            return new Node(this.level, this.nodeBitMap, newNodes, this.entryBitMap, this.entries);
+            return new Node(this.level, this.size + (newNode.size - oldNode.size), this.nodesBitMap, newNodeValues, this.entriesBitMap, this.entries);
 
         }
 
@@ -178,7 +210,7 @@ final class Node implements Serializable {
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
             newEntries[entryPos] = newEntry;
 
-            return new Node(this.level, this.nodeBitMap, this.nodes, this.entryBitMap, newEntries);
+            return new Node(this.level, this.size, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
 
         }
 
@@ -190,17 +222,16 @@ final class Node implements Serializable {
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
             newEntries[entryPos] = newEntry;
 
-            return new Node(this.level, this.nodeBitMap, this.nodes, this.entryBitMap, newEntries);
+            return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
 
         }
 
         // A new level will be created, a node will replace the existing entry
         final Node newNode = new Node(this.level + 1, (DataEntry)oldEntry, dataEntry);
-        final int newNodePos = (nodePos ^ Hash.NEG_MASK);
+        final int newNodePos = (nodePos ^ NEG_MASK);
 
-        final long hashMask = hash.mask(this.level);
-        final long newNodeBitMap = this.nodeBitMap ^ hashMask;
-        final long newEntryBitMap = this.entryBitMap ^ hashMask;
+        final long newNodeBitMap = this.nodesBitMap ^ mask;
+        final long newEntryBitMap = this.entriesBitMap ^ mask;
 
         final Node[] newNodes = new Node[this.nodes.length + 1];
         System.arraycopy(this.nodes, 0, newNodes, 0, newNodePos);
@@ -211,7 +242,7 @@ final class Node implements Serializable {
         System.arraycopy(this.entries, 0, newEntries, 0, entryPos);
         System.arraycopy(this.entries, entryPos + 1, newEntries, entryPos, this.entries.length - entryPos - 1);
 
-        return new Node(this.level, newNodeBitMap, newNodes, newEntryBitMap, newEntries);
+        return new Node(this.level, this.size + 1,newNodeBitMap, newNodes, newEntryBitMap, newEntries);
 
     }
 
