@@ -71,25 +71,6 @@ final class CollisionEntry implements Entry, Serializable {
 
 
     @Override
-    public Entry set(final KeyValue keyValue) {
-        for (int i = 0; i < this.keyValues.length; i++) {
-            final KeyValue thisKeyValue = this.keyValues[i];
-            if (Objects.equals(thisKeyValue.key, keyValue.key)) {
-                // We have a match, so we will need to replace (if objects are truly different)
-                if (thisKeyValue.key == keyValue.key && thisKeyValue.value == keyValue.value) {
-                    return this;
-                }
-                final KeyValue[] newKeyValues = Arrays.copyOf(this.keyValues, this.keyValues.length, KeyValue[].class);
-                newKeyValues[i] = keyValue;
-                return new CollisionEntry(this.hash, newKeyValues);
-            }
-        }
-        // Should never happen as all calls should be protected by a previous call to containsKey()
-        throw new IllegalStateException("Setting a key that does not exist");
-    }
-
-
-    @Override
     public CollisionEntry add(final KeyValue keyValue) {
         final KeyValue[] newKeyValues = new KeyValue[this.keyValues.length + 1];
         System.arraycopy(this.keyValues, 0, newKeyValues, 0, this.keyValues.length);
@@ -98,18 +79,42 @@ final class CollisionEntry implements Entry, Serializable {
     }
 
 
-    CollisionEntry addOrReplaceKeyValues(final KeyValue[] keyValues) {
+    @Override
+    public Entry merge(final Entry other) {
+        // hash is guaranteed to match
 
-        final boolean[] processed = new boolean[keyValues.length];
+        if (other instanceof DataEntry) {
+
+            final DataEntry otherDataEntry = (DataEntry) other;
+            final KeyValue otherKeyValue = otherDataEntry.keyValue;
+            for (int i = 0; i < this.keyValues.length; i++) {
+                final KeyValue thisKeyValue = this.keyValues[i];
+                if (Objects.equals(thisKeyValue.key, otherKeyValue.key)) {
+                    if (thisKeyValue.key == otherKeyValue.key && thisKeyValue.value == otherKeyValue.value) {
+                        return this;
+                    }
+                    final KeyValue[] newKeyValues = Arrays.copyOf(this.keyValues, this.keyValues.length, KeyValue[].class);
+                    newKeyValues[i] = otherKeyValue;
+                    return new CollisionEntry(this.hash, newKeyValues);
+                }
+            }
+            return add(otherKeyValue);
+
+        }
+
+        final CollisionEntry otherCollisionEntry = (CollisionEntry) other;
+        final KeyValue[] otherKeyValues = otherCollisionEntry.keyValues;
+
+        final boolean[] processed = new boolean[otherKeyValues.length];
         Arrays.fill(processed, false);
         int toBeProcessed = processed.length;
 
         KeyValue[] newKeyValues = Arrays.copyOf(this.keyValues, this.keyValues.length, KeyValue[].class);
         for (int i = 0; i < this.keyValues.length && toBeProcessed > 0; i++) {
             for (int j = 0; j < processed.length && toBeProcessed > 0; j++) {
-                if (!processed[j] && Objects.equals(this.keyValues[i].key, keyValues[j].key)) {
+                if (!processed[j] && Objects.equals(this.keyValues[i].key, otherKeyValues[j].key)) {
                     // We have a match, so we will need to replace
-                    newKeyValues[i] = keyValues[j];
+                    newKeyValues[i] = otherKeyValues[j];
                     processed[j] = true;
                     toBeProcessed--;
                 }
@@ -119,7 +124,7 @@ final class CollisionEntry implements Entry, Serializable {
             newKeyValues = Arrays.copyOf(newKeyValues, newKeyValues.length + toBeProcessed, KeyValue[].class);
             for (int i = 0; i < processed.length; i++) {
                 if (!processed[i]) {
-                    newKeyValues[this.keyValues.length + i] = keyValues[i];
+                    newKeyValues[this.keyValues.length + i] = otherKeyValues[i];
                 }
             }
         }

@@ -61,17 +61,25 @@ final class DataEntry implements Entry, Serializable {
 
 
     @Override
-    public Entry set(final KeyValue keyValue) {
-        if (this.keyValue.key == keyValue.key && this.keyValue.value == keyValue.value) {
-            return this;
-        }
-        return new DataEntry(this.hash, keyValue);
+    public CollisionEntry add(final KeyValue keyValue) {
+        return new CollisionEntry(this.hash, new KeyValue[]{ this.keyValue, keyValue });
     }
 
 
     @Override
-    public CollisionEntry add(final KeyValue keyValue) {
-        return new CollisionEntry(this.hash, new KeyValue[]{ this.keyValue, keyValue });
+    public Entry merge(final Entry other) {
+        // hash is guaranteed to match
+        if (other instanceof DataEntry) {
+            final DataEntry otherDataEntry = (DataEntry) other;
+            if (containsKey(otherDataEntry.hash, otherDataEntry.keyValue.key)) {
+                return otherDataEntry;
+            }
+            return add(otherDataEntry.keyValue);
+        }
+        if (other.containsKey(this.hash, this.keyValue)) {
+            return other; // Entries in "other" will not be replaced as they are meant to be the new values
+        }
+        return other.add(this.keyValue);
     }
 
 

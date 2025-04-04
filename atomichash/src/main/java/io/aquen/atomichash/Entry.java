@@ -23,8 +23,8 @@ interface Entry {
 
     boolean containsKey(final Hash hash, final Object key);
     KeyValue get(final Object key);
-    Entry set(final KeyValue keyValue);
     CollisionEntry add(final KeyValue keyValue);
     int size();
+    Entry merge(final Entry entry);
 
 }
