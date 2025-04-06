@@ -29,52 +29,87 @@ final class Util implements Serializable {
     private static final DataEntryHashComparator COMPARATOR = new DataEntryHashComparator();
 
 
-//    public static Node createNode(final KeyValue[] keyValues) {
-//
-//        final DataEntry[] dataEntries = new DataEntry[keyValues.length];
-//        for (int i = 0; i < keyValues.length; i++) {
-//            dataEntries[i] = new DataEntry(Hash.of(keyValues[i].key), keyValues[i]);
-//        }
-//        // Sort the DataEntry objects by hash
-//        Arrays.sort(dataEntries, COMPARATOR);
-//
-//        // Transform the sorted list into a new list of DataEntry or MultiDataEntry objects
-//        final List<Object> processedEntries = new ArrayList<Object>(dataEntries.length);
-//        Object previous = null;
-//        Hash previousHash = null;
-//
-//        boolean process;
-//        for (DataEntry current : dataEntries) {
-//
-//            process = true;
-//
-//            if (previousHash != null && previousHash.equals(current.hash)) {
-//                if (previous instanceof DataEntry) {
-//                    final DataEntry previousDataEntry = (DataEntry) previous;
-//                    if (previousDataEntry.matches(current.keyValue.key)) {
-//                        previous = previousDataEntry.replaceKeyValue(current.keyValue, true);
-//                    } else {
-//                        previous = previousDataEntry.addKeyValue(current.keyValue);
-//                    }
-//                } else if (previous instanceof CollisionEntry) {
-//                    previous = ((CollisionEntry) previous).addOrReplaceKeyValue(current.keyValue, true);
-//                }
-//                processedEntries.set(processedEntries.size() - 1, previous); // Replace the last element
-//                process = false;
-//            }
-//
-//            if (process) {
-//                processedEntries.add(current);
-//                previous = current;
-//                previousHash = current.hash;
-//            }
-//
-//        }
-//
-//        // At this point processedEntries contains all new entries ordered and grouped into collisions if needed
-//        return null;
-//
-//    }
+    public static Node createNode(final KeyValue[] keyValues) {
+
+        final DataEntry[] dataEntries = new DataEntry[keyValues.length];
+        for (int i = 0; i < keyValues.length; i++) {
+            dataEntries[i] = new DataEntry(Hash.of(keyValues[i].key), keyValues[i]);
+        }
+        // Sort the DataEntry objects by hash
+        Arrays.sort(dataEntries, COMPARATOR);
+
+        // Transform the sorted list into a new list of DataEntry or MultiDataEntry objects
+        final List<Entry> processedEntries = new ArrayList<Entry>(dataEntries.length);
+        Entry previous = null;
+        Hash previousHash = null;
+
+        for (DataEntry current : dataEntries) {
+
+            if (previousHash != null && previousHash.equals(current.hash)) {
+                previous = previous.merge(current);
+                processedEntries.set(processedEntries.size() - 1, previous); // Replace the last element
+            } else {
+                processedEntries.add(current);
+                previous = current;
+                previousHash = current.hash;
+            }
+
+        }
+
+        // At this point processedEntries contains all new entries ordered and grouped into collisions if needed
+
+        return null;
+
+    }
+
+
+    private List<Object> valuesForLevel(final int level, final List<DataEntry> entries) {
+        int previousIndex = -1;
+        final List<Object> valuesForLevel = new ArrayList<>();
+        final List<DataEntry> entryGroup = new ArrayList<>();
+        for (final DataEntry entry : entries) {
+            final int entryIndex = entry.hash.index(level);
+            if (entryIndex == previousIndex) {
+                entryGroup.add(entry);
+                continue;
+            }
+            if (!entryGroup.isEmpty()) {
+                processEntryGroup(level, entryGroup, valuesForLevel);
+            }
+            entryGroup.clear();
+            entryGroup.add(entry);
+            previousIndex = entryIndex;
+        }
+        if (!entryGroup.isEmpty()) {
+            processEntryGroup(level, entryGroup, valuesForLevel);
+        }
+        return valuesForLevel;
+    }
+
+
+    private void processEntryGroup(final int level, final List<DataEntry> entryGroup, final List<Object> valuesForLevel) {
+        if (entryGroup.size() == 1) {
+            valuesForLevel.add(entryGroup.get(0));
+        } else {
+            if (level == Hash.MAX_LEVEL) {
+                Entry previous = null;
+                Hash previousHash = null;
+                for (final DataEntry entryInGroup : entryGroup) {
+                    if (previousHash != null && previousHash.equals(entryInGroup.hash)) {
+                        previous = previous.merge(entryInGroup);
+                        valuesForLevel.set(valuesForLevel.size() - 1, previous); // Replace the last element
+                    } else {
+                        valuesForLevel.add(entryInGroup);
+                        previous = entryInGroup;
+                        previousHash = entryInGroup.hash;
+                    }
+                }
+            } else {
+                // TODO This should not add a List<Object> but a node created for it.
+                valuesForLevel.add(valuesForLevel(level + 1, entryGroup));
+            }
+        }
+    }
 
 
 
