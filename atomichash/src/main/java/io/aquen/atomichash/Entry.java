@@ -20,9 +20,11 @@
 package io.aquen.atomichash;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
-final class Entry implements Serializable {
+final class Entry implements Map.Entry<Object,Object>, Serializable {
 
     private static final long serialVersionUID = -5401891463106165174L;
 
@@ -52,7 +54,7 @@ final class Entry implements Serializable {
     }
 
 
-    public boolean containsKey(final int hash, final Object key) {
+    boolean containsKey(final int hash, final Object key) {
         if (this.collisions == null) {
             return this.hash == hash && eq(this.key, key);
         }
@@ -69,7 +71,7 @@ final class Entry implements Serializable {
 
 
 
-    public Object get(final Object key) {
+    Object get(final Object key) {
         if (this.collisions == null) {
             return eq(this.key, key) ? this.value : NOT_FOUND;
         }
@@ -83,7 +85,7 @@ final class Entry implements Serializable {
     }
 
 
-    public Entry add(final Entry entry) {
+    Entry add(final Entry entry) {
         if (this.collisions == null) {
             return new Entry(this.hash, new Entry[]{this, entry});
         }
@@ -124,5 +126,31 @@ final class Entry implements Serializable {
         return o1 == null ? o2 == null : o1.equals(o2);
     }
 
+
+    @Override
+    public Object getKey() {
+        return this.key;
+    }
+
+    @Override
+    public Object getValue() {
+        return this.value;
+    }
+
+    @Override
+    public Object setValue(Object value) {
+        throw new UnsupportedOperationException("Cannot set value for immutable map entry");
+    }
+
+
+    void addEntries(final List<Entry> entriesList) {
+        if (this.collisions == null) {
+            entriesList.add(this);
+        } else {
+            for (final Entry collision : this.collisions) {
+                collision.addEntries(entriesList);
+            }
+        }
+    }
 
 }

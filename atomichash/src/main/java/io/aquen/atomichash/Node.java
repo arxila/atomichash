@@ -21,6 +21,7 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 
 final class Node implements Serializable {
 
@@ -348,6 +349,20 @@ final class Node implements Serializable {
 
         return new Node(this.level, this.size - 1, newNodeBitMap, newNodes, newEntryBitMap, newEntries);
 
+    }
+
+
+    void addEntries(final List<Entry> entriesList) {
+        if (this.entriesBitMap != 0L) {
+            for (final Entry entry : this.entries) {
+                entry.addEntries(entriesList);
+            }
+        }
+        if (this.nodesBitMap != 0L) {
+            for (final Node node : this.nodes) {
+                node.addEntries(entriesList);
+            }
+        }
     }
 
 }
