@@ -18,22 +18,96 @@ public class CopyTest {
 
             Node node = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
 
+
             for (int j = 0; j < 1000000; j++) {
-                final KeyValue keyValue0 = new KeyValue(keys[j], "Value zero");
-                final DataEntry dataEntry0 = new DataEntry(Hash.of(keyValue0.key), keyValue0);
-                node = node.put(dataEntry0, true);
+                node = node.put(keys[j], "Value zero");
             }
+
+            node = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
+
+
+            long startTimeCreat0 = System.nanoTime();
+
+            for (int j = 0; j < 1000000; j++) {
+                node = node.put(keys[j], "Value zero");
+            }
+
+            long endTimeCreat0 = System.nanoTime();
+            System.out.println("Execution time adding 1000000 entries to an empty node with put:                       " + (endTimeCreat0 - startTimeCreat0) + " nanoseconds. Size: " + node.size);
+
+
+            final KeyValue[] keyValues = new KeyValue[50];
+            for (int j = 0; j < 50; j++) {
+                keyValues[j] = new KeyValue(keys[j], "Value one");
+            }
+            long startTimeCreat11 = System.nanoTime();
+            Node nodePutAll = Util.createNode(keyValues);
+            long endTimeCreat11 = System.nanoTime();
+
+            long startTimeCreat12 = System.nanoTime();
+            Node nodePutAll2 = node.putAll(nodePutAll);
+            long endTimeCreat12 = System.nanoTime();
+
+            System.out.println("Execution time changing the value of 1000000 entries by createNode and then putAll:    " + ((endTimeCreat11 - startTimeCreat11) + (endTimeCreat12 - startTimeCreat12)) + " nanoseconds. Size: " + nodePutAll2.size + " - Time 1: " + (endTimeCreat11 - startTimeCreat11) + " Time 2: " + (endTimeCreat12 - startTimeCreat12));
+
+            long startTimeCreat2 = System.nanoTime();
+            Node nodePutAll3 = node;
+            for (int j = 0; j < 50; j++) {
+                nodePutAll3 = nodePutAll3.put(keyValues[j].key, keyValues[j].value);
+            }
+
+            long endTimeCreat2 = System.nanoTime();
+            System.out.println("Execution time changing the value of 1000000 entries by executing put on each one:     " + (endTimeCreat2 - startTimeCreat2) + " nanoseconds. Size: " + nodePutAll3.size);
+
+
+
+
+
+
+            Node nodeOne = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
+            for (int j = 0; j < 500000; j++) {
+                nodeOne = nodeOne.put(keys[j], "Value one");
+            }
+
+            int counterValue0 = 0;
+            int counterValue1 = 0;
+            for (int j = 0; j < 1000000; j++) {
+                final Object value = node.get(keys[j]);
+                if (value != null && value.equals("Value zero")) {
+                    counterValue0++;
+                } else if (value != null && value.equals("Value one")) {
+                    counterValue1++;
+                } else {
+                    System.out.println("Error");
+                }
+            }
+            System.out.println("CounterValue0: " + counterValue0 + " CounterValue1: " + counterValue1);
+
+            node = node.putAll(nodeOne);
+
+            counterValue0 = 0;
+            counterValue1 = 0;
+            for (int j = 0; j < 1000000; j++) {
+                final Object value = node.get(keys[j]);
+                if (value != null && value.equals("Value zero")) {
+                    counterValue0++;
+                } else if (value != null && value.equals("Value one")) {
+                    counterValue1++;
+                } else {
+                    System.out.println("Error");
+                }
+            }
+            System.out.println("CounterValue0: " + counterValue0 + " CounterValue1: " + counterValue1);
+
 
             boolean allFound = true;
             for (int j = 0; j < 1000000; j++) {
-                final String key = keys[j];
-                final Hash hash = Hash.of(key);
-                if (!node.contains(hash, key)) {
+                if (!node.contains(keys[j])) {
                     allFound = false;
                 }
             }
-            System.out.println(allFound);
-            System.out.println(node.size);
+            System.out.println("All found: " + allFound);
+            System.out.println("Size: " + node.size);
 
             long startTime0 = System.nanoTime();
 
@@ -41,9 +115,7 @@ public class CopyTest {
             for (int i = 0; i < 100; i++) {
 
                 for (int j = 0; j < 1000000; j++) {
-                    final String key = keys[j];
-                    final Hash hash = Hash.of(key);
-                    if (node.get(hash, key) != null) {
+                    if (node.get(keys[j]) != null) {
                         counter0++;
                     }
                 }
@@ -78,8 +150,27 @@ public class CopyTest {
             long endTime1 = System.nanoTime();
             System.out.println("Execution time HashMap:    " + (endTime1 - startTime1) + " nanoseconds");
 
+
+            long startTime2 = System.nanoTime();
+
+            int counter2 = 0;
+            for (int i = 0; i < 100; i++) {
+
+                for (int j = 0; j < 1000000; j++) {
+                    if (node.get(keys[j]) != null) {
+                        counter2++;
+                    }
+                }
+
+            }
+
+            long endTime2 = System.nanoTime();
+            System.out.println("Execution time AtomicHash: " + (endTime2 - startTime2) + " nanoseconds");
+
+
             System.out.println(counter0);
             System.out.println(counter1);
+            System.out.println(counter2);
 
         }
 

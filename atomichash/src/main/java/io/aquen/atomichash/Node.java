@@ -56,13 +56,13 @@ final class Node implements Serializable {
         this.level = level;
         this.size = 2;
 
-        final long mask0 = dataEntry0.hash.mask(this.level);
-        final long mask1 = dataEntry1.hash.mask(this.level);
+        final long mask0 = Hash.mask(dataEntry0.hash, this.level);
+        final long mask1 = Hash.mask(dataEntry1.hash, this.level);
 
         if (mask0 != mask1) {
 
-            final int index0 = dataEntry0.hash.index(this.level);
-            final int index1 = dataEntry1.hash.index(this.level);
+            final int index0 = Hash.index(dataEntry0.hash, this.level);
+            final int index1 = Hash.index(dataEntry1.hash, this.level);
 
             this.nodesBitMap = 0L;
             this.nodes = EMPTY_NODES;
@@ -79,7 +79,7 @@ final class Node implements Serializable {
                 this.nodes = EMPTY_NODES;
 
                 this.entriesBitMap = mask0;
-                this.entries = new Entry[] { dataEntry0.add(dataEntry1.keyValue) };
+                this.entries = new Entry[] { dataEntry0.add(dataEntry1) };
 
             } else {
                 // We need an additional level to further differentiate entries
@@ -119,11 +119,12 @@ final class Node implements Serializable {
     }
 
 
-    boolean contains(final Hash hash, final Object key) {
+    boolean contains(final Object key) {
+        final int hash = Hash.hash(key);
         long bitMap, mask;
         Node node = this;
         while (true) {
-            mask = hash.mask(node.level);
+            mask = Hash.mask(hash, node.level);
             if (((bitMap = node.nodesBitMap) & mask) != 0) {
                 node = node.nodes[pos(mask, bitMap)];
             } else if (((bitMap = node.entriesBitMap) & mask) != 0) {
@@ -135,12 +136,13 @@ final class Node implements Serializable {
     }
 
 
-    // May return KeyValue.NOT_FOUND if not found (so that it can be differentiated from a null value)
-    KeyValue get(final Hash hash, final Object key) {
+    // May return DataEntry.NOT_FOUND if not found (so that it can be differentiated from a null value)
+    Object get(final Object key) {
+        final int hash = Hash.hash(key);
         long bitMap, mask;
         Node node = this;
         while (true) {
-            mask = hash.mask(node.level);
+            mask = Hash.mask(hash, node.level);
             if (((bitMap = node.nodesBitMap) & mask) != 0) {
                 node = node.nodes[pos(mask, bitMap)];
             } else if (((bitMap = node.entriesBitMap) & mask) != 0) {
@@ -153,10 +155,15 @@ final class Node implements Serializable {
 
 
 
+    public Node put(final Object key, final Object value) {
+        return put(new DataEntry(key, value), true);
+    }
+
+
     public Node put(final DataEntry dataEntry, final boolean replaceIfPresent) {
 
-        final Hash hash = dataEntry.hash;
-        final long mask = hash.mask(this.level);
+        final int hash = dataEntry.hash;
+        final long mask = Hash.mask(hash, this.level);
         final int nodePos = pos(mask, this.nodesBitMap);
         final int entryPos = pos(mask, this.entriesBitMap);
 
@@ -195,7 +202,7 @@ final class Node implements Serializable {
         // There was an entry at the selected position: either replace (if keys match) or create level / collision
         final Entry oldEntry = this.entries[entryPos];
 
-        if (oldEntry.containsKey(hash, dataEntry.keyValue.key)) {
+        if (oldEntry.containsKey(hash, dataEntry.key)) {
             // There is a match (key exists): entry needs to be replaced unless flagged not to do so
 
             if (!replaceIfPresent) {
@@ -212,7 +219,7 @@ final class Node implements Serializable {
         if (this.level == Hash.MAX_LEVEL) {
             // No new levels can be created, so a CollisionEntry will be created or expanded
 
-            final CollisionEntry newEntry = oldEntry.add(dataEntry.keyValue);
+            final CollisionEntry newEntry = oldEntry.add(dataEntry);
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
             newEntries[entryPos] = newEntry;
@@ -315,7 +322,7 @@ final class Node implements Serializable {
                 final DataEntry thisDataEntry = (DataEntry)thisEntry;
                 final DataEntry otherDataEntry = (DataEntry)otherEntry;
 
-                if (thisEntry.containsKey(otherDataEntry.hash, otherDataEntry.keyValue.key)) {
+                if (thisEntry.containsKey(otherDataEntry.hash, otherDataEntry.key)) {
                     newEntries[newEntriesIndex++] = otherEntry;
                     continue;
                 }

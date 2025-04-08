@@ -25,20 +25,18 @@ final class DataEntry implements Entry, Serializable {
 
     private static final long serialVersionUID = -5401891463106165174L;
 
-    final Hash hash;
-    final KeyValue keyValue;
+    static final Object NOT_FOUND = new Object(); // Always to be checked using reference equality
+
+    final int hash;
+    final Object key;
+    final Object value;
 
 
-    static DataEntry of(final Hash hash, final KeyValue keyValue) {
-        return new DataEntry(hash, keyValue);
-    }
-
-
-    // Should only be called from DataEntry or CollisionEntry
-    DataEntry(final Hash hash, final KeyValue keyValue) {
+    DataEntry(final Object key, final Object value) {
         super();
-        this.hash = hash;
-        this.keyValue = keyValue;
+        this.hash = Hash.hash(key);
+        this.key = key;
+        this.value = value;
     }
 
 
@@ -49,20 +47,20 @@ final class DataEntry implements Entry, Serializable {
 
 
     @Override
-    public boolean containsKey(final Hash hash, final Object key) {
-        return this.hash.hash == hash.hash && eq(this.keyValue.key, key);
+    public boolean containsKey(final int hash, final Object key) {
+        return this.hash == hash && eq(this.key, key);
     }
 
 
     @Override
-    public KeyValue get(final Object key) {
-        return eq(this.keyValue.key, key) ? this.keyValue : KeyValue.NOT_FOUND;
+    public Object get(final Object key) {
+        return eq(this.key, key) ? this.value : NOT_FOUND;
     }
 
 
     @Override
-    public CollisionEntry add(final KeyValue keyValue) {
-        return new CollisionEntry(this.hash, new KeyValue[]{ this.keyValue, keyValue });
+    public CollisionEntry add(final DataEntry entry) {
+        return new CollisionEntry(this.hash, new DataEntry[]{ this, entry });
     }
 
 
@@ -70,16 +68,16 @@ final class DataEntry implements Entry, Serializable {
     public Entry merge(final Entry other) {
         // hash is guaranteed to match
         if (other instanceof DataEntry) {
-            final DataEntry otherDataEntry = (DataEntry) other;
-            if (containsKey(otherDataEntry.hash, otherDataEntry.keyValue.key)) {
-                return otherDataEntry;
+            final DataEntry otherEntry = (DataEntry) other;
+            if (containsKey(otherEntry.hash, otherEntry.key)) {
+                return otherEntry;
             }
-            return add(otherDataEntry.keyValue);
+            return add(otherEntry);
         }
-        if (other.containsKey(this.hash, this.keyValue)) {
+        if (other.containsKey(this.hash, this.key)) {
             return other; // Entries in "other" will not be replaced as they are meant to be the new values
         }
-        return other.add(this.keyValue);
+        return other.add(this);
     }
 
 

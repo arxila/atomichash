@@ -21,9 +21,9 @@ package io.aquen.atomichash;
 
 interface Entry {
 
-    boolean containsKey(final Hash hash, final Object key);
-    KeyValue get(final Object key);
-    CollisionEntry add(final KeyValue keyValue);
+    boolean containsKey(final int hash, final Object key);
+    Object get(final Object key);
+    CollisionEntry add(final DataEntry entry);
     int size();
     Entry merge(final Entry entry);
 

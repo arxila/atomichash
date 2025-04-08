@@ -19,37 +19,20 @@
  */
 package io.aquen.atomichash;
 
-import java.io.Serializable;
-
-final class Hash implements Serializable {
-
-    private static final long serialVersionUID = 5018497257745964899L;
+final class Hash {
 
     public static final int MAX_LEVEL = 5;
 
     private static final int[] SHIFTS = new int[] { 0, 6, 12, 18, 24, 30 };
     private static final int MASK = 0b111111;
 
-    final int hash;
 
-
-    public static Hash of(final Object object) {
-        return new Hash(hash(object));
+    static int index(final int hash, final int level) {
+        return (hash >>> SHIFTS[level]) & MASK;
     }
 
-
-    private Hash(final int hash) {
-        super();
-        this.hash = hash;
-    }
-
-
-    int index(final int level) {
-        return (this.hash >>> SHIFTS[level]) & MASK;
-    }
-
-    long mask(final int level) {
-        return 1L << ((this.hash >>> SHIFTS[level]) & MASK);
+    static long mask(final int hash, final int level) {
+        return 1L << ((hash >>> SHIFTS[level]) & MASK);
     }
 
 
@@ -70,57 +53,8 @@ final class Hash implements Serializable {
     }
 
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Hash)) {
-            return false;
-        }
-        return this.hash == ((Hash)o).hash;
-    }
-
-
-    /*
-     * Will sort hashes in the same way that entries would be returned by an iterator (tree inorder). The aim of this
-     * sorting algorithm is to be used when performing multiple insertions, allowing the easy segmenting of
-     * the array of new entries so that each segment is easily sent to its corresponding subtree.
-     *
-     * The use of this comparison algorithm should be restricted to sorting during multi-insertion. Other uses could
-     * lead to issues because the algorithm is NOT compatible with the natural order of objects, i.e., even if two Hash
-     * objects that are .equals() are guaranteed to return .compareTo() == 0, the contrary cannot be guaranteed
-     * because the comparison algorithm is only based on the hash value and not the key itself.
-     *
-     * Note also that the hash being used is the one returned by the hash() method and not the key's .hashCode(),
-     * which is specific to this class and thus may not be compatible with other sorting mechanisms present in the
-     * key objects themselves (such as e.g. the key objects implementing Comparable).
-     */
-    static int hashCompare(final Hash o1, final Hash o2) {
-        if (o1.hash == o2.hash) {
-            return 0;
-        }
-        final int index0 = Integer.compare(o1.index(0), o2.index(0));
-        if (index0 != 0) {
-            return index0;
-        }
-        final int index1 = Integer.compare(o1.index(1), o2.index(1));
-        if (index1 != 0) {
-            return index1;
-        }
-        final int index2 = Integer.compare(o1.index(2), o2.index(2));
-        if (index2 != 0) {
-            return index2;
-        }
-        final int index3 = Integer.compare(o1.index(3), o2.index(3));
-        if (index3 != 0) {
-            return index3;
-        }
-        final int index4 = Integer.compare(o1.index(4), o2.index(4));
-        if (index4 != 0) {
-            return index4;
-        }
-        return Integer.compare(o1.index(5), o2.index(5));
+    private Hash() {
+        super();
     }
 
 }
