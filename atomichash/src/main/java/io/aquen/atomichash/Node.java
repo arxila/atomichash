@@ -26,9 +26,14 @@ final class Node implements Serializable {
 
     private static final long serialVersionUID = 5892440116260222326L;
 
+    private static final int MAX_LEVEL = 5;
+    private static final int[] SHIFTS = new int[] { 0, 6, 12, 18, 24, 30 };
+    private static final int MASK = 0b111111;
     private static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 int positions into negative
+
     private static final Node[] EMPTY_NODES = new Node[0];
     private static final Entry[] EMPTY_ENTRIES = new Entry[0];
+    static final Node EMPTY_NODE = new Node();
 
     final int level;
     final int size;
@@ -39,7 +44,7 @@ final class Node implements Serializable {
 
 
 
-    Node() {
+    private Node() {
         super();
         this.level = 0;
         this.size = 0;
@@ -61,43 +66,43 @@ final class Node implements Serializable {
     }
 
 
-    private Node(final int level, final DataEntry dataEntry0, final DataEntry dataEntry1) {
+    private Node(final int level, final Entry entry0, final Entry entry1) {
 
         super();
 
         this.level = level;
         this.size = 2;
 
-        final long mask0 = Hash.mask(dataEntry0.hash, this.level);
-        final long mask1 = Hash.mask(dataEntry1.hash, this.level);
+        final long mask0 = mask(entry0.hash, this.level);
+        final long mask1 = mask(entry1.hash, this.level);
 
         if (mask0 != mask1) {
 
-            final int index0 = Hash.index(dataEntry0.hash, this.level);
-            final int index1 = Hash.index(dataEntry1.hash, this.level);
+            final int index0 = index(entry0.hash, this.level);
+            final int index1 = index(entry1.hash, this.level);
 
             this.nodesBitMap = 0L;
             this.nodes = EMPTY_NODES;
 
             this.entriesBitMap = (mask0 | mask1);
-            this.entries = (index0 < index1) ? new Entry[] { dataEntry0, dataEntry1 } : new Entry[] { dataEntry1, dataEntry0 };
+            this.entries = (index0 < index1) ? new Entry[] {entry0, entry1} : new Entry[] {entry1, entry0};
 
         } else {
             // We have an index match at this level, so we will need to (try) to create a new level
-            if (this.level == Hash.MAX_LEVEL) {
+            if (this.level == MAX_LEVEL) {
                 // We have no more levels, so we need a CollisionEntry
 
                 this.nodesBitMap = 0L;
                 this.nodes = EMPTY_NODES;
 
                 this.entriesBitMap = mask0;
-                this.entries = new Entry[] { dataEntry0.add(dataEntry1) };
+                this.entries = new Entry[] { entry0.add(entry1) };
 
             } else {
                 // We need an additional level to further differentiate entries
 
                 this.nodesBitMap = mask0;
-                this.nodes = new Node[]{ new Node(this.level + 1, dataEntry0, dataEntry1) };
+                this.nodes = new Node[]{ new Node(this.level + 1, entry0, entry1) };
 
                 this.entriesBitMap = 0L;
                 this.entries = EMPTY_ENTRIES;
@@ -106,14 +111,32 @@ final class Node implements Serializable {
         }
     }
 
-    // TODO There is still need for a constructor that takes a KeyValue[] as an argument. This will
-    //      be executed outside the critical path so it won't be as important that it's fast, but nevertheless
-    //      its performance should be cared for.
-    //
-    //  1. Create DataEntry for all keyvalues
-    //  2. Sort dataentries by means of the comparator
-    //  3. Create MultiDataEntry's where needed, remove key-duplicates
-    //  4. 
+
+    /*
+     * Many of the most used classes for keys have well-implemented hashCode() methods (String, Integer...) but
+     * it is important to cover the scenario of classes being used as keys that do not have a good implementation
+     * of hashCode() or have no implementation at all -- in which case their identity hashCode (based on memory
+     * address) will be used.
+     *
+     * We will mirror what the standard implementation of "hashCode()" in java.util.HashMap does to try to improve
+     * uniformity of hashes by performing a bitwise XOR of the 16 most significant bits on the 16 less significant,
+     * assuming that due to how memory assignment works in the JVM, in cases when the identity hash code is used,
+     * the 16 most significant ones will probably show a higher entropy.
+     */
+    static int hash(final Object object) {
+        int h;
+        return (object == null) ? 0 : (h = object.hashCode()) ^ (h >>> 16);
+    }
+
+
+    static int index(final int hash, final int level) {
+        return (hash >>> SHIFTS[level]) & MASK;
+    }
+
+
+    static long mask(final int hash, final int level) {
+        return 1L << ((hash >>> SHIFTS[level]) & MASK);
+    }
 
 
     /*
@@ -132,9 +155,9 @@ final class Node implements Serializable {
 
 
     boolean contains(final Object key) {
-        final int hash = Hash.hash(key);
+        final int hash = hash(key);
         Node node = this; int level = 0; long mask;
-        while(((mask = Hash.mask(hash, level++)) & node.nodesBitMap) != 0L) {
+        while(((mask = mask(hash, level++)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
@@ -146,28 +169,28 @@ final class Node implements Serializable {
 
     // May return DataEntry.NOT_FOUND if not found (so that it can be differentiated from a null value)
     Object get(final Object key) {
-        final int hash = Hash.hash(key);
+        final int hash = hash(key);
         Node node = this; int level = 0; long mask;
-        while(((mask = Hash.mask(hash, level++)) & node.nodesBitMap) != 0L) {
+        while(((mask = mask(hash, level++)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
             return node.entries[pos(mask, node.entriesBitMap)].get(key);
         }
-        return DataEntry.NOT_FOUND;
+        return Entry.NOT_FOUND;
     }
 
 
 
     Node put(final Object key, final Object value) {
-        return put(new DataEntry(key, value));
+        return put(new Entry(hash(key), key, value));
     }
 
 
-    Node put(final DataEntry dataEntry) {
+    Node put(final Entry entry) {
 
-        final int hash = dataEntry.hash;
-        final long mask = Hash.mask(hash, this.level);
+        final int hash = entry.hash;
+        final long mask = mask(hash, this.level);
         final int nodePos = pos(mask, this.nodesBitMap);
         final int entryPos = pos(mask, this.entriesBitMap);
 
@@ -179,7 +202,7 @@ final class Node implements Serializable {
             final long newEntriesBitMap = this.entriesBitMap | mask;
             final Entry[] newEntries = new Entry[this.entries.length + 1];
             System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
-            newEntries[newEntryPos] = dataEntry;
+            newEntries[newEntryPos] = entry;
             System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
 
             return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
@@ -190,7 +213,7 @@ final class Node implements Serializable {
             // There was a node at the selected position, therefore the put operation will be delegated
 
             final Node oldNode = this.nodes[nodePos];
-            final Node newNode = oldNode.put(dataEntry);
+            final Node newNode = oldNode.put(entry);
 
             final Node[] newNodeValues = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
             newNodeValues[nodePos] = newNode;
@@ -202,28 +225,28 @@ final class Node implements Serializable {
         // There was an entry at the selected position: either replace (if keys match) or create level / collision
         final Entry oldEntry = this.entries[entryPos];
 
-        if (oldEntry.containsKey(hash, dataEntry.key)) {
+        if (oldEntry.containsKey(hash, entry.key)) {
             // There is a match (key exists): entry needs to be replaced
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-            newEntries[entryPos] = dataEntry;
+            newEntries[entryPos] = entry;
 
             return new Node(this.level, this.size, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
 
         }
 
-        if (this.level == Hash.MAX_LEVEL) {
+        if (this.level == MAX_LEVEL) {
             // No new levels can be created, so a CollisionEntry will be created or expanded
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-            newEntries[entryPos] = oldEntry.add(dataEntry);
+            newEntries[entryPos] = oldEntry.add(entry);
 
             return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
 
         }
 
         // A new level will be created, a node will replace the existing entry
-        final Node newNode = new Node(this.level + 1, (DataEntry)oldEntry, dataEntry);
+        final Node newNode = new Node(this.level + 1, (Entry)oldEntry, entry);
         final int newNodePos = (nodePos ^ NEG_MASK);
 
         final long newNodeBitMap = this.nodesBitMap ^ mask;

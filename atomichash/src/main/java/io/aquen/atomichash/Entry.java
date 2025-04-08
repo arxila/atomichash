@@ -19,11 +19,91 @@
  */
 package io.aquen.atomichash;
 
-interface Entry {
+import java.io.Serializable;
+import java.util.Objects;
 
-    boolean containsKey(final int hash, final Object key);
-    Object get(final Object key);
-    CollisionEntry add(final DataEntry entry);
-    int size();
+final class Entry implements Serializable {
+
+    private static final long serialVersionUID = -5401891463106165174L;
+
+    static final Object NOT_FOUND = new Object(); // Always to be checked using reference equality
+
+    final int hash;
+    final Object key;
+    final Object value;
+    final Entry[] collisions;
+
+
+    Entry(final int hash, final Object key, final Object value) {
+        super();
+        this.hash = hash;
+        this.key = key;
+        this.value = value;
+        this.collisions = null;
+    }
+
+
+    private Entry(final int hash, final Entry[] collisions) {
+        super();
+        this.hash = hash;
+        this.key = null;
+        this.value = null;
+        this.collisions = collisions;
+    }
+
+
+    public boolean containsKey(final int hash, final Object key) {
+        if (this.collisions == null) {
+            return this.hash == hash && eq(this.key, key);
+        }
+        if (this.hash != hash) {
+            return false;
+        }
+        for (final Entry collision : this.collisions) {
+            if (Objects.equals(collision.key, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    public Object get(final Object key) {
+        if (this.collisions == null) {
+            return eq(this.key, key) ? this.value : NOT_FOUND;
+        }
+        for (final Entry collision : this.collisions) {
+            if (Objects.equals(collision.key, key)) {
+                return collision.value;
+            }
+        }
+        return NOT_FOUND;
+
+    }
+
+
+    public Entry add(final Entry entry) {
+        if (this.collisions == null) {
+            return new Entry(this.hash, new Entry[]{this, entry});
+        }
+        final Entry[] newCollisions = new Entry[this.collisions.length + 1];
+        System.arraycopy(this.collisions, 0, newCollisions, 0, this.collisions.length);
+        newCollisions[this.collisions.length] = entry;
+        return new Entry(this.hash, newCollisions);
+    }
+
+
+    /*
+     * Equivalent to Objects.equals(), but by being called only from
+     * this class we might benefit from runtime profile information on the
+     * type of o1. See java.util.AbstractMap#eq().
+     *
+     * Do not replace with Objects.equals() until JDK-8015417 is resolved.
+     */
+    private static boolean eq(final Object o1, final Object o2) {
+        return o1 == null ? o2 == null : o1.equals(o2);
+    }
+
 
 }

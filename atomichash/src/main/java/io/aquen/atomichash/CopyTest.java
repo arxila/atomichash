@@ -16,14 +16,14 @@ public class CopyTest {
                 keys[i] = "Key " + i;
             }
 
-            Node node = new Node();
+            Node node = Node.EMPTY_NODE;
 
 
             for (int j = 0; j < 1000000; j++) {
                 node = node.put(keys[j], "Value zero");
             }
 
-            node = new Node();
+            node = Node.EMPTY_NODE;
 
 
             long startTimeCreat0 = System.nanoTime();
