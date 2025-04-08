@@ -20,8 +20,8 @@
 package io.aquen.atomichash;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 final class Util implements Serializable {
@@ -31,65 +31,65 @@ final class Util implements Serializable {
 
     public static Node createNode(final KeyValue[] keyValues) {
 
-        final DataEntry[] dataEntries = new DataEntry[keyValues.length];
-        for (int i = 0; i < keyValues.length; i++) {
-            dataEntries[i] = new DataEntry(Hash.of(keyValues[i].key), keyValues[i]);
+        final List<DataEntry> dataEntries = new ArrayList<>(keyValues.length);
+        for (KeyValue keyValue : keyValues) {
+            dataEntries.add(new DataEntry(Hash.of(keyValue.key), keyValue));
         }
         // Sort the DataEntry objects by hash
-        Arrays.sort(dataEntries, COMPARATOR);
+        dataEntries.sort(COMPARATOR);
 
-        // Transform the sorted list into a new list of DataEntry or MultiDataEntry objects
-        final List<Entry> processedEntries = new ArrayList<Entry>(dataEntries.length);
-        Entry previous = null;
-        Hash previousHash = null;
-
-        for (DataEntry current : dataEntries) {
-
-            if (previousHash != null && previousHash.equals(current.hash)) {
-                previous = previous.merge(current);
-                processedEntries.set(processedEntries.size() - 1, previous); // Replace the last element
-            } else {
-                processedEntries.add(current);
-                previous = current;
-                previousHash = current.hash;
-            }
-
-        }
-
-        // At this point processedEntries contains all new entries ordered and grouped into collisions if needed
-
-        return null;
+        return nodeForLevel(0, dataEntries);
 
     }
 
 
-    private List<Object> valuesForLevel(final int level, final List<DataEntry> entries) {
-        int previousIndex = -1;
-        final List<Object> valuesForLevel = new ArrayList<>();
-        final List<DataEntry> entryGroup = new ArrayList<>();
+    private static Node nodeForLevel(final int level, final List<DataEntry> entries) {
+
+        final BitmapList<Node> newNodes = new BitmapList<>(Node.class, entries.size());
+        final BitmapList<Entry> newEntries = new BitmapList<>(Entry.class, entries.size());
+
+        long entryMask, groupMask = 0L;
+        final List<DataEntry> entryGroup = new ArrayList<>(entries.size() / 2);
+
         for (final DataEntry entry : entries) {
-            final int entryIndex = entry.hash.index(level);
-            if (entryIndex == previousIndex) {
+
+            entryMask = entry.hash.mask(level);
+            if (groupMask == entryMask) {
                 entryGroup.add(entry);
                 continue;
             }
             if (!entryGroup.isEmpty()) {
-                processEntryGroup(level, entryGroup, valuesForLevel);
+                processEntryGroup(level, groupMask, entryGroup, newNodes, newEntries);
             }
             entryGroup.clear();
             entryGroup.add(entry);
-            previousIndex = entryIndex;
+            groupMask = entryMask;
+
         }
+
         if (!entryGroup.isEmpty()) {
-            processEntryGroup(level, entryGroup, valuesForLevel);
+            processEntryGroup(level, groupMask, entryGroup, newNodes, newEntries);
         }
-        return valuesForLevel;
+
+        // Compute size based only on new existing nodes and entries
+        int newSize = 0;
+        for (final Node newNode : newNodes.values) {
+            newSize += newNode.size;
+        }
+        for (final Entry newEntry : newEntries.values) {
+            newSize += newEntry.size();
+        }
+
+        return new Node(level, newSize, newNodes.bitmap, newNodes.valuesToArray(), newEntries.bitmap, newEntries.valuesToArray());
+
     }
 
 
-    private void processEntryGroup(final int level, final List<DataEntry> entryGroup, final List<Object> valuesForLevel) {
+    private static void processEntryGroup(final int level, final long mask, final List<DataEntry> entryGroup,
+                                   final BitmapList<Node> nodes, final BitmapList<Entry> entries) {
         if (entryGroup.size() == 1) {
-            valuesForLevel.add(entryGroup.get(0));
+            entries.bitmap |= mask;
+            entries.values.add(entryGroup.get(0));
         } else {
             if (level == Hash.MAX_LEVEL) {
                 Entry previous = null;
@@ -97,18 +97,40 @@ final class Util implements Serializable {
                 for (final DataEntry entryInGroup : entryGroup) {
                     if (previousHash != null && previousHash.equals(entryInGroup.hash)) {
                         previous = previous.merge(entryInGroup);
-                        valuesForLevel.set(valuesForLevel.size() - 1, previous); // Replace the last element
+                        entries.values.set(entries.values.size() - 1, previous); // Replace the last element
                     } else {
-                        valuesForLevel.add(entryInGroup);
+                        entries.bitmap |= mask;
+                        entries.values.add(entryInGroup);
                         previous = entryInGroup;
                         previousHash = entryInGroup.hash;
                     }
                 }
             } else {
-                // TODO This should not add a List<Object> but a node created for it.
-                valuesForLevel.add(valuesForLevel(level + 1, entryGroup));
+                nodes.bitmap |= mask;
+                nodes.values.add(nodeForLevel(level + 1, entryGroup));
             }
         }
+    }
+
+
+
+    private static class BitmapList<T> {
+
+        private long bitmap;
+        private final Class<T> clazz;
+        private final List<T> values;
+
+        private BitmapList(final Class<T> clazz, final int initSize) {
+            super();
+            this.clazz = clazz;
+            this.values = new ArrayList<T>(initSize);
+        }
+
+        @SuppressWarnings("unchecked")
+        private T[] valuesToArray() {
+            return values.toArray((T[])Array.newInstance(this.clazz, this.values.size()));
+        }
+
     }
 
 
