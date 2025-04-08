@@ -156,8 +156,8 @@ final class Node implements Serializable {
 
     boolean contains(final Object key) {
         final int hash = hash(key);
-        Node node = this; int level = 0; long mask;
-        while(((mask = mask(hash, level++)) & node.nodesBitMap) != 0L) {
+        Node node = this; long mask;
+        while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
@@ -170,8 +170,8 @@ final class Node implements Serializable {
     // May return DataEntry.NOT_FOUND if not found (so that it can be differentiated from a null value)
     Object get(final Object key) {
         final int hash = hash(key);
-        Node node = this; int level = 0; long mask;
-        while(((mask = mask(hash, level++)) & node.nodesBitMap) != 0L) {
+        Node node = this; long mask;
+        while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
