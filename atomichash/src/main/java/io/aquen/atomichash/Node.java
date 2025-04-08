@@ -159,12 +159,12 @@ final class Node implements Serializable {
 
 
 
-    public Node put(final Object key, final Object value) {
-        return put(new DataEntry(key, value), true);
+    Node put(final Object key, final Object value) {
+        return put(new DataEntry(key, value));
     }
 
 
-    public Node put(final DataEntry dataEntry, final boolean replaceIfPresent) {
+    Node put(final DataEntry dataEntry) {
 
         final int hash = dataEntry.hash;
         final long mask = Hash.mask(hash, this.level);
@@ -190,11 +190,7 @@ final class Node implements Serializable {
             // There was a node at the selected position, therefore the put operation will be delegated
 
             final Node oldNode = this.nodes[nodePos];
-            final Node newNode = oldNode.put(dataEntry, replaceIfPresent);
-
-            if (oldNode == newNode) {
-                return this;
-            }
+            final Node newNode = oldNode.put(dataEntry);
 
             final Node[] newNodeValues = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
             newNodeValues[nodePos] = newNode;
@@ -207,11 +203,7 @@ final class Node implements Serializable {
         final Entry oldEntry = this.entries[entryPos];
 
         if (oldEntry.containsKey(hash, dataEntry.key)) {
-            // There is a match (key exists): entry needs to be replaced unless flagged not to do so
-
-            if (!replaceIfPresent) {
-                return this;
-            }
+            // There is a match (key exists): entry needs to be replaced
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
             newEntries[entryPos] = dataEntry;
@@ -223,10 +215,8 @@ final class Node implements Serializable {
         if (this.level == Hash.MAX_LEVEL) {
             // No new levels can be created, so a CollisionEntry will be created or expanded
 
-            final CollisionEntry newEntry = oldEntry.add(dataEntry);
-
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-            newEntries[entryPos] = newEntry;
+            newEntries[entryPos] = oldEntry.add(dataEntry);
 
             return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
 
@@ -246,142 +236,9 @@ final class Node implements Serializable {
 
         final Entry[] newEntries = new Entry[this.entries.length - 1];
         System.arraycopy(this.entries, 0, newEntries, 0, entryPos);
-        System.arraycopy(this.entries, entryPos + 1, newEntries, entryPos, this.entries.length - entryPos - 1);
+        System.arraycopy(this.entries, entryPos + 1, newEntries, entryPos, this.entries.length - (entryPos + 1));
 
-        return new Node(this.level, this.size + 1,newNodeBitMap, newNodes, newEntryBitMap, newEntries);
-
-    }
-
-
-
-    Node putAll(final Node other) {
-        // this.level and other.level will always be the same
-
-        // The new bitmaps will need to be considered temporary, as during processing some entries could turn to nodes
-        long newNodesBitMap = this.nodesBitMap | other.nodesBitMap;
-        long newEntriesBitMap = this.entriesBitMap | other.entriesBitMap;
-
-        // New nodes and entries arrays will also be considered temporary, for the same reason as bitmaps
-        // Nodes are given the maximum size because entries could be turned into nodes (the opposite does not happen)
-        final int newNodesBitCount = Long.bitCount(newNodesBitMap);
-        final int newEntriesBitCount = Long.bitCount(newEntriesBitMap);
-        Node[] newNodes = new Node[newNodesBitCount + newEntriesBitCount];
-        Entry[] newEntries = (newEntriesBitCount == 0)? EMPTY_ENTRIES : new Entry[newEntriesBitCount];
-
-        // Three indices needed for nodes and other three for entries
-        int thisNodesIndex = 0, otherNodesIndex = 0, newNodesIndex = 0;
-        int thisEntriesIndex = 0, otherEntriesIndex = 0, newEntriesIndex = 0;
-
-        // Iteration performed bit-by-bit for all the 64 possible bits in the bitmap
-        boolean inThisNodes, inOtherNodes, inThisEntries, inOtherEntries;
-        Node thisNode, otherNode;
-        Entry thisEntry, otherEntry;
-        for (long mask = 1L; mask != 0; mask <<= 1) {
-
-            inThisNodes = (this.nodesBitMap & mask) != 0;
-            inOtherNodes = (other.nodesBitMap & mask) != 0;
-            inThisEntries = (this.entriesBitMap & mask) != 0;
-            inOtherEntries = (other.entriesBitMap & mask) != 0;
-
-            if (!inThisNodes && !inOtherNodes && !inThisEntries && !inOtherEntries) {
-                // Not found in this or other: skip
-                continue;
-            }
-
-            if (inThisNodes && inOtherNodes) {
-                thisNode = this.nodes[thisNodesIndex++];
-                otherNode = other.nodes[otherNodesIndex++];
-                newNodes[newNodesIndex++] = thisNode.putAll(otherNode);
-                continue;
-            }
-
-            if (inThisNodes && inOtherEntries) {
-                thisNode = this.nodes[thisNodesIndex++];
-                otherEntry = other.entries[otherEntriesIndex++];
-                newNodes[newNodesIndex++] = thisNode.put((DataEntry)otherEntry, true);
-                newEntriesBitMap ^= mask; // Remove from entries bitmap
-                continue;
-            }
-
-            if (inThisEntries && inOtherNodes) {
-                thisEntry = this.entries[thisEntriesIndex++];
-                otherNode = other.nodes[otherNodesIndex++];
-                newNodes[newNodesIndex++] = otherNode.put((DataEntry)thisEntry, false);
-                newEntriesBitMap ^= mask; // Remove from entries bitmap
-                continue;
-            }
-
-            if (inThisEntries && inOtherEntries) {
-
-                thisEntry = this.entries[thisEntriesIndex++];
-                otherEntry = other.entries[otherEntriesIndex++];
-
-                if (this.level == Hash.MAX_LEVEL) {
-                    // If level is max, this is a hash collision
-                    newEntries[newEntriesIndex++] = thisEntry.merge(otherEntry);
-                    continue;
-                }
-
-                // Not at max level: entries guaranteed to be DataEntry and deeper levels could be created
-                final DataEntry thisDataEntry = (DataEntry)thisEntry;
-                final DataEntry otherDataEntry = (DataEntry)otherEntry;
-
-                if (thisEntry.containsKey(otherDataEntry.hash, otherDataEntry.key)) {
-                    newEntries[newEntriesIndex++] = otherEntry;
-                    continue;
-                }
-
-                // A node for a deeper level will be created
-
-                newNodesBitMap ^= mask; // Add to nodes bitmap
-                newNodes[newNodesIndex++] = new Node(this.level + 1, thisDataEntry, otherDataEntry);
-                newEntriesBitMap ^= mask; // Remove from entries bitmap
-                continue;
-
-            }
-
-            if (inThisNodes) {
-                newNodes[newNodesIndex++] = this.nodes[thisNodesIndex++];
-                continue;
-            }
-
-            if (inOtherNodes) {
-                newNodes[newNodesIndex++] = other.nodes[otherNodesIndex++];
-                continue;
-            }
-
-            if (inThisEntries) {
-                newEntries[newEntriesIndex++] = this.entries[thisEntriesIndex++];
-                continue;
-            }
-
-            if (inOtherEntries) {
-                newEntries[newEntriesIndex++] = other.entries[otherEntriesIndex++];
-                continue;
-            }
-
-
-        }
-
-        // The size of nodes and entries arrays may need to be adjusted after some entries may have been converted
-        // to nodes (and also, newNodes was initialized to the max possible size)
-        if (newNodesIndex != newNodes.length) {
-            newNodes = (newNodesIndex == 0)? EMPTY_NODES : Arrays.copyOf(newNodes, newNodesIndex);
-        }
-        if (newEntriesIndex != newEntries.length) {
-            newEntries = (newEntriesIndex == 0)? EMPTY_ENTRIES : Arrays.copyOf(newEntries, newEntriesIndex);
-        }
-
-        // Compute size based only on new existing nodes and entries
-        int newSize = 0;
-        for (final Node newNode : newNodes) {
-            newSize += newNode.size;
-        }
-        for (final Entry newEntry : newEntries) {
-            newSize += newEntry.size();
-        }
-
-        return new Node(this.level, newSize ,newNodesBitMap, newNodes, newEntriesBitMap, newEntries);
+        return new Node(this.level, this.size + 1, newNodeBitMap, newNodes, newEntryBitMap, newEntries);
 
     }
 

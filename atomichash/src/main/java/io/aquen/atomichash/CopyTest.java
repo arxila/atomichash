@@ -16,14 +16,14 @@ public class CopyTest {
                 keys[i] = "Key " + i;
             }
 
-            Node node = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
+            Node node = new Node();
 
 
             for (int j = 0; j < 1000000; j++) {
                 node = node.put(keys[j], "Value zero");
             }
 
-            node = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
+            node = new Node();
 
 
             long startTimeCreat0 = System.nanoTime();
@@ -35,39 +35,51 @@ public class CopyTest {
             long endTimeCreat0 = System.nanoTime();
             System.out.println("Execution time adding 1000000 entries to an empty node with put:                       " + (endTimeCreat0 - startTimeCreat0) + " nanoseconds. Size: " + node.size);
 
-
-            final KeyValue[] keyValues = new KeyValue[50];
-            for (int j = 0; j < 50; j++) {
-                keyValues[j] = new KeyValue(keys[j], "Value one");
-            }
-            long startTimeCreat11 = System.nanoTime();
-            Node nodePutAll = Util.createNode(keyValues);
-            long endTimeCreat11 = System.nanoTime();
-
-            long startTimeCreat12 = System.nanoTime();
-            Node nodePutAll2 = node.putAll(nodePutAll);
-            long endTimeCreat12 = System.nanoTime();
-
-            System.out.println("Execution time changing the value of 1000000 entries by createNode and then putAll:    " + ((endTimeCreat11 - startTimeCreat11) + (endTimeCreat12 - startTimeCreat12)) + " nanoseconds. Size: " + nodePutAll2.size + " - Time 1: " + (endTimeCreat11 - startTimeCreat11) + " Time 2: " + (endTimeCreat12 - startTimeCreat12));
-
             long startTimeCreat2 = System.nanoTime();
             Node nodePutAll3 = node;
             for (int j = 0; j < 50; j++) {
-                nodePutAll3 = nodePutAll3.put(keyValues[j].key, keyValues[j].value);
+                nodePutAll3 = nodePutAll3.put(keys[j], "Value one");
             }
 
             long endTimeCreat2 = System.nanoTime();
             System.out.println("Execution time changing the value of 1000000 entries by executing put on each one:     " + (endTimeCreat2 - startTimeCreat2) + " nanoseconds. Size: " + nodePutAll3.size);
+//
+//            long startTimeCreat11 = System.nanoTime();
+//            Node nodePutAll = Util.createNode(keyValues);
+//            long endTimeCreat11 = System.nanoTime();
+//
+//            long startTimeCreat12 = System.nanoTime();
+//            Node nodePutAll2 = node.putAll(nodePutAll);
+//            long endTimeCreat12 = System.nanoTime();
+//
+//            System.out.println("Execution time changing the value of 1000000 entries by createNode and then putAll:    " + ((endTimeCreat11 - startTimeCreat11) + (endTimeCreat12 - startTimeCreat12)) + " nanoseconds. Size: " + nodePutAll2.size + " - Time 1: " + (endTimeCreat11 - startTimeCreat11) + " Time 2: " + (endTimeCreat12 - startTimeCreat12));
 
-
-
-
-
-
-            Node nodeOne = new Node(0, 0,  0L, new Node[0], 0L, new Entry[0]);
-            for (int j = 0; j < 500000; j++) {
-                nodeOne = nodeOne.put(keys[j], "Value one");
+            long startTimeCreat4 = System.nanoTime();
+            Node nodePutAll4 = node;
+            for (int j = 0; j < 50; j++) {
+                nodePutAll4 = nodePutAll4.put(keys[j], "Value one");
             }
+
+            long endTimeCreat4 = System.nanoTime();
+            System.out.println("Execution time changing the value of 1000000 entries by executing put on each one:     " + (endTimeCreat4 - startTimeCreat4) + " nanoseconds. Size: " + nodePutAll4.size);
+//
+//
+//
+//            long startTimeCreat51 = System.nanoTime();
+//            nodePutAll = Util.createNode(keyValues);
+//            long endTimeCreat51 = System.nanoTime();
+//
+//            long startTimeCreat52 = System.nanoTime();
+//            Node nodePutAll5 = node.putAll(nodePutAll);
+//            long endTimeCreat52 = System.nanoTime();
+//
+//            System.out.println("Execution time changing the value of 1000000 entries by createNode and then putAll:    " + ((endTimeCreat51 - startTimeCreat51) + (endTimeCreat52 - startTimeCreat52)) + " nanoseconds. Size: " + nodePutAll5.size + " - Time 1: " + (endTimeCreat51 - startTimeCreat51) + " Time 2: " + (endTimeCreat52 - startTimeCreat52));
+
+
+
+
+
+
 
             int counterValue0 = 0;
             int counterValue1 = 0;
@@ -83,7 +95,9 @@ public class CopyTest {
             }
             System.out.println("CounterValue0: " + counterValue0 + " CounterValue1: " + counterValue1);
 
-            node = node.putAll(nodeOne);
+            for (int j = 0; j < 500000; j++) {
+                node = node.put(keys[j], "Value one");
+            }
 
             counterValue0 = 0;
             counterValue1 = 0;

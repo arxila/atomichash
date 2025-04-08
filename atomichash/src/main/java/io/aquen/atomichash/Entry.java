@@ -25,6 +25,5 @@ interface Entry {
     Object get(final Object key);
     CollisionEntry add(final DataEntry entry);
     int size();
-    Entry merge(final Entry entry);
 
 }

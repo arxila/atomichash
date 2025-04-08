@@ -64,23 +64,6 @@ final class DataEntry implements Entry, Serializable {
     }
 
 
-    @Override
-    public Entry merge(final Entry other) {
-        // hash is guaranteed to match
-        if (other instanceof DataEntry) {
-            final DataEntry otherEntry = (DataEntry) other;
-            if (containsKey(otherEntry.hash, otherEntry.key)) {
-                return otherEntry;
-            }
-            return add(otherEntry);
-        }
-        if (other.containsKey(this.hash, this.key)) {
-            return other; // Entries in "other" will not be replaced as they are meant to be the new values
-        }
-        return other.add(this);
-    }
-
-
     /*
      * Equivalent to Objects.equals(), but by being called only from
      * this class we might benefit from runtime profile information on the
