@@ -94,6 +94,25 @@ final class Entry implements Serializable {
     }
 
 
+    Entry remove(final int hash, final Object key) {
+        if (this.collisions == null) {
+            return (this.hash == hash && eq(this.key, key)) ? null : this;
+        }
+        for (int i = 0; i < this.collisions.length; i++) {
+            if (this.hash == hash && Objects.equals(this.collisions[i].key, key)) {
+                if (this.collisions.length == 2) {
+                    return this.collisions[1 - i];
+                }
+                final Entry[] newCollisions = new Entry[this.collisions.length - 1];
+                System.arraycopy(this.collisions, 0, newCollisions, 0, i);
+                System.arraycopy(this.collisions, i + 1, newCollisions, i, this.collisions.length - (i + 1));
+                return new Entry(this.hash, newCollisions);
+            }
+        }
+        return this;
+    }
+
+
     /*
      * Equivalent to Objects.equals(), but by being called only from
      * this class we might benefit from runtime profile information on the

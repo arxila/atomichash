@@ -186,6 +186,14 @@ public class CopyTest {
             System.out.println(counter1);
             System.out.println(counter2);
 
+
+
+            for (int j = 0; j < 1000000; j++) {
+                node = node.remove(keys[j]);
+            }
+
+            System.out.println(node.size);
+
         }
 
 

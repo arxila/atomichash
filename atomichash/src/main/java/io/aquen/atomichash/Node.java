@@ -187,7 +187,7 @@ final class Node implements Serializable {
     }
 
 
-    Node put(final Entry entry) {
+    private Node put(final Entry entry) {
 
         final int hash = entry.hash;
         final long mask = mask(hash, this.level);
@@ -265,5 +265,89 @@ final class Node implements Serializable {
 
     }
 
+
+
+    Node remove(final Object key) {
+        return remove(hash(key), key);
+    }
+
+
+    private Node remove(final int hash, final Object key) {
+
+        final long mask = mask(hash, this.level);
+
+        final int entryPos = pos(mask, this.entriesBitMap);
+        if (entryPos >= 0) {
+
+            final Entry oldEntry = this.entries[entryPos];
+            final Entry newEntry = oldEntry.remove(hash, key);
+            if (newEntry == oldEntry) {
+                return this;
+            }
+
+            if (newEntry != null) {
+                final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
+                newEntries[entryPos] = newEntry;
+                return new Node(this.level, this.size, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
+            }
+
+            final long newEntriesBitMap = this.entriesBitMap ^ mask;
+            final Entry[] newEntries;
+            if (newEntriesBitMap == 0L) {
+                if (this.nodesBitMap == 0L) {
+                    return EMPTY_NODE;
+                }
+                newEntries = EMPTY_ENTRIES;
+            } else {
+                newEntries = new Entry[this.entries.length - 1];
+                System.arraycopy(this.entries, 0, newEntries, 0, entryPos);
+                System.arraycopy(this.entries, entryPos + 1, newEntries, entryPos, this.entries.length - (entryPos + 1));
+            }
+
+            return new Node(this.level, this.size - 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
+
+        }
+
+        final int nodePos = pos(mask, this.nodesBitMap);
+        if (nodePos < 0) {
+            return this;
+        }
+
+        final Node oldNode = this.nodes[nodePos];
+        final Node newNode = oldNode.remove(hash, key);
+
+        if (oldNode == newNode) {
+            return this;
+        }
+
+        if (newNode.size > 1) {
+
+            final Node[] newNodes = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
+            newNodes[nodePos] = newNode;
+
+            return new Node(this.level, this.size - 1, this.nodesBitMap, newNodes, this.entriesBitMap, this.entries);
+
+        }
+
+        // The new Node at level + 1 now has a single Entry, so we need to link that Entry instead
+
+        final Entry newEntry = newNode.entries[0];
+        final int newEntryPos = (entryPos ^ NEG_MASK);
+
+        final long newNodeBitMap = this.nodesBitMap ^ mask;
+        final long newEntryBitMap = this.entriesBitMap ^ mask;
+
+        final Entry[] newEntries = new Entry[this.entries.length + 1];
+        System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
+        newEntries[newEntryPos] = newEntry;
+        System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
+
+        final Node[] newNodes = new Node[this.nodes.length - 1];
+        System.arraycopy(this.nodes, 0, newNodes, 0, nodePos);
+        System.arraycopy(this.nodes, nodePos + 1, newNodes, nodePos, this.nodes.length - (nodePos + 1));
+
+        return new Node(this.level, this.size - 1, newNodeBitMap, newNodes, newEntryBitMap, newEntries);
+
+    }
 
 }
