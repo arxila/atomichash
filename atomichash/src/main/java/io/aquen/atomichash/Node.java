@@ -38,7 +38,19 @@ final class Node implements Serializable {
     final Entry[] entries;
 
 
-    Node(final int level, final int size, final long nodesBitMap, final Node[] nodes, final long entriesBitMap, final Entry[] entries) {
+
+    Node() {
+        super();
+        this.level = 0;
+        this.size = 0;
+        this.nodesBitMap = 0L;
+        this.nodes = EMPTY_NODES;
+        this.entriesBitMap = 0L;
+        this.entries = EMPTY_ENTRIES;
+    }
+
+
+    private Node(final int level, final int size, final long nodesBitMap, final Node[] nodes, final long entriesBitMap, final Entry[] entries) {
         super();
         this.level = level;
         this.size = size;
@@ -121,36 +133,28 @@ final class Node implements Serializable {
 
     boolean contains(final Object key) {
         final int hash = Hash.hash(key);
-        long bitMap, mask;
-        Node node = this;
-        while (true) {
-            mask = Hash.mask(hash, node.level);
-            if (((bitMap = node.nodesBitMap) & mask) != 0) {
-                node = node.nodes[pos(mask, bitMap)];
-            } else if (((bitMap = node.entriesBitMap) & mask) != 0) {
-                return node.entries[pos(mask, bitMap)].containsKey(hash, key);
-            } else {
-                return false;
-            }
+        Node node = this; int level = 0; long mask;
+        while(((mask = Hash.mask(hash, level++)) & node.nodesBitMap) != 0L) {
+            node = node.nodes[pos(mask, node.nodesBitMap)];
         }
+        if ((mask & node.entriesBitMap) != 0L) {
+            return node.entries[pos(mask, node.entriesBitMap)].containsKey(hash, key);
+        }
+        return false;
     }
 
 
     // May return DataEntry.NOT_FOUND if not found (so that it can be differentiated from a null value)
     Object get(final Object key) {
         final int hash = Hash.hash(key);
-        long bitMap, mask;
-        Node node = this;
-        while (true) {
-            mask = Hash.mask(hash, node.level);
-            if (((bitMap = node.nodesBitMap) & mask) != 0) {
-                node = node.nodes[pos(mask, bitMap)];
-            } else if (((bitMap = node.entriesBitMap) & mask) != 0) {
-                return node.entries[pos(mask, bitMap)].get(key);
-            } else {
-                return KeyValue.NOT_FOUND;
-            }
+        Node node = this; int level = 0; long mask;
+        while(((mask = Hash.mask(hash, level++)) & node.nodesBitMap) != 0L) {
+            node = node.nodes[pos(mask, node.nodesBitMap)];
         }
+        if ((mask & node.entriesBitMap) != 0L) {
+            return node.entries[pos(mask, node.entriesBitMap)].get(key);
+        }
+        return DataEntry.NOT_FOUND;
     }
 
 
