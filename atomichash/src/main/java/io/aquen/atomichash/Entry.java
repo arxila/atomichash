@@ -20,9 +20,11 @@
 package io.aquen.atomichash;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 final class Entry implements Map.Entry<Object,Object>, Serializable {
 
@@ -63,6 +65,19 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
         }
         for (final Entry collision : this.collisions) {
             if (Objects.equals(collision.key, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    boolean containsValue(final Object value) {
+        if (this.collisions == null) {
+            return eq(this.value, value);
+        }
+        for (final Entry collision : this.collisions) {
+            if (Objects.equals(collision.value, value)) {
                 return true;
             }
         }
@@ -143,14 +158,40 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     }
 
 
-    void addEntries(final List<Entry> entriesList) {
-        if (this.collisions == null) {
-            entriesList.add(this);
-        } else {
-            for (final Entry collision : this.collisions) {
-                collision.addEntries(entriesList);
-            }
+    @Override
+    public boolean equals(final Object other) {
+        if (!(other instanceof Map.Entry<?,?>)) {
+            return false;
         }
+        if (other instanceof Entry) {
+            final Entry otherEntry = (Entry) other;
+            if (this.hash != otherEntry.hash) {
+                return false;
+            }
+            if (this.collisions == null) {
+                if (otherEntry.collisions != null) {
+                    return false;
+                }
+                return eq(this.key, otherEntry.key) && eq(this.value, otherEntry.value);
+            }
+            if (otherEntry.collisions == null) {
+                return false;
+            }
+            return Objects.equals(Set.of(this.collisions), Set.of(otherEntry.collisions));
+        }
+        final Map.Entry<?,?> otherEntry = (Map.Entry<?,?>) other;
+        return eq(this.key, otherEntry.getKey()) && eq(this.value, otherEntry.getValue());
+    }
+
+
+    @Override
+    public int hashCode() {
+        if (this.collisions == null) {
+            // This follows the definition of java.util.Map.Entry.hashCode()
+            return ((this.key == null) ? 0 : this.key.hashCode()) ^
+                   ((this.value == null) ? 0 : this.value.hashCode());
+        }
+        return Set.of(this.collisions).hashCode();
     }
 
 }
