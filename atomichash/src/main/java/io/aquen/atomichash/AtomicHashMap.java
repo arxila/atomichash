@@ -21,7 +21,6 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,10 +48,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         return this.root.get().size;
     }
 
+
     @Override
     public boolean isEmpty() {
         return this.root.get() == Node.EMPTY_NODE;
     }
+
 
     @Override
     public boolean containsKey(final Object key) {
@@ -63,6 +64,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public boolean containsValue(final Object value) {
         return this.root.get().containsValue(value);
     }
+
 
     @Override
     public V get(final Object key) {
@@ -76,22 +78,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         return (value == io.aquen.atomichash.Entry.NOT_FOUND) ? defaultValue : (V) value;
     }
 
+
     @Override
     public V put(final K key, final V value) {
         Node oldNode;
         do {
             oldNode = this.root.get();
         } while (!this.root.compareAndSet(oldNode, oldNode.put(key, value)));
-        final Object oldValue = oldNode.get(key);
-        return (oldValue == io.aquen.atomichash.Entry.NOT_FOUND) ? null : (V) oldValue;
-    }
-
-    @Override
-    public V remove(final Object key) {
-        Node oldNode;
-        do {
-            oldNode = this.root.get();
-        } while (!this.root.compareAndSet(oldNode, oldNode.remove(key)));
         final Object oldValue = oldNode.get(key);
         return (oldValue == io.aquen.atomichash.Entry.NOT_FOUND) ? null : (V) oldValue;
     }
@@ -125,6 +118,17 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             }
         } while (!this.root.compareAndSet(oldNode, newNode));
 
+    }
+
+
+    @Override
+    public V remove(final Object key) {
+        Node oldNode;
+        do {
+            oldNode = this.root.get();
+        } while (!this.root.compareAndSet(oldNode, oldNode.remove(key)));
+        final Object oldValue = oldNode.get(key);
+        return (oldValue == io.aquen.atomichash.Entry.NOT_FOUND) ? null : (V) oldValue;
     }
 
     @Override
