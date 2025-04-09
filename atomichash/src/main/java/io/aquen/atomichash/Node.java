@@ -20,8 +20,12 @@
 package io.aquen.atomichash;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 final class Node implements Serializable {
 
@@ -155,7 +159,7 @@ final class Node implements Serializable {
     }
 
 
-    boolean contains(final Object key) {
+    boolean containsKey(final Object key) {
         final int hash = hash(key);
         Node node = this; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
@@ -163,6 +167,25 @@ final class Node implements Serializable {
         }
         if ((mask & node.entriesBitMap) != 0L) {
             return node.entries[pos(mask, node.entriesBitMap)].containsKey(hash, key);
+        }
+        return false;
+    }
+
+
+    boolean containsValue(final Object value) {
+        if (this.entriesBitMap != 0L) {
+            for (final Entry entry : this.entries) {
+                if (entry.containsValue(value)) {
+                    return true;
+                }
+            }
+        }
+        if (this.nodesBitMap != 0L) {
+            for (final Node node : this.nodes) {
+                if (node.containsValue(value)) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -352,17 +375,86 @@ final class Node implements Serializable {
     }
 
 
-    void addEntries(final List<Entry> entriesList) {
+
+    Set<Entry> allEntries() {
+        final Set<Entry> entrySet = new HashSet<>(this.size + 1, 1.0f);
+        addEntries(entrySet);
+        // TODO Perhaps cache this into a volatile?
+        return Collections.unmodifiableSet(entrySet);
+    }
+
+    private void addEntries(final Set<Entry> entrySet) {
         if (this.entriesBitMap != 0L) {
             for (final Entry entry : this.entries) {
-                entry.addEntries(entriesList);
+                if (entry.collisions == null) {
+                    entrySet.add(entry);
+                } else {
+                    Collections.addAll(entrySet, entry.collisions);
+                }
             }
         }
         if (this.nodesBitMap != 0L) {
             for (final Node node : this.nodes) {
-                node.addEntries(entriesList);
+                node.addEntries(entrySet);
             }
         }
     }
+
+
+
+    Set<Object> allKeys() {
+        final Set<Object> keySet = new HashSet<>(this.size + 1, 1.0f);
+        addKeys(keySet);
+        // TODO Perhaps cache this into a volatile?
+        return Collections.unmodifiableSet(keySet);
+    }
+
+    private void addKeys(final Set<Object> keySet) {
+        if (this.entriesBitMap != 0L) {
+            for (final Entry entry : this.entries) {
+                if (entry.collisions == null) {
+                    keySet.add(entry.key);
+                } else {
+                    for (final Entry collision : entry.collisions) {
+                        keySet.add(collision.key);
+                    }
+                }
+            }
+        }
+        if (this.nodesBitMap != 0L) {
+            for (final Node node : this.nodes) {
+                node.addKeys(keySet);
+            }
+        }
+    }
+
+
+
+    List<Object> allValues() {
+        final List<Object> valueList = new ArrayList<>(this.size);
+        addValues(valueList);
+        // TODO Perhaps cache this into a volatile?
+        return Collections.unmodifiableList(valueList);
+    }
+
+    private void addValues(final List<Object> valueList) {
+        if (this.entriesBitMap != 0L) {
+            for (final Entry entry : this.entries) {
+                if (entry.collisions == null) {
+                    valueList.add(entry.value);
+                } else {
+                    for (final Entry collision : entry.collisions) {
+                        valueList.add(collision.value);
+                    }
+                }
+            }
+        }
+        if (this.nodesBitMap != 0L) {
+            for (final Node node : this.nodes) {
+                node.addValues(valueList);
+            }
+        }
+    }
+
 
 }
