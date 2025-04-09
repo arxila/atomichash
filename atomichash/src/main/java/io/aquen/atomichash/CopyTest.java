@@ -2,9 +2,8 @@ package io.aquen.atomichash;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CopyTest {
 
@@ -188,13 +187,13 @@ public class CopyTest {
 
 
             long startTimeAllEntries0 = System.nanoTime();
-            List<Entry> allEntries0 = node.allEntries();
+            Set<Entry> allEntries0 = node.allEntries();
             long endTimeAllEntries0 = System.nanoTime();
             System.out.println("Execution time obtaining all entries1: " + (endTimeAllEntries0 - startTimeAllEntries0) + " nanoseconds: " + allEntries0.size());
 
 
             long startTimeAllEntries1 = System.nanoTime();
-            List<Entry> allEntries1 = node.allEntries();
+            Set<Entry> allEntries1 = node.allEntries();
             long endTimeAllEntries1 = System.nanoTime();
             System.out.println("Execution time obtaining all entries1: " + (endTimeAllEntries1 - startTimeAllEntries1) + " nanoseconds: " + allEntries1.size());
 
