@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
 public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
@@ -106,11 +107,8 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public void putAll(final Map<? extends K, ? extends V> m) {
-
         Objects.requireNonNull(m);
-
         final Set<? extends Entry<? extends K, ? extends V>> entrySet = m.entrySet();
-
         Node oldNode, newNode;
         do {
             oldNode = this.root.get();
@@ -119,7 +117,6 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                 newNode = newNode.put(entry.getKey(), entry.getValue());
             }
         } while (!this.root.compareAndSet(oldNode, newNode));
-
     }
 
 
@@ -132,6 +129,19 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         final Object oldValue = oldNode.get(key);
         return (oldValue == io.aquen.atomichash.Entry.NOT_FOUND) ? null : (V) oldValue;
     }
+
+    @Override
+    public boolean remove(final Object key, final Object value) {
+        boolean matches;
+        V currentValue;
+        Node oldNode;
+        do {
+            oldNode = this.root.get();
+            currentValue = (V) oldNode.get(key);
+        } while ((matches = Objects.equals(value, currentValue)) && !this.root.compareAndSet(oldNode, oldNode.remove(key)));
+        return matches;
+    }
+
 
     @Override
     public void clear() {
@@ -167,6 +177,31 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
 
     @Override
+    public boolean replace(final K key, final V oldValue, final V newValue) {
+        boolean matches;
+        V currentValue;
+        Node oldNode;
+        do {
+            oldNode = this.root.get();
+            currentValue = (V) oldNode.get(key);
+        } while ((matches = Objects.equals(oldValue, currentValue)) && !this.root.compareAndSet(oldNode, oldNode.put(key, newValue)));
+        return matches;
+    }
+
+    @Override
+    public V replace(final K key, final V value) {
+        boolean mapped;
+        Node oldNode;
+        do {
+            oldNode = this.root.get();
+        } while ((mapped = oldNode.containsKey(key)) && !this.root.compareAndSet(oldNode, oldNode.put(key, value)));
+        if (!mapped) {
+            return null;
+        }
+        return (V) oldNode.get(key);
+    }
+
+    @Override
     public void replaceAll(final BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
         Node oldNode, newNode;
@@ -177,6 +212,53 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                 newNode = newNode.put(entry.key, function.apply((K)entry.key, (V)entry.value));
             }
         } while (!this.root.compareAndSet(oldNode, newNode));
+    }
+
+
+    @Override
+    public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
+        Objects.requireNonNull(mappingFunction);
+        boolean absent;
+        V currentValue, newValue;
+        Node oldNode;
+        do {
+            oldNode = this.root.get();
+            currentValue = (V) oldNode.get(key);
+            // Per the definition of Map.computeIfAbsent, a value mapped to null and a non-existing key are equivalent
+            absent = (currentValue == NOT_FOUND || currentValue == null);
+            newValue = absent ? mappingFunction.apply(key) : null;
+        } while (newValue != null && !this.root.compareAndSet(oldNode, oldNode.put(key, newValue)));
+        return (absent) ? null : currentValue;
+    }
+
+    @Override
+    public V computeIfPresent(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        boolean present;
+        V currentValue, newValue;
+        Node oldNode;
+        do {
+            oldNode = this.root.get();
+            currentValue = (V) oldNode.get(key);
+            // Per the definition of Map.computeIfPresent, a value mapped to null and a non-existing key are equivalent
+            present = (currentValue != NOT_FOUND && currentValue != null);
+            newValue = present ? remappingFunction.apply(key, currentValue) : null;
+        } while (newValue != null && !this.root.compareAndSet(oldNode, oldNode.put(key, newValue)));
+        return (present) ? newValue : null;
+    }
+
+    @Override
+    public V compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        V currentValue, newValue;
+        Node oldNode, newNode;
+        do {
+            oldNode = this.root.get();
+            currentValue = (V) oldNode.get(key);
+            newValue = remappingFunction.apply(key, (currentValue == NOT_FOUND) ? null : currentValue);
+            newNode = (newValue == null) ? oldNode.remove(key) : oldNode.put(key, newValue);
+        } while (oldNode != newNode && !this.root.compareAndSet(oldNode, newNode));
+        return newValue;
     }
 
 
