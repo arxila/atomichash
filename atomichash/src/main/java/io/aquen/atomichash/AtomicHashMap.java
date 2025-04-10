@@ -93,14 +93,15 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public V putIfAbsent(final K key, final V value) {
         boolean absent;
+        V currentValue;
         Node oldNode;
         do {
             oldNode = this.root.get();
-        } while ((absent = !oldNode.containsKey(key)) && !this.root.compareAndSet(oldNode, oldNode.put(key, value)));
-        if (!absent) {
-            return null;
-        }
-        return (V) oldNode.get(key);
+            currentValue = (V) oldNode.get(key);
+            // Per the definition of Map.putIfAbsent, a value mapped to null and a non-existing key are equivalent
+            absent = (currentValue == NOT_FOUND || currentValue == null);
+        } while (absent && !this.root.compareAndSet(oldNode, oldNode.put(key, value)));
+        return (absent) ? null : currentValue;
     }
 
     @Override
