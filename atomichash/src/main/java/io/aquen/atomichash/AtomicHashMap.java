@@ -33,6 +33,7 @@ import java.util.function.BiFunction;
 public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     private static final long serialVersionUID = 6117491851316897982L;
+    private static Object NOT_FOUND = io.aquen.atomichash.Entry.NOT_FOUND;
 
     private final AtomicReference<Node> root;
 
@@ -69,13 +70,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public V get(final Object key) {
         final Object value = this.root.get().get(key);
-        return (value == io.aquen.atomichash.Entry.NOT_FOUND) ? null : (V) value;
+        return (value == NOT_FOUND) ? null : (V) value;
     }
 
     @Override
     public V getOrDefault(final Object key, final V defaultValue) {
         final Object value = this.root.get().get(key);
-        return (value == io.aquen.atomichash.Entry.NOT_FOUND) ? defaultValue : (V) value;
+        return (value == NOT_FOUND) ? defaultValue : (V) value;
     }
 
 
@@ -86,7 +87,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             oldNode = this.root.get();
         } while (!this.root.compareAndSet(oldNode, oldNode.put(key, value)));
         final Object oldValue = oldNode.get(key);
-        return (oldValue == io.aquen.atomichash.Entry.NOT_FOUND) ? null : (V) oldValue;
+        return (oldValue == NOT_FOUND) ? null : (V) oldValue;
     }
 
     @Override
