@@ -309,4 +309,27 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     }
 
 
+    @Override
+    public String toString() {
+        // Same as java.util.AbstractMap#toString() as it is what most users would expect
+        final Iterator<Entry<K,V>> i = entrySet().iterator();
+        if (!i.hasNext()) {
+            return "{}";
+        }
+        final StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        for (;;) {
+            final Entry<K,V> e = i.next();
+            final K key = e.getKey();
+            final V value = e.getValue();
+            sb.append(key == this ? "(this Map)" : key);
+            sb.append('=');
+            sb.append(value == this ? "(this Map)" : value);
+            if (!i.hasNext()) {
+                return sb.append('}').toString();
+            }
+            sb.append(',').append(' ');
+        }
+    }
+
 }
