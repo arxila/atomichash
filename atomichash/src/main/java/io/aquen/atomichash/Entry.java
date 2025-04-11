@@ -187,7 +187,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     @Override
     public int hashCode() {
         if (this.collisions == null) {
-            // This follows the definition of java.util.Map.Entry.hashCode()
+            // This follows the definition of java.util.Map.Entry#hashCode()
             return ((this.key == null) ? 0 : this.key.hashCode()) ^
                    ((this.value == null) ? 0 : this.value.hashCode());
         }

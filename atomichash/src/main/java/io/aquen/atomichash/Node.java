@@ -95,7 +95,7 @@ final class Node implements Serializable {
         } else {
             // We have an index match at this level, so we will need to (try) to create a new level
             if (this.level == MAX_LEVEL) {
-                // We have no more levels, so we need a CollisionEntry
+                // We have no more levels, so we need an Entry with collisions
 
                 this.nodesBitMap = 0L;
                 this.nodes = EMPTY_NODES;
@@ -123,7 +123,7 @@ final class Node implements Serializable {
      * of hashCode() or have no implementation at all -- in which case their identity hashCode (based on memory
      * address) will be used.
      *
-     * We will mirror what the standard implementation of "hashCode()" in java.util.HashMap does to try to improve
+     * This mirrors what the standard implementation of hashCode() in java.util.HashMap does to try to improve
      * uniformity of hashes by performing a bitwise XOR of the 16 most significant bits on the 16 less significant,
      * assuming that due to how memory assignment works in the JVM, in cases when the identity hash code is used,
      * the 16 most significant ones will probably show a higher entropy.
@@ -191,7 +191,7 @@ final class Node implements Serializable {
     }
 
 
-    // May return DataEntry.NOT_FOUND if not found (so that it can be differentiated from a null value)
+    // May return Entry.NOT_FOUND if not found (so that it can be differentiated from a null value)
     Object get(final Object key) {
         final int hash = hash(key);
         Node node = this; long mask;
