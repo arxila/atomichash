@@ -85,6 +85,22 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     }
 
 
+    boolean alreadyMapped(final Object key, final Object value) {
+        // In order to determine whether a mapping already exists, key and value will be applied
+        // referential equality and not object equality. This leaves room for the possibility of a mapping
+        // (key and/or value) to be replaced by other objects even if these are "equals".
+        if (this.collisions == null) {
+            return this.key == key && this.value == value;
+        }
+        for (final Entry collision : this.collisions) {
+            if (collision.key == key && collision.value == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 
     Object get(final Object key) {
         if (this.collisions == null) {

@@ -31,13 +31,13 @@ final class Node implements Serializable {
 
     private static final long serialVersionUID = 5892440116260222326L;
 
-    private static final int MAX_LEVEL = 5;
-    private static final int[] SHIFTS = new int[] { 0, 6, 12, 18, 24, 30 };
-    private static final int MASK = 0b111111;
-    private static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 int positions into negative
+    static final int MAX_LEVEL = 5;
+    static final int[] HASH_SHIFTS = new int[] { 0, 6, 12, 18, 24, 30 };
+    static final int HASH_MASK = 0b111111;
+    static final int NEG_MASK = 1 << 31; // will be used for turning 0..63 int positions into negative
 
-    private static final Node[] EMPTY_NODES = new Node[0];
-    private static final Entry[] EMPTY_ENTRIES = new Entry[0];
+    static final Node[] EMPTY_NODES = new Node[0];
+    static final Entry[] EMPTY_ENTRIES = new Entry[0];
     static final Node EMPTY_NODE = new Node();
 
     final int level;
@@ -135,12 +135,12 @@ final class Node implements Serializable {
 
 
     static int index(final int hash, final int level) {
-        return (hash >>> SHIFTS[level]) & MASK;
+        return (hash >>> HASH_SHIFTS[level]) & HASH_MASK;
     }
 
 
     static long mask(final int hash, final int level) {
-        return 1L << ((hash >>> SHIFTS[level]) & MASK);
+        return 1L << ((hash >>> HASH_SHIFTS[level]) & HASH_MASK);
     }
 
 
@@ -238,6 +238,9 @@ final class Node implements Serializable {
 
             final Node oldNode = this.nodes[nodePos];
             final Node newNode = oldNode.put(entry);
+            if (oldNode == newNode) {
+                return this;
+            }
 
             final Node[] newNodeValues = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
             newNodeValues[nodePos] = newNode;
@@ -251,6 +254,10 @@ final class Node implements Serializable {
 
         if (oldEntry.containsKey(hash, entry.key)) {
             // There is a match (key exists): entry needs to be replaced
+
+            if (oldEntry.alreadyMapped(entry.key, entry.value)) {
+                return this;
+            }
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
             newEntries[entryPos] = entry;
