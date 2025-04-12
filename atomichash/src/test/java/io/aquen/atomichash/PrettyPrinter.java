@@ -19,114 +19,81 @@
  */
 package io.aquen.atomichash;
 
-import java.math.BigInteger;
-import java.util.Map;
-
 final class PrettyPrinter {
 
 
-    static <K,V> String prettyPrint(final AtomicHashMap<K,V> map) {
-        return prettyPrint(map.store());
-    }
-
-    static <K,V> String prettyPrint(final AtomicHashStore<K,V> store) {
+    static <K,V> String printNode(final Node node) {
         final StringBuilder stringBuilder = new StringBuilder();
-        if (store.root != null) {
-            if (store.root.children == null) {
-                printData(0, 0, stringBuilder, store.root.hash, store.root.entry, store.root.entries);
-            } else {
-                printNode(0, 0, stringBuilder, store.root.children);
-            }
-        }
+        printNode(0, 0, 0, stringBuilder, node);
         return stringBuilder.toString();
     }
-    
-    
 
-    private static String indentForLevel(final int level) {
+
+    private static <K,V> void printNode(
+            final int indentLevel, final int level, final int indexInLevel, final StringBuilder stringBuilder,
+            final Node node) {
+
+        stringBuilder.append(indentForLevel(indentLevel));
+        stringBuilder.append(String.format("[%1d|%02x] {\n", level, indexInLevel));
+        for (final Entry childEntry : node.entries) {
+            printEntry(indentLevel + 1, stringBuilder, childEntry);
+        }
+        for (int i = 0; i < node.nodes.length; i++) {
+            final Node childNode = node.nodes[i];
+            printNode(indentLevel + 1, level + 1, i, stringBuilder, childNode);
+        }
+        stringBuilder.append(indentForLevel(indentLevel));
+        stringBuilder.append('}');
+        stringBuilder.append('\n');
+
+    }
+
+
+    private static <K,V> void printEntry(
+            final int indentLevel, final StringBuilder stringBuilder, final Entry entry) {
+
+        stringBuilder.append(indentForLevel(indentLevel));
+        stringBuilder.append(String.format("[%17s] (", formatHash(entry.hash)));
+        if (entry.collisions == null) {
+            stringBuilder.append(String.format(" <%s> <%s> )", entry.key, entry.value));
+        } else {
+            stringBuilder.append('\n');
+            for (int i = 0; i < entry.collisions.length; i++) {
+                stringBuilder.append(indentForLevel(indentLevel + 1));
+                stringBuilder.append(String.format("( <%s> <%s> )", entry.key, entry.value));
+                stringBuilder.append('\n');
+            }
+            stringBuilder.append(indentForLevel(indentLevel));
+            stringBuilder.append(")");
+        }
+        stringBuilder.append('\n');
+
+    }
+
+
+    private static String formatHash(int hash) {
+        int firstFragment = (hash >>> Node.HASH_SHIFTS[5]) & Node.HASH_MASK;
+        int secondFragment = (hash >>> Node.HASH_SHIFTS[4]) & Node.HASH_MASK;
+        int thirdFragment = (hash >>> Node.HASH_SHIFTS[3]) & Node.HASH_MASK;
+        int fourthFragment = (hash >>> Node.HASH_SHIFTS[2]) & Node.HASH_MASK;
+        int fifthFragment = (hash >>> Node.HASH_SHIFTS[1]) & Node.HASH_MASK;
+        int sixthFragment = (hash >>> Node.HASH_SHIFTS[0]) & Node.HASH_MASK;
+
+        return String.format("%02x|%02x|%02x|%02x|%02x|%02x",
+                firstFragment, secondFragment, thirdFragment,
+                fourthFragment, fifthFragment, sixthFragment);
+    }
+
+
+
+    private static String indentForLevel(final int indentLevel) {
         final StringBuilder strBuilder = new StringBuilder();
-        for (int i = 0; i < (level * 2); i++) {
+        for (int i = 0; i < (indentLevel * 2); i++) {
             strBuilder.append(' ');
         }
         return strBuilder.toString();
     }
 
-
-    private static <K,V> String printEntry(final Map.Entry<K,V> entry) {
-        return String.format("<\"%s\"> : <\"%s\">", entry.getKey(), entry.getValue());
-    }
-
-
-
-    private static <K,V> void printNode(
-            final int levelidx, final int level, final StringBuilder stringBuilder, final Node<K,V>[] children) {
-
-        stringBuilder.append(indentForLevel(levelidx));
-        stringBuilder.append(
-                String.format("[%2d | %032d] {",
-                        levelidx,
-                        new BigInteger(Integer.toBinaryString(AtomicHashStore.maskFor(level) << AtomicHashStore.shiftFor(level)))));
-        if (children.length == 0) {
-            stringBuilder.append("}");
-        } else {
-            stringBuilder.append('\n');
-            for (int i = 0; i < children.length; i++) {
-                final Node<K,V> child = children[i];
-                if (child != null) {
-                    if (child.children == null) {
-                        printData(levelidx + 1, level + 1, stringBuilder, child.hash, child.entry, child.entries);
-                    } else {
-                        printNode(levelidx + 1, level + 1, stringBuilder, child.children);
-                    }
-                    stringBuilder.append('\n');
-                }
-            }
-            stringBuilder.append(indentForLevel(levelidx));
-            stringBuilder.append('}');
-        }
-
-    }
-
-
-    private static <K,V> void printData(
-            final int levelidx, final int level, final StringBuilder stringBuilder,
-            final int hash, final HashEntry<K,V> entry, final HashEntry<K,V>[] entries) {
-
-        stringBuilder.append(indentForLevel(levelidx));
-        stringBuilder.append(
-                String.format("[%2d | %032d] {\n",
-                        levelidx,
-                        (level < AtomicHashStore.LEVEL_COUNT? new BigInteger(Integer.toBinaryString(AtomicHashStore.maskFor(level) << AtomicHashStore.shiftFor(level))) : 0)));
-
-        printEntries(levelidx + 1, stringBuilder, hash, entry, entries);
-        stringBuilder.append('\n');
-
-        stringBuilder.append(indentForLevel(levelidx));
-        stringBuilder.append('}');
-
-    }
-
-
-    private static <K,V> void printEntries(
-            final int levelidx, final StringBuilder stringBuilder,
-            final int hash, final HashEntry<K,V> entry, final Map.Entry<K,V>[] entries) {
-
-        stringBuilder.append(indentForLevel(levelidx));
-        stringBuilder.append(String.format("[%032d] (", new BigInteger(Integer.toBinaryString(hash))));
-        if (entries == null) {
-            stringBuilder.append(String.format(" %s )", printEntry(entry)));
-        } else {
-            stringBuilder.append('\n');
-            for (int i = 0; i < entries.length; i++) {
-                stringBuilder.append(indentForLevel(levelidx + 1));
-                stringBuilder.append(printEntry(entries[i]));
-                stringBuilder.append('\n');
-            }
-            stringBuilder.append(indentForLevel(levelidx));
-            stringBuilder.append(")");
-        }
-
-    }
 
 
 

@@ -145,7 +145,7 @@ public class AtomicHashStoreOfTest {
 
             final AtomicHashStore.Entry<String,Integer>[] entries = new AtomicHashStore.Entry[i];
             for (int j = 0; j < entries.length; j++) {
-                entries[j] = new DataEntry<>(keys[j], values[j]);
+                entries[j] = new Entry<>(keys[j], values[j]);
             }
 
             final AtomicHashStore<String,Integer> st = AtomicHashStore.ofEntries(entries);
