@@ -90,10 +90,11 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V put(final K key, final V newValue) {
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
-        } while (!this.root.compareAndSet(node, node.put(key, newValue)));
+            newNode = node.put(key, newValue);
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
         final Object oldValue = node.get(key);
         return (V) normalizeAbsentValue(oldValue);
     }
@@ -101,11 +102,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public V putIfAbsent(final K key, final V newValue) {
         V value;
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
             value = (V) normalizeAbsentValue(node.get(key));
-        } while (value == null && !this.root.compareAndSet(node, node.put(key, newValue)));
+            newNode = (value == null) ? node.put(key, newValue) : node;
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return value;
     }
 
@@ -120,16 +122,17 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             for (final Entry<? extends K, ? extends V> entry : newEntrySet) {
                 newNode = newNode.put(entry.getKey(), entry.getValue());
             }
-        } while (!this.root.compareAndSet(node, newNode));
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
     }
 
 
     @Override
     public V remove(final Object key) {
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
-        } while (!this.root.compareAndSet(node, node.remove(key)));
+            newNode = node.remove(key);
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
         final Object oldValue = node.get(key);
         return (V) normalizeAbsentValue(oldValue);
     }
@@ -137,12 +140,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public boolean remove(final Object key, final Object oldValue) {
         boolean matches;
-        V value;
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
-            value = (V) node.get(key);
-        } while ((matches = Objects.equals(oldValue, value)) && !this.root.compareAndSet(node, node.remove(key)));
+            matches = Objects.equals(oldValue, node.get(key));
+            newNode = (matches) ? node.remove(key) : node;
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
     }
 
@@ -183,26 +186,25 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public boolean replace(final K key, final V oldValue, final V newValue) {
         boolean matches;
-        V value;
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
-            value = (V) node.get(key);
-        } while ((matches = Objects.equals(oldValue, value)) && !this.root.compareAndSet(node, node.put(key, newValue)));
+            matches = Objects.equals(oldValue, node.get(key));
+            newNode = (matches) ? node.put(key, newValue) : node;
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
     }
 
     @Override
     public V replace(final K key, final V newValue) {
         boolean mapped;
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
-        } while ((mapped = node.containsKey(key)) && !this.root.compareAndSet(node, node.put(key, newValue)));
-        if (!mapped) {
-            return null;
-        }
-        return (V) node.get(key);
+            mapped = node.containsKey(key);
+            newNode = (mapped) ? node.put(key, newValue) : node;
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+        return (mapped) ? (V) node.get(key) : null;
     }
 
     @Override
@@ -215,7 +217,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             for (io.aquen.atomichash.Entry entry : node.allEntries()) {
                 newNode = newNode.put(entry.key, function.apply((K)entry.key, (V)entry.value));
             }
-        } while (!this.root.compareAndSet(node, newNode));
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
     }
 
 
@@ -223,12 +225,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
         Objects.requireNonNull(mappingFunction);
         V value, mappedValue;
-        Node node;
+        Node node, newNode;
         do {
             node = this.root.get();
             value = (V) normalizeAbsentValue(node.get(key));
             mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-        } while (mappedValue != null && !this.root.compareAndSet(node, node.put(key, mappedValue)));
+            newNode = (mappedValue != null) ? node.put(key, mappedValue) : node;
+        } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return value;
     }
 
