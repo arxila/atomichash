@@ -45,9 +45,19 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     }
 
 
+    Node innerRoot() {
+        return this.root.get();
+    }
+
+
     // Several methods in the java.util.Map interface consider absent values and those mapped to null to be equivalent
     private static Object normalizeAbsentValue(final Object value) {
         return (value == io.aquen.atomichash.Entry.NOT_FOUND) ? null : value;
+    }
+
+
+    public AtomicHashStore<K,V> toStore() {
+        return new AtomicHashStore<>(this.root.get());
     }
 
 
