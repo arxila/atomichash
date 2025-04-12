@@ -319,7 +319,7 @@ final class Node implements Serializable {
             if (newEntry != null) {
                 final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
                 newEntries[entryPos] = newEntry;
-                return new Node(this.level, this.size, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
+                return new Node(this.level, this.size - 1, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
             }
 
             final long newEntriesBitMap = this.entriesBitMap ^ mask;
@@ -351,7 +351,7 @@ final class Node implements Serializable {
             return this;
         }
 
-        if (newNode.size > 1) {
+        if (newNode.nodes.length > 0 || newNode.entries.length > 1) {
 
             final Node[] newNodes = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
             newNodes[nodePos] = newNode;
