@@ -66,6 +66,42 @@ public class BaseAtomicHashMapTest {
 
 
     @Test
+    void testContainsKeyAndValue() {
+
+        final Map<String, String> map = new AtomicHashMap<>();
+
+        // Initially, the map should not contain any key or value
+        assertFalse(map.containsKey(null), "Empty map should not contain null key");
+        assertFalse(map.containsValue(null), "Empty map should not contain null value");
+        assertFalse(map.containsKey("key1"), "Empty map should not contain any key");
+        assertFalse(map.containsValue("value1"), "Empty map should not contain any value");
+
+        // Add null key with non-null value
+        map.put(null, "value1");
+        assertTrue(map.containsKey(null), "Map should contain null key after adding it");
+        assertTrue(map.containsValue("value1"), "Map should contain value1 after adding it");
+        assertFalse(map.containsValue(null), "Map should not contain null value if not explicitly added");
+
+        // Add non-null key with null value
+        map.put("key1", null);
+        assertTrue(map.containsKey("key1"), "Map should contain key1 after adding it with a null value");
+        assertTrue(map.containsValue(null), "Map should contain null value after adding it");
+        assertFalse(map.containsKey("key2"), "Map should not contain key2 if not added");
+        assertFalse(map.containsValue("value2"), "Map should not contain value2 if not added");
+
+        // Add additional key-value pairs
+        map.put("key2", "value2");
+        assertTrue(map.containsKey("key2"), "Map should contain key2 after adding it");
+        assertTrue(map.containsValue("value2"), "Map should contain value2 after adding it");
+
+        // Remove key and check again
+        map.remove(null);
+        assertFalse(map.containsKey(null), "Map should not contain null key after removal");
+        assertFalse(map.containsValue("value1"), "Map should not contain value1 after null key removal");
+    }
+
+
+    @Test
     void testPutAndGetWithNullKeysAndValues() {
 
         final Map<String, String> map = new AtomicHashMap<>();
