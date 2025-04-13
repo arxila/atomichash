@@ -1,5 +1,6 @@
 package io.aquen.atomichash;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -8,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class HeavyLoadAtomicHashMapTest {
 
-    private Map<String, String> heavyLoadInstance() {
+    private AtomicHashMap<String, String> heavyLoadInstance() {
         final AtomicHashMap<String, String> map = new AtomicHashMap<>();
         for (int i = 0; i < 2_000_000; i++) {
             map.put("Key" + i, "Value" + i);
@@ -49,4 +50,12 @@ public class HeavyLoadAtomicHashMapTest {
         final Map<String, String> map = heavyLoadInstance();
         assertEquals(2_000_000, map.keySet().size());
     }
+
+    @Test
+    public void testNodeValid() {
+        final AtomicHashMap<String, String> map = heavyLoadInstance();
+        TestUtils.validateNode(map.innerRoot());
+        assertTrue(true);
+    }
+
 }
