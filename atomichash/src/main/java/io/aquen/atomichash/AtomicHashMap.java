@@ -45,6 +45,18 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     }
 
 
+    public AtomicHashMap(final Map<? extends K, ? extends V> map) {
+        this.root = new AtomicReference<>();
+        Node node = Node.EMPTY_NODE;
+        if (map != null) {
+            for (final Entry<? extends K, ? extends V> entry : map.entrySet()) {
+                node = node.put(entry.getKey(), entry.getValue());
+            }
+        }
+        this.root.set(node);
+    }
+
+
     Node innerRoot() {
         return this.root.get();
     }
@@ -56,7 +68,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     }
 
 
-    public AtomicHashStore<K,V> toStore() {
+    public AtomicHashStore<K,V> store() {
         return new AtomicHashStore<>(this.root.get());
     }
 
