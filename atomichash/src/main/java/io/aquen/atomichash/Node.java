@@ -255,12 +255,13 @@ final class Node implements Serializable {
         if (oldEntry.containsKey(hash, entry.key)) {
             // There is a match (key exists): entry needs to be replaced
 
-            if (oldEntry.alreadyMapped(entry.key, entry.value)) {
+            final Entry newEntry = oldEntry.set(entry);
+            if (oldEntry == newEntry) {
                 return this;
             }
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-            newEntries[entryPos] = entry;
+            newEntries[entryPos] = newEntry;
 
             return new Node(this.level, this.size, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
 

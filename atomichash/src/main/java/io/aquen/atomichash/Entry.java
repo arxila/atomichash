@@ -85,22 +85,6 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     }
 
 
-    boolean alreadyMapped(final Object key, final Object value) {
-        // In order to determine whether a mapping already exists, key and value will be applied
-        // referential equality and not object equality. This leaves room for the possibility of a mapping
-        // (key and/or value) to be replaced by other objects even if these are "equals".
-        if (this.collisions == null) {
-            return this.key == key && this.value == value;
-        }
-        for (final Entry collision : this.collisions) {
-            if (collision.key == key && collision.value == value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
 
     Object get(final Object key) {
         if (this.collisions == null) {
@@ -113,6 +97,32 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
         }
         return NOT_FOUND;
 
+    }
+
+
+    Entry set(final Entry entry) {
+        // In order to determine whether a mapping already exists, key and value will be applied
+        // referential equality and not object equality. This leaves room for the possibility of a mapping
+        // (key and/or value) to be replaced by other objects even if these are "equals".
+        if (this.collisions == null) {
+            if (this.key == entry.key && this.value == entry.value) {
+                return this;
+            }
+            return entry;
+        }
+        Entry collision;
+        for (int i = 0; i < this.collisions.length; i++) {
+            collision = this.collisions[i];
+            if (Objects.equals(collision.key, entry.key)) {
+                if (collision.key == key && collision.value == value) {
+                    return this;
+                }
+                final Entry[] newCollisions = Arrays.copyOf(this.collisions, this.collisions.length);
+                newCollisions[i] = entry;
+                return new Entry(this.hash, newCollisions);
+            }
+        }
+        throw new IllegalStateException(); // Should never happen
     }
 
 
