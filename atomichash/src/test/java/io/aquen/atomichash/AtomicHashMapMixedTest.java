@@ -104,7 +104,7 @@ public class AtomicHashMapMixedTest {
 
         Assertions.assertEquals("FOUR", map.computeIfAbsent("four", (k) -> k + "x"));
         Assertions.assertEquals("FOUR", map.get("four"));
-        Assertions.assertNull(map.computeIfAbsent("five", (k) -> k + "x"));
+        Assertions.assertEquals("fivex", map.computeIfAbsent("five", (k) -> k + "x"));
         Assertions.assertEquals("fivex", map.get("five"));
 
         Assertions.assertNull(map.computeIfPresent("six", (k,v) -> k + v + "x"));
