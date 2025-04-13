@@ -254,7 +254,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             mappedValue = (value == null) ? mappingFunction.apply(key) : null;
             newNode = (mappedValue != null) ? node.put(key, mappedValue) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
-        return value;
+        return (mappedValue != null) ? mappedValue : value;
     }
 
     @Override
