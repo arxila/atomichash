@@ -214,7 +214,7 @@ public class AtomicHashMapReadWriteTest {
         Assertions.assertEquals((oldContainsKey) ? oldSize : (oldSize + 1), newSize);
         Assertions.assertSame(value, newValue);
 
-        final AtomicHashMap<K,V> map2 = AtomicHashMap.copyOf(map);
+        final AtomicHashMap<K,V> map2 = new AtomicHashMap<>(map);
         x = map2.remove(key);
 
         Assertions.assertEquals(value, x);
@@ -240,7 +240,7 @@ public class AtomicHashMapReadWriteTest {
             Assertions.assertNull(oldValue);
         }
 
-        AtomicHashMap<K,V> map2 = AtomicHashMap.copyOf(map);
+        AtomicHashMap<K,V> map2 = new AtomicHashMap<>(map);
 
         V x1 = map.remove(key);
         boolean x2 = map2.remove(key, oldValue);

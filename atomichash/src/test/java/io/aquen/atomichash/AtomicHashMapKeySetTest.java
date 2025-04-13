@@ -21,6 +21,7 @@ package io.aquen.atomichash;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -73,22 +74,16 @@ public class AtomicHashMapKeySetTest {
 
 
 
-    private void testIterator(KeyValue<String,String>[] entries, final Set<String> keySet) {
+    private void testIterator(final KeyValue<String,String>[] entries, final Set<String> keySet) {
 
-        final List<KeyValue<String,String>> expectedEntries = new ArrayList<>(Arrays.asList(entries));
-        expectedEntries.sort(TestUtils.HashComparator.INSTANCE);
+        final Set<KeyValue<String,String>> expectedEntries = new HashSet<>(Arrays.asList(entries));
 
-        final List<String> expectedKeys = new ArrayList<>();
+        final Set<String> expectedKeys = new HashSet<>();
         for (final KeyValue<String,String> expectedEntry : expectedEntries) {
             expectedKeys.add(expectedEntry.getKey());
         }
 
-        final List<String> obtainedKeys = new ArrayList<>();
-        for (final String key : keySet) {
-            obtainedKeys.add(key);
-        }
-
-        Assertions.assertEquals(expectedKeys, obtainedKeys);
+        Assertions.assertEquals(expectedKeys, keySet);
 
     }
 

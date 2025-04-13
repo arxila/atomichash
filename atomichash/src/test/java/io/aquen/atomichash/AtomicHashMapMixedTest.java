@@ -71,12 +71,12 @@ public class AtomicHashMapMixedTest {
 
         map.forEach((k,v) -> Assertions.assertTrue(map.containsKey(k)));
         map.forEach((k,v) -> Assertions.assertTrue(map.containsValue(v)));
-        map.forEach((k,v) -> Assertions.assertTrue(map.get(k) == v));
+        map.forEach((k,v) -> Assertions.assertSame(map.get(k), v));
 
         Assertions.assertEquals("FOUR", map.getOrDefault("four", "NOTHING"));
         Assertions.assertEquals("NOTHING", map.getOrDefault("nothing", "NOTHING"));
 
-        Assertions.assertNull("FIVE", map.putIfAbsent("five","FIVE"));
+        Assertions.assertNull(map.putIfAbsent("five","FIVE"));
         Assertions.assertEquals("FIVE", map.get("five"));
 
         Assertions.assertNull(map.remove("six"));
@@ -104,7 +104,7 @@ public class AtomicHashMapMixedTest {
 
         Assertions.assertEquals("FOUR", map.computeIfAbsent("four", (k) -> k + "x"));
         Assertions.assertEquals("FOUR", map.get("four"));
-        Assertions.assertEquals("fivex", map.computeIfAbsent("five", (k) -> k + "x"));
+        Assertions.assertNull(map.computeIfAbsent("five", (k) -> k + "x"));
         Assertions.assertEquals("fivex", map.get("five"));
 
         Assertions.assertNull(map.computeIfPresent("six", (k,v) -> k + v + "x"));
