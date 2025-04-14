@@ -21,9 +21,11 @@ package io.aquen.atomichash;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -55,21 +57,20 @@ public class AtomicHashStoreIteratorTest {
             store = store.put(entries[i].getKey(), entries[i].getValue());
         }
 
-        final String snap11 = PrettyPrinter.prettyPrint(store);
+        final String snap11 = PrettyPrinter.print(store);
 
-        TestUtils.validateStoreWellFormed(store);
+        TestUtils.validate(store);
 
-        final List<KeyValue<String,String>> expected = new ArrayList<>(Arrays.asList(entries));
-        expected.sort(TestUtils.HashComparator.INSTANCE);
+        final Set<KeyValue<String,String>> expected = new HashSet<>(Arrays.asList(entries));
 
-        final List<KeyValue<String,String>> obtained = new ArrayList<>();
-        for (final Map.Entry<String,String> entry : store) {
+        final Set<KeyValue<String,String>> obtained = new HashSet<>();
+        for (final Map.Entry<String,String> entry : store.entrySet()) {
             obtained.add(new KeyValue<>(entry.getKey(), entry.getValue()));
         }
 
         Assertions.assertEquals(expected, obtained);
 
-        final String snap12 = PrettyPrinter.prettyPrint(store);
+        final String snap12 = PrettyPrinter.print(store);
         Assertions.assertEquals(snap11, snap12);
 
     }

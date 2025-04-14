@@ -221,15 +221,15 @@ public final class AtomicHashStore<K,V> implements Serializable {
         if (other == this) {
             return true;
         }
-        if (!(other instanceof Map)) {
+        if (!(other instanceof AtomicHashStore<?,?>)) {
             return false;
         }
         // In order to ensure consistency of the operation, only one call (".entrySet()") will be performed
         // on "this" and on the "other" variable. This avoids possible issues that could arise if first "other.size()"
         // was checked and then "other.entrySet()", but "other" was modified in between.
         final Set<Map.Entry<K,V>> entrySet = entrySet();
-        final Map<?,?> otherMap = (Map<?,?>) other;
-        return entrySet.equals(otherMap.entrySet());
+        final AtomicHashStore<?,?> otherStore = (AtomicHashStore<?,?>) other;
+        return entrySet.equals(otherStore.entrySet());
     }
 
 

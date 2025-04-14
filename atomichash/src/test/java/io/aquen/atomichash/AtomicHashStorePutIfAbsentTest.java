@@ -160,14 +160,14 @@ public class AtomicHashStorePutIfAbsentTest {
             Assertions.assertNull(oldValue);
         }
 
-        final String snap11 = PrettyPrinter.prettyPrint(store);
+        final String snap11 = PrettyPrinter.print(store);
 
         store2 = store.putIfAbsent(key, value);
 
-        final String snap12 = PrettyPrinter.prettyPrint(store);
+        final String snap12 = PrettyPrinter.print(store);
         Assertions.assertEquals(snap11, snap12);
 
-        TestUtils.validateStoreWellFormed(store2);
+        TestUtils.validate(store2);
 
         final boolean newContainsKey = store2.containsKey(key);
         final boolean newContainsValue = store2.containsValue(value);
@@ -196,14 +196,14 @@ public class AtomicHashStorePutIfAbsentTest {
             Assertions.assertSame(value, newValue);
         }
 
-        final String snap21 = PrettyPrinter.prettyPrint(store2);
+        final String snap21 = PrettyPrinter.print(store2);
 
         store3 = store2.remove(key);
 
-        final String snap22 = PrettyPrinter.prettyPrint(store2);
+        final String snap22 = PrettyPrinter.print(store2);
         Assertions.assertEquals(snap21, snap22);
 
-        TestUtils.validateStoreWellFormed(store3);
+        TestUtils.validate(store3);
 
         Assertions.assertTrue(store2.containsKey(key));
         if (!oldContainsKey && (!oldContainsValue || oldValue == null)) {
@@ -233,14 +233,14 @@ public class AtomicHashStorePutIfAbsentTest {
             Assertions.assertNull(oldValue);
         }
 
-        final String snap11 = PrettyPrinter.prettyPrint(store);
+        final String snap11 = PrettyPrinter.print(store);
 
         store2 = store.remove(key);
 
-        final String snap12 = PrettyPrinter.prettyPrint(store);
+        final String snap12 = PrettyPrinter.print(store);
         Assertions.assertEquals(snap11, snap12);
 
-        TestUtils.validateStoreWellFormed(store2);
+        TestUtils.validate(store2);
 
         final boolean newContainsKey = store2.containsKey(key);
         final V newValue = store2.get(key);
@@ -258,14 +258,14 @@ public class AtomicHashStorePutIfAbsentTest {
         Assertions.assertEquals((!oldContainsKey) ? oldSize : (oldSize - 1), newSize);
         Assertions.assertNull(newValue);
 
-        final String snap21 = PrettyPrinter.prettyPrint(store2);
+        final String snap21 = PrettyPrinter.print(store2);
 
         store3 = store2.put(key, null);
 
-        final String snap22 = PrettyPrinter.prettyPrint(store2);
+        final String snap22 = PrettyPrinter.print(store2);
         Assertions.assertEquals(snap21, snap22);
 
-        TestUtils.validateStoreWellFormed(store3);
+        TestUtils.validate(store3);
 
         Assertions.assertFalse(store2.containsKey(key));
         Assertions.assertEquals(newSize, store2.size());
@@ -283,7 +283,7 @@ public class AtomicHashStorePutIfAbsentTest {
 
 
     private static <K,V> boolean existsEntryByReference(final AtomicHashStore<K,V> store, final K key, final V value) {
-        for (final Map.Entry<K,V> entry : store) {
+        for (final Map.Entry<K,V> entry : store.entrySet()) {
             if (key == entry.getKey() && value == entry.getValue()) {
                 return true;
             }
