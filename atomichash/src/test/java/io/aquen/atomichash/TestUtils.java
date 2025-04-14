@@ -21,9 +21,7 @@ package io.aquen.atomichash;
 
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 
