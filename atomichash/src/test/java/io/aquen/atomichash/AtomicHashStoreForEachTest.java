@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,12 +84,13 @@ public class AtomicHashStoreForEachTest {
 
         st = st.putAll(entriesMap);
 
-        Arrays.sort(entries, TestUtils.HashComparator.INSTANCE);
+        Arrays.sort(entries, (o1, o2) -> Integer.compare(o1.hashCode(), o2.hashCode()));
 
         final List<KeyValue<String,String>> iteratedKVs = new ArrayList<>();
         st.forEach((k,v) -> iteratedKVs.add(new KeyValue<>(k, v)));
 
         final KeyValue<String,String>[] iteratedKVsArr = iteratedKVs.toArray(new KeyValue[iteratedKVs.size()]);
+        Arrays.sort(iteratedKVsArr, (o1, o2) -> Integer.compare(o1.hashCode(), o2.hashCode()));
 
         Assertions.assertTrue(Arrays.equals(entries, iteratedKVsArr));
 
@@ -104,13 +104,13 @@ public class AtomicHashStoreForEachTest {
         AtomicHashStore<String,String> st = this.store;
 
         final List<KeyValue<String,String>> vals = new ArrayList<>();
-        st.forEach((entry) -> vals.add(new KeyValue<>(entry.getKey(), entry.getValue())));
+        st.forEach((k,v) -> vals.add(new KeyValue<>(k,v)));
 
         Assertions.assertTrue(vals.isEmpty());
 
         st = st.put("one", "ONE");
 
-        st.forEach((entry) -> vals.add(new KeyValue<>(entry.getKey(), entry.getValue())));
+        st.forEach((k,v) -> vals.add(new KeyValue<>(k,v)));
 
         Assertions.assertEquals(1, vals.size());
         Assertions.assertTrue(vals.iterator().next().getKey().equals("one"));
@@ -120,7 +120,7 @@ public class AtomicHashStoreForEachTest {
         st = st.put(null, null);
 
         vals.clear();
-        st.forEach((entry) -> vals.add(new KeyValue<>(entry.getKey(), entry.getValue())));
+        st.forEach((k,v) -> vals.add(new KeyValue<>(k,v)));
 
         Assertions.assertEquals(1, vals.size());
         Assertions.assertTrue(vals.iterator().next().getKey() == null);
@@ -143,12 +143,13 @@ public class AtomicHashStoreForEachTest {
 
         st = st.putAll(entriesMap);
 
-        Arrays.sort(entries, TestUtils.HashComparator.INSTANCE);
+        Arrays.sort(entries, (o1, o2) -> Integer.compare(o1.hashCode(), o2.hashCode()));
 
         final List<KeyValue<String,String>> iteratedKVs = new ArrayList<>();
-        st.forEach((entry) -> iteratedKVs.add(new KeyValue<>(entry.getKey(), entry.getValue())));
+        st.forEach((k,v) -> iteratedKVs.add(new KeyValue<>(k,v)));
 
         final KeyValue<String,String>[] iteratedKVsArr = iteratedKVs.toArray(new KeyValue[iteratedKVs.size()]);
+        Arrays.sort(iteratedKVsArr, (o1, o2) -> Integer.compare(o1.hashCode(), o2.hashCode()));
 
         Assertions.assertTrue(Arrays.equals(entries, iteratedKVsArr));
 

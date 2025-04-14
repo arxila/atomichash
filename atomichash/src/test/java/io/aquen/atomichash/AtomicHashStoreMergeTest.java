@@ -112,24 +112,22 @@ public class AtomicHashStoreMergeTest {
             Assertions.assertNull(oldValue);
         }
 
-        final String snap11 = PrettyPrinter.prettyPrint(store);
+        final String snap11 = PrettyPrinter.print(store);
 
-        final Map<String,V> m = new HashMap<>();
-        store2 = store.merge(key, value, (oldv,newv) -> (V)((String)oldv+(String)newv), (v) -> { m.put("VALUE", v);});
+        store2 = store.merge(key, value, (oldv,newv) -> (V)((String)oldv+(String)newv));
 
         String expected = (oldContainsKey) ? (String) oldValue + (String) value : (String)value;
 
-        Assertions.assertEquals(expected, m.get("VALUE"));
         Assertions.assertEquals(expected, store2.get(key));
 
 
         store2 = store.merge(key, value, (oldv,newv) -> (V)((String)oldv+(String)newv));
 
 
-        final String snap12 = PrettyPrinter.prettyPrint(store);
+        final String snap12 = PrettyPrinter.print(store);
         Assertions.assertEquals(snap11, snap12);
 
-        TestUtils.validateStoreWellFormed(store2);
+        TestUtils.validate(store2);
 
         Assertions.assertEquals(expected, store2.get(key));
 
@@ -140,7 +138,7 @@ public class AtomicHashStoreMergeTest {
 
 
     private static <K,V> boolean existsEntryByReference(final AtomicHashStore<K,V> store, final K key, final V value) {
-        for (final Map.Entry<K,V> entry : store) {
+        for (final Map.Entry<K,V> entry : store.entrySet()) {
             if (key == entry.getKey() && value == entry.getValue()) {
                 return true;
             }

@@ -189,7 +189,7 @@ public class AtomicHashMapComputeTest {
 
     @Test
     void testComputeOnLargeMap() {
-        Map<Integer, Integer> largeMap = new HashMap<>();
+        Map<Integer, Integer> largeMap = new AtomicHashMap<>();
         for (int i = 0; i < 1_000_000; i++) {
             largeMap.put(i, i);
         }
@@ -203,7 +203,7 @@ public class AtomicHashMapComputeTest {
     @Test
     void testComputeWithCollisionsInLargeMap() {
         // Create a large map with collision-prone custom keys
-        Map<CustomKey, String> largeMap = new HashMap<>();
+        Map<CustomKey, String> largeMap = new AtomicHashMap<>();
         for (int i = 0; i < 50_000; i++) {
             largeMap.put(new CustomKey("key" + i), "value" + i);
         }

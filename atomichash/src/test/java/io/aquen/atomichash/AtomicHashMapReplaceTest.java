@@ -155,7 +155,7 @@ public class AtomicHashMapReplaceTest {
 
     @Test
     void testReplaceKeyWithValue_LargeMap() {
-        Map<Integer, String> largeMap = new HashMap<>();
+        Map<Integer, String> largeMap = new AtomicHashMap<>();
         for (int i = 0; i < 1_000_000; i++) {
             largeMap.put(i, "value" + i);
         }
@@ -169,7 +169,7 @@ public class AtomicHashMapReplaceTest {
 
     @Test
     void testReplaceAll_LargeMap() {
-        Map<Integer, String> largeMap = new HashMap<>();
+        Map<Integer, String> largeMap = new AtomicHashMap<>();
         for (int i = 0; i < 1_000_000; i++) {
             largeMap.put(i, "value" + i);
         }
