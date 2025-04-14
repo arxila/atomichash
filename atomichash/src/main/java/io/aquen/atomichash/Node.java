@@ -352,7 +352,7 @@ final class Node implements Serializable {
             return this;
         }
 
-        if (newNode.nodes.length > 0 || newNode.entries.length > 1) {
+        if (newNode.nodes.length > 0 || newNode.entries.length > 1 || newNode.entries[0].collisions != null) {
 
             final Node[] newNodes = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
             newNodes[nodePos] = newNode;
@@ -361,7 +361,7 @@ final class Node implements Serializable {
 
         }
 
-        // The new Node at level + 1 now has a single Entry, so we need to link that Entry instead
+        // The new Node at level + 1 now has a single non-collision Entry, so we need to link that Entry instead
 
         final Entry newEntry = newNode.entries[0];
         final int newEntryPos = (entryPos ^ NEG_MASK);

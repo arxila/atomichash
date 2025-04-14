@@ -21,7 +21,6 @@ package io.aquen.atomichash;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -145,26 +144,26 @@ public class AtomicHashStorePutAllTest {
 
         final int oldContainedKeysCount = containsHowManyKeys(map, store);
 
-        final String snap11 = PrettyPrinter.prettyPrint(store);
+        final String snap11 = PrettyPrinter.print(store);
 
         store2 = store.putAll(map);
 
-        final String snap12 = PrettyPrinter.prettyPrint(store);
+        final String snap12 = PrettyPrinter.print(store);
         Assertions.assertEquals(snap11, snap12);
 
-        TestUtils.validateStoreWellFormed(store2);
+        TestUtils.validate(store2);
 
         Assertions.assertEquals(oldContainedKeysCount, containsHowManyKeys(map, store));
         Assertions.assertEquals(map.size(), containsHowManyKeys(map, store2));
 
         store3 = store;
-        final String snap31 = PrettyPrinter.prettyPrint(store2);
+        final String snap31 = PrettyPrinter.print(store2);
 
         for (final Map.Entry<K,V> entry : map.entrySet()) {
             store3 = store3.put(entry.getKey(), entry.getValue());
         }
 
-        final String snap32 = PrettyPrinter.prettyPrint(store3);
+        final String snap32 = PrettyPrinter.print(store3);
         Assertions.assertEquals(snap31, snap32); // Result of putAll is the same as many put
 
 
@@ -202,17 +201,17 @@ public class AtomicHashStorePutAllTest {
 
         Assertions.assertEquals(store.size() + (map.size() - oldContainedKeysCount), store2.size());
 
-        final String snap21 = PrettyPrinter.prettyPrint(store2);
+        final String snap21 = PrettyPrinter.print(store2);
 
         store3 = store2;
         for (final Map.Entry<K,V> entry : map.entrySet()) {
             store3 = store3.remove(entry.getKey());
         }
 
-        final String snap22 = PrettyPrinter.prettyPrint(store2);
+        final String snap22 = PrettyPrinter.print(store2);
         Assertions.assertEquals(snap21, snap22);
 
-        TestUtils.validateStoreWellFormed(store3);
+        TestUtils.validate(store3);
 
         newStatus.forEach((nk,nst) -> {
             final TestStatus<V> ost = oldStatus.get(nk);
@@ -239,7 +238,7 @@ public class AtomicHashStorePutAllTest {
 
 
     private static <K,V> boolean existsEntryByReference(final AtomicHashStore<K,V> store, final K key, final V value) {
-        for (final Map.Entry<K,V> entry : store) {
+        for (final Map.Entry<K,V> entry : store.entrySet()) {
             if (key == entry.getKey() && value == entry.getValue()) {
                 return true;
             }

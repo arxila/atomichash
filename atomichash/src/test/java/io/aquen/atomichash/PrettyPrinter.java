@@ -22,6 +22,16 @@ package io.aquen.atomichash;
 final class PrettyPrinter {
 
 
+    static <K,V> String print(final AtomicHashMap<K,V> map) {
+        return printNode(map.innerRoot());
+    }
+
+
+    static <K,V> String print(final AtomicHashStore<K,V> store) {
+        return printNode(store.innerRoot());
+    }
+
+
     static <K,V> String printNode(final Node node) {
         final StringBuilder stringBuilder = new StringBuilder();
         printNode(0, 0, 0, stringBuilder, node);

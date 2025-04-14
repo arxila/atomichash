@@ -78,91 +78,91 @@ public class HeavyLoadAtomicHashMapTest {
     @Test
     public void testNodeValid0() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(0);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid1() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(1);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid10() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(10);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid100() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(100);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid500() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(500);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid1000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(1000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid5000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(5000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid10000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(10000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid50000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(50000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid100000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(100000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid500000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(500000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid1000000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(1000000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 
     @Test
     public void testNodeValid5000000() {
         final AtomicHashMap<String, String> map = heavyLoadInstance(5000000);
-        TestUtils.validateNode(map.innerRoot());
+        TestUtils.validate(map.innerRoot());
         assertTrue(true);
     }
 

@@ -114,7 +114,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
         for (int i = 0; i < this.collisions.length; i++) {
             collision = this.collisions[i];
             if (Objects.equals(collision.key, entry.key)) {
-                if (collision.key == key && collision.value == value) {
+                if (collision.key == entry.key && collision.value == entry.value) {
                     return this;
                 }
                 final Entry[] newCollisions = Arrays.copyOf(this.collisions, this.collisions.length);
