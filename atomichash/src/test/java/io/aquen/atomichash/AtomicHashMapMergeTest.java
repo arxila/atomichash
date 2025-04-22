@@ -19,7 +19,6 @@
  */
 package io.aquen.atomichash;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;

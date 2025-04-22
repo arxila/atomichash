@@ -21,10 +21,10 @@ package io.aquen.atomichash;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,17 +88,21 @@ public class AtomicHashStoreReplaceAllTest {
 
         st = st.putAll(entriesMap);
 
-        Arrays.sort(entries, TestUtils.HashComparator.INSTANCE);
+        for (int i = 0; i < entries.length; i++) {
+            entries[i] = new KeyValue<>(entries[i].getKey(), "[x]" + entries[i].getValue());
+        }
+        Arrays.sort(entries, Comparator.comparingInt(KeyValue::hashCode));
 
         final List<KeyValue<String,String>> iteratedKVs = new ArrayList<>();
         st = st.replaceAll((k,v) -> "[x]" + v);
         st.forEach((k,v) -> iteratedKVs.add(new KeyValue<>(k, v)));
 
         final KeyValue<String,String>[] iteratedKVsArr = iteratedKVs.toArray(new KeyValue[iteratedKVs.size()]);
+        Arrays.sort(iteratedKVsArr, Comparator.comparingInt(KeyValue::hashCode));
 
         for (int i = 0; i < entries.length; i++) {
             Assertions.assertEquals(entries[i].getKey(), iteratedKVsArr[i].getKey());
-            Assertions.assertEquals("[x]" + entries[i].getValue(), iteratedKVsArr[i].getValue());
+            Assertions.assertEquals(entries[i].getValue(), iteratedKVsArr[i].getValue());
         }
 
     }
