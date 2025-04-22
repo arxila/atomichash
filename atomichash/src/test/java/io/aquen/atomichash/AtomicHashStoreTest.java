@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AtomicHashStoreTests {
+public class AtomicHashStoreTest {
 
     private AtomicHashStore<String, String> store;
 
