@@ -21,10 +21,10 @@ package io.aquen.atomichash.benchmarks.utils;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public final class BenchmarkMappings {
@@ -33,12 +33,17 @@ public final class BenchmarkMappings {
     private final static String VALUES_MODIFIED_FILENAME = "benchmark-values-modified.properties";
     private final static String VALUES_NEW_FILENAME = "benchmark-values-new.properties";
 
+    private final String[] initKeys;
+    private final String[] additionalKeys;
+    private AtomicInteger keyIndex = new AtomicInteger(0);
+    private AtomicInteger additionalKeyIndex = new AtomicInteger(0);
     private final Map<String,String> initMappings;
-    private final Map<String,String> modifiedMappings;
-    private final Map<String,String> newMappings;
+    private final Map<String,String> additionalMappings;
 
 
-    public BenchmarkMappings(final int initMappings, final int modifiedMappings, final int newMappings) {
+
+
+    public BenchmarkMappings(final int initMappingsCount, final int modifiedMappingsCount, final int newMappingsCount) {
 
         super();
 
@@ -55,17 +60,17 @@ public final class BenchmarkMappings {
             throw new RuntimeException(e);
         }
 
-        if (initMappings > initProperties.size()) {
-            throw new IllegalArgumentException("initMappings is " + initMappings + " but total init properties are " + initProperties.size());
+        if (initMappingsCount > initProperties.size()) {
+            throw new IllegalArgumentException("initMappings is " + initMappingsCount + " but total init properties are " + initProperties.size());
         }
-        if (modifiedMappings > modifiedProperties.size()) {
-            throw new IllegalArgumentException("modifiedMappings is " + modifiedMappings + " but total modified properties are " + modifiedProperties.size());
+        if (modifiedMappingsCount > modifiedProperties.size()) {
+            throw new IllegalArgumentException("modifiedMappings is " + modifiedMappingsCount + " but total modified properties are " + modifiedProperties.size());
         }
-        if (newMappings > newProperties.size()) {
-            throw new IllegalArgumentException("newMappings is " + newMappings + " but total new properties are " + newProperties.size());
+        if (newMappingsCount > newProperties.size()) {
+            throw new IllegalArgumentException("newMappings is " + newMappingsCount + " but total new properties are " + newProperties.size());
         }
-        if (modifiedMappings > initMappings) {
-            throw new IllegalArgumentException("modifiedMappings is " + modifiedMappings + " but initMappings is " + initMappings + " (must be <=)");
+        if (modifiedMappingsCount > initMappingsCount) {
+            throw new IllegalArgumentException("modifiedMappings is " + modifiedMappingsCount + " but initMappings is " + initMappingsCount + " (must be <=)");
         }
 
         final KeyValue<String,String>[] allInitMappings =
@@ -75,31 +80,83 @@ public final class BenchmarkMappings {
         final KeyValue<String,String>[] allNewMappings =
                 newProperties.entrySet().stream().map(e -> new KeyValue<>(e.getKey(), e.getValue())).toArray(KeyValue[]::new);
 
-        Arrays.sort(allInitMappings, Comparator.comparingInt(KeyValue::hashCode));
-        Arrays.sort(allModifiedMappings, Comparator.comparingInt(KeyValue::hashCode));
-        Arrays.sort(allNewMappings, Comparator.comparingInt(KeyValue::hashCode));
+        this.initMappings = Arrays.stream(Arrays.copyOf(allInitMappings, initMappingsCount)).collect(Collectors.toMap(KeyValue::getKey, KeyValue::getValue));
 
-        this.initMappings = Arrays.stream(Arrays.copyOf(allInitMappings, initMappings)).collect(Collectors.toMap(KeyValue::getKey, KeyValue::getValue));
-        this.newMappings = Arrays.stream(Arrays.copyOf(allNewMappings, newMappings)).collect(Collectors.toMap(KeyValue::getKey, KeyValue::getValue));
-
-        this.modifiedMappings = new HashMap<>();
+        this.additionalMappings = new HashMap<>();
         int modifCount = 0, i = 0;
         do {
             final KeyValue<String,String> kv = allModifiedMappings[i];
             if (this.initMappings.containsKey(kv.getKey())) {
-                this.modifiedMappings.put(kv.getKey(), kv.getValue());
+                this.additionalMappings.put(kv.getKey(), kv.getValue());
                 modifCount++;
             }
             i++;
-        } while (modifCount < modifiedMappings);
+        } while (modifCount < modifiedMappingsCount);
+
+        final Map<String,String> newMappings =
+                Arrays.stream(Arrays.copyOf(allNewMappings, newMappingsCount)).collect(Collectors.toMap(KeyValue::getKey, KeyValue::getValue));
+        this.additionalMappings.putAll(newMappings);
+
+        this.initKeys = this.initMappings.keySet().toArray(String[]::new);
+        this.additionalKeys = this.additionalMappings.keySet().toArray(String[]::new);
 
     }
 
 
-
-    public static void main(String[] args) {
-        final BenchmarkMappings bm = new BenchmarkMappings(10, 4, 2);
-        System.out.println(bm.initMappings);
+    public Map<String,String> getInitMappings() {
+        return this.initMappings;
     }
+
+
+    public String nextKey() {
+        final int initKeysLen = this.initKeys.length;
+        int index, newIndex;
+        do {
+            index = this.keyIndex.get();
+            newIndex = (index + 1) % initKeysLen;
+        } while (!this.keyIndex.compareAndSet(index, newIndex));
+        return this.initKeys[index];
+    }
+
+
+    public Map.Entry<String,String> nextAdditionalMapping() {
+        // This is meant to return a mapping corresponding to the keys of the "additionalMappings" map. This
+        // map contains both new values for entries already existing in "initMappings" and also new entries.
+        // To make sure the same value for the same key is not returned twice, the algorithm below will
+        // allow iteration up to twice the length of the additionalKeys array. For the first half of such a length
+        // mappings are retrieved from the "additionalMappings" map, but for the second half the retrieved keys
+        // are checked against the "initMappings" so that a new value (the "init" one) is retrieved for the same
+        // key that was already returned some iterations ago. If the selected key is a "new" one (which will have
+        // no correspondence in the "init" map, then a new index is computed.
+
+        final int modifiedKeysLen = this.additionalKeys.length;
+        int oldIndex, index, newIndex;
+        boolean useAdditionals;
+        String key;
+        do {
+            do {
+                oldIndex = this.additionalKeyIndex.get();
+                index = oldIndex;
+                if (index >= modifiedKeysLen) {
+                    index -= modifiedKeysLen;
+                    useAdditionals = false;
+                } else {
+                    useAdditionals = true;
+                }
+                newIndex = oldIndex + 1;
+                if (newIndex >= (modifiedKeysLen * 2)) {
+                    newIndex = 0;
+                }
+            } while (!this.additionalKeyIndex.compareAndSet(oldIndex, newIndex));
+            key = this.additionalKeys[index];
+        } while (!useAdditionals && !this.initMappings.containsKey(key));
+
+        final Map<String,String> mappings = useAdditionals ? this.additionalMappings : this.initMappings;
+
+        return new KeyValue<>(key, mappings.get(key));
+
+    }
+
+
 
 }

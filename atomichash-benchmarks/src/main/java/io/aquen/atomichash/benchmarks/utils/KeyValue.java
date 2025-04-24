@@ -64,4 +64,12 @@ public class KeyValue<K,V> implements Map.Entry<K,V> {
         return ((this.key == null) ? 0 : this.key.hashCode()) ^
                 ((this.value == null) ? 0 : this.value.hashCode());
     }
+
+    @Override
+    public String toString() {
+        return "KeyValue{" +
+                "key=" + key +
+                ", value=" + value +
+                '}';
+    }
 }
