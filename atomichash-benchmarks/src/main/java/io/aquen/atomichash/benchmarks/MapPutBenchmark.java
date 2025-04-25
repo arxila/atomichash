@@ -57,7 +57,7 @@ public class MapPutBenchmark {
     @State(Scope.Benchmark)
     public static abstract class MapState {
 
-        @Param({"10"})
+        @Param({"10", "1000", "1000000"})
         int mapInitialSize;
 
         final Supplier<Map<String,String>> mapSupplier;
@@ -168,65 +168,65 @@ public class MapPutBenchmark {
 
 
 
-    @Benchmark @Group("atomic") @GroupThreads(16)
+    @Benchmark @Group("atomic") @GroupThreads(8)
     public String t10_atomicHashMapGet(final AtomicHashMapState state) {
         return doAtomicGet(state);
     }
-    @Benchmark @Group("atomic") @GroupThreads(4)
+    @Benchmark @Group("atomic") @GroupThreads(2)
     public String t10_atomicHashMapPut(final AtomicHashMapState state) {
         return doAtomicPut(state);
     }
 
-    @Benchmark @Group("concurrent") @GroupThreads(16)
+
+    @Benchmark @Group("concurrent") @GroupThreads(8)
     public String t10_concurrentHashMapGet(final ConcurrentHashMapState state) {
         return doAtomicGet(state);
     }
-    @Benchmark @Group("concurrent") @GroupThreads(4)
+    @Benchmark @Group("concurrent") @GroupThreads(2)
     public String t10_concurrentHashMapPut(final ConcurrentHashMapState state) {
         return doAtomicPut(state);
     }
 
-    @Benchmark @Group("control") @GroupThreads(16)
+
+    @Benchmark @Group("hashmap") @GroupThreads(8)
+    public String t10_hashMapGet(final HashMapState state) {
+        return doSynchronizedGet(state);
+    }
+    @Benchmark @Group("hashmap") @GroupThreads(2)
+    public String t10_hashMapPut(final HashMapState state) {
+        return doSynchronizedPut(state);
+    }
+
+
+    @Benchmark @Group("synchronized") @GroupThreads(8)
+    public String t10_synchronizedMapGet(final SynchronizedMapState state) {
+        return doSynchronizedGet(state);
+    }
+    @Benchmark @Group("synchronized") @GroupThreads(2)
+    public String t10_synchronizedMapPut(final SynchronizedMapState state) {
+        return doSynchronizedPut(state);
+    }
+
+
+    @Benchmark @Group("linkedhashmap") @GroupThreads(8)
+    public String t10_linkedHashMapGet(final LinkedHashMapState state) {
+        return doSynchronizedGet(state);
+    }
+    @Benchmark @Group("linkedhashmap") @GroupThreads(2)
+    public String t10_linkedHashMapPut(final LinkedHashMapState state) {
+        return doSynchronizedPut(state);
+    }
+
+
+    @Benchmark @Group("control") @GroupThreads(8)
     public String t10_controlHashMapGet(final ConcurrentHashMapState state) {
         return doControlGet(state);
     }
-    @Benchmark @Group("control") @GroupThreads(4)
+    @Benchmark @Group("control") @GroupThreads(2)
     public Map.Entry<String,String> t10_controlHashMapPut(final ConcurrentHashMapState state) {
         return doControlPut(state);
     }
 
-/*
-    @Benchmark @Threads(4)
-    public String t4_concurrentHashMap(final ConcurrentHashMapState state) {
-        return doAtomicGet(state);
-    }
-
-
-    @Benchmark @Threads(4)
-    public String t4_hashMap(final HashMapState state) {
-        return doSynchronizedGet(state);
-    }
-
-
-    @Benchmark @Threads(4)
-    public String t4_synchronizedMap(final SynchronizedMapState state) {
-        return doAtomicGet(state);
-    }
-
-
-    @Benchmark
-    public String t1_linkedHashMap(final LinkedHashMapState state) {
-        return doSynchronizedGet(state);
-    }
-    @Benchmark @Threads(2)
-    public String t2_linkedHashMap(final LinkedHashMapState state) {
-        return doSynchronizedGet(state);
-    }
-    @Benchmark @Threads(4)
-    public String t4_linkedHashMap(final LinkedHashMapState state) {
-        return doSynchronizedGet(state);
-    }
-*/
 
 
 }

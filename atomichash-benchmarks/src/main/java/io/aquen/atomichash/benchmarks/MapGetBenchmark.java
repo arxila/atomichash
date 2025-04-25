@@ -55,7 +55,7 @@ public class MapGetBenchmark {
     @State(Scope.Benchmark)
     public static abstract class MapState {
 
-        @Param({"10", "100", "1000", "1000000"})
+        @Param({"10", "1000", "1000000"})
         int mapInitialSize;
 
         final Supplier<Map<String,String>> mapSupplier;
