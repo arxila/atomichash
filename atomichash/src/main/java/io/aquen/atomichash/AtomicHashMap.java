@@ -21,6 +21,7 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,9 +49,11 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public AtomicHashMap(final Map<? extends K, ? extends V> map) {
         this.root = new AtomicReference<>();
         Node node = Node.EMPTY_NODE;
+        io.aquen.atomichash.Entry entry;
         if (map != null) {
-            for (final Entry<? extends K, ? extends V> entry : map.entrySet()) {
-                node = node.put(entry.getKey(), entry.getValue());
+            for (final Entry<? extends K, ? extends V> mapEntry : map.entrySet()) {
+                entry = new io.aquen.atomichash.Entry(mapEntry.getKey(), mapEntry.getValue());
+                node = node.put(entry);
             }
         }
         this.root.set(node);
@@ -112,10 +115,11 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V put(final K key, final V newValue) {
+        final io.aquen.atomichash.Entry newEntry = new io.aquen.atomichash.Entry(key, newValue);
         Node node, newNode;
         do {
             node = this.root.get();
-            newNode = node.put(key, newValue);
+            newNode = node.put(newEntry);
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         final Object oldValue = node.get(key);
         return (V) normalizeAbsentValue(oldValue);
@@ -123,12 +127,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V putIfAbsent(final K key, final V newValue) {
+        final io.aquen.atomichash.Entry newEntry = new io.aquen.atomichash.Entry(key, newValue);
         V value;
         Node node, newNode;
         do {
             node = this.root.get();
             value = (V) normalizeAbsentValue(node.get(key));
-            newNode = (value == null) ? node.put(key, newValue) : node;
+            newNode = (value == null) ? node.put(newEntry) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return value;
     }
@@ -136,13 +141,18 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public void putAll(final Map<? extends K, ? extends V> newMappings) {
         Objects.requireNonNull(newMappings);
-        final Set<? extends Entry<? extends K, ? extends V>> newEntrySet = newMappings.entrySet();
+        // Building a set of entries needs an iteration on the new mappings, but it pays off because
+        // the Entry objects will already be instanced outside the critical (and repeatable) region.
+        final Set<io.aquen.atomichash.Entry> newEntrySet = new HashSet<>();
+        for (final Entry<? extends K, ? extends V> entry : newMappings.entrySet()) {
+            newEntrySet.add(new io.aquen.atomichash.Entry(entry.getKey(), entry.getValue()));
+        }
         Node node, newNode;
         do {
             node = this.root.get();
             newNode = node;
-            for (final Entry<? extends K, ? extends V> entry : newEntrySet) {
-                newNode = newNode.put(entry.getKey(), entry.getValue());
+            for (final io.aquen.atomichash.Entry entry : newEntrySet) {
+                newNode = newNode.put(entry);
             }
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
     }
@@ -150,10 +160,11 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V remove(final Object key) {
+        final int hash = io.aquen.atomichash.Entry.hash(key);
         Node node, newNode;
         do {
             node = this.root.get();
-            newNode = node.remove(key);
+            newNode = node.remove(hash, key);
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         final Object oldValue = node.get(key);
         return (V) normalizeAbsentValue(oldValue);
@@ -161,12 +172,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean remove(final Object key, final Object oldValue) {
+        final int hash = io.aquen.atomichash.Entry.hash(key);
         boolean matches;
         Node node, newNode;
         do {
             node = this.root.get();
             matches = Objects.equals(oldValue, node.get(key));
-            newNode = (matches) ? node.remove(key) : node;
+            newNode = (matches) ? node.remove(hash, key) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
     }
@@ -207,24 +219,26 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean replace(final K key, final V oldValue, final V newValue) {
+        final io.aquen.atomichash.Entry newEntry = new io.aquen.atomichash.Entry(key, newValue);
         boolean matches;
         Node node, newNode;
         do {
             node = this.root.get();
             matches = Objects.equals(oldValue, node.get(key));
-            newNode = (matches) ? node.put(key, newValue) : node;
+            newNode = (matches) ? node.put(newEntry) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
     }
 
     @Override
     public V replace(final K key, final V newValue) {
+        final io.aquen.atomichash.Entry newEntry = new io.aquen.atomichash.Entry(key, newValue);
         boolean mapped;
         Node node, newNode;
         do {
             node = this.root.get();
             mapped = node.containsKey(key);
-            newNode = (mapped) ? node.put(key, newValue) : node;
+            newNode = (mapped) ? node.put(newEntry) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return (mapped) ? (V) node.get(key) : null;
     }
@@ -237,7 +251,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             newNode = node;
             for (io.aquen.atomichash.Entry entry : node.allEntries()) {
-                newNode = newNode.put(entry.key, function.apply((K)entry.key, (V)entry.value));
+                newNode = newNode.put(new io.aquen.atomichash.Entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
             }
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
     }
@@ -252,7 +266,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             value = (V) normalizeAbsentValue(node.get(key));
             mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-            newNode = (mappedValue != null) ? node.put(key, mappedValue) : node;
+            newNode = (mappedValue != null) ? node.put(new io.aquen.atomichash.Entry(key, mappedValue)) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return (mappedValue != null) ? mappedValue : value;
     }
@@ -260,6 +274,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public V computeIfPresent(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
+        final int hash = io.aquen.atomichash.Entry.hash(key);
         V value, remappedValue;
         Node node, newNode;
         do {
@@ -268,7 +283,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
             newNode = (value == null) ?
                             node :  // Absent, no changes
-                            ((remappedValue == null) ? node.remove(key) : node.put(key, remappedValue));
+                            ((remappedValue == null) ? node.remove(hash, key) : node.put(new io.aquen.atomichash.Entry(hash, key, remappedValue)));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
@@ -276,13 +291,14 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public V compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
+        final int hash = io.aquen.atomichash.Entry.hash(key);
         V value, remappedValue;
         Node node, newNode;
         do {
             node = this.root.get();
             value = (V) normalizeAbsentValue(node.get(key));
             remappedValue = remappingFunction.apply(key, value);
-            newNode = (remappedValue == null) ? node.remove(key) : node.put(key, remappedValue);
+            newNode = (remappedValue == null) ? node.remove(hash, key) : node.put(new io.aquen.atomichash.Entry(hash, key, remappedValue));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
@@ -292,13 +308,14 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public V merge(final K key, final V newValue, final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
         Objects.requireNonNull(newValue);
+        final int hash = io.aquen.atomichash.Entry.hash(key);
         V value, remappedValue;
         Node node, newNode;
         do {
             node = this.root.get();
             value = (V) normalizeAbsentValue(node.get(key));
             remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
-            newNode =  (remappedValue == null) ? node.remove(key) : node.put(key, remappedValue);
+            newNode =  (remappedValue == null) ? node.remove(hash, key) : node.put(new io.aquen.atomichash.Entry(hash, key, remappedValue));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }

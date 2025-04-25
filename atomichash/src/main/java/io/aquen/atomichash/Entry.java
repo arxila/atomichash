@@ -21,7 +21,6 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -38,9 +37,35 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     final Entry[] collisions;
 
 
+    /*
+     * Many of the most used classes for keys have well-implemented hashCode() methods (String, Integer...) but
+     * it is important to cover the scenario of classes being used as keys that do not have a good implementation
+     * of hashCode() or have no implementation at all -- in which case their identity hashCode (based on memory
+     * address) will be used.
+     *
+     * This mirrors what the standard implementation of hashCode() in java.util.HashMap does to try to improve
+     * uniformity of hashes by performing a bitwise XOR of the 16 most significant bits on the 16 less significant,
+     * assuming that due to how memory assignment works in the JVM, in cases when the identity hash code is used,
+     * the 16 most significant ones will probably show a higher entropy.
+     */
+    static int hash(final Object object) {
+        int h;
+        return (object == null) ? 0 : (h = object.hashCode()) ^ (h >>> 16);
+    }
+
+
+
     Entry(final int hash, final Object key, final Object value) {
         super();
         this.hash = hash;
+        this.key = key;
+        this.value = value;
+        this.collisions = null;
+    }
+
+    Entry(final Object key, final Object value) {
+        super();
+        this.hash = hash(key);
         this.key = key;
         this.value = value;
         this.collisions = null;

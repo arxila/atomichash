@@ -117,23 +117,6 @@ final class Node implements Serializable {
     }
 
 
-    /*
-     * Many of the most used classes for keys have well-implemented hashCode() methods (String, Integer...) but
-     * it is important to cover the scenario of classes being used as keys that do not have a good implementation
-     * of hashCode() or have no implementation at all -- in which case their identity hashCode (based on memory
-     * address) will be used.
-     *
-     * This mirrors what the standard implementation of hashCode() in java.util.HashMap does to try to improve
-     * uniformity of hashes by performing a bitwise XOR of the 16 most significant bits on the 16 less significant,
-     * assuming that due to how memory assignment works in the JVM, in cases when the identity hash code is used,
-     * the 16 most significant ones will probably show a higher entropy.
-     */
-    static int hash(final Object object) {
-        int h;
-        return (object == null) ? 0 : (h = object.hashCode()) ^ (h >>> 16);
-    }
-
-
     static int index(final int hash, final int level) {
         return (hash >>> HASH_SHIFTS[level]) & HASH_MASK;
     }
@@ -160,7 +143,7 @@ final class Node implements Serializable {
 
 
     boolean containsKey(final Object key) {
-        final int hash = hash(key);
+        final int hash = Entry.hash(key);
         Node node = this; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
@@ -193,7 +176,7 @@ final class Node implements Serializable {
 
     // May return Entry.NOT_FOUND if not found (so that it can be differentiated from a null value)
     Object get(final Object key) {
-        final int hash = hash(key);
+        final int hash = Entry.hash(key);
         Node node = this; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
@@ -206,12 +189,7 @@ final class Node implements Serializable {
 
 
 
-    Node put(final Object key, final Object value) {
-        return put(new Entry(hash(key), key, value));
-    }
-
-
-    private Node put(final Entry entry) {
+    Node put(final Entry entry) {
 
         final int hash = entry.hash;
         final long mask = mask(hash, this.level);
@@ -299,12 +277,7 @@ final class Node implements Serializable {
 
 
 
-    Node remove(final Object key) {
-        return remove(hash(key), key);
-    }
-
-
-    private Node remove(final int hash, final Object key) {
+    Node remove(final int hash, final Object key) {
 
         final long mask = mask(hash, this.level);
 
