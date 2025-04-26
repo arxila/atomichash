@@ -21,6 +21,8 @@ package io.aquen.atomichash;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +93,22 @@ public final class AtomicHashStore<K,V> implements Serializable {
         final Object value = this.root.get(key);
         // The definition of java.util.Map#getOrDefault() returns the default value only if key is not mapped
         return (value == io.aquen.atomichash.Entry.NOT_FOUND) ? defaultValue : (V) value;
+    }
+
+
+    public Map<K,V> getAll(final Object... keys) {
+        if (keys == null || keys.length == 0) {
+            return Collections.EMPTY_MAP;
+        }
+        final Map<K,V> map = new HashMap<>();
+        Object value;
+        for (final Object key : keys) {
+            value = this.root.get(key);
+            if (value != io.aquen.atomichash.Entry.NOT_FOUND) {
+                map.put((K)key, (V)value);
+            }
+        }
+        return map;
     }
 
 
