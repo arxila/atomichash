@@ -22,7 +22,7 @@ package io.aquen.atomichash;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class AtomicHash {
+public final class AtomicHash {
 
     public static final String VERSION;
     public static final String BUILD_TIMESTAMP;
