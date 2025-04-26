@@ -47,6 +47,10 @@ final class Node implements Serializable {
     final long entriesBitMap;
     final Entry[] entries;
 
+    private transient Set<Entry> entrySet;
+    private transient Set<Object> keySet;
+    private transient List<Object> valueList;
+
 
 
     private Node() {
@@ -356,12 +360,14 @@ final class Node implements Serializable {
     }
 
 
-
     Set<Entry> allEntries() {
-        final Set<Entry> entrySet = new HashSet<>(this.size + 1, 1.0f);
+        Set<Entry> entrySet;
+        if ((entrySet = this.entrySet) != null) {
+            return entrySet;
+        }
+        entrySet = new HashSet<>(this.size + 1, 1.0f);
         addEntries(entrySet);
-        // TODO Perhaps cache this into a volatile?
-        return Collections.unmodifiableSet(entrySet);
+        return this.entrySet = Collections.unmodifiableSet(entrySet);
     }
 
     private void addEntries(final Set<Entry> entrySet) {
@@ -384,10 +390,13 @@ final class Node implements Serializable {
 
 
     Set<Object> allKeys() {
-        final Set<Object> keySet = new HashSet<>(this.size + 1, 1.0f);
+        Set<Object> keySet;
+        if ((keySet = this.keySet) != null) {
+            return keySet;
+        }
+        keySet = new HashSet<>(this.size + 1, 1.0f);
         addKeys(keySet);
-        // TODO Perhaps cache this into a volatile?
-        return Collections.unmodifiableSet(keySet);
+        return this.keySet = Collections.unmodifiableSet(keySet);
     }
 
     private void addKeys(final Set<Object> keySet) {
@@ -412,10 +421,13 @@ final class Node implements Serializable {
 
 
     List<Object> allValues() {
-        final List<Object> valueList = new ArrayList<>(this.size);
+        List<Object> valueList;
+        if ((valueList = this.valueList) != null) {
+            return valueList;
+        }
+        valueList = new ArrayList<>(this.size);
         addValues(valueList);
-        // TODO Perhaps cache this into a volatile?
-        return Collections.unmodifiableList(valueList);
+        return this.valueList = Collections.unmodifiableList(valueList);
     }
 
     private void addValues(final List<Object> valueList) {
