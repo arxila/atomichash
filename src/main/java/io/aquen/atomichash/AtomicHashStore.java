@@ -40,6 +40,83 @@ public final class AtomicHashStore<K,V> implements Serializable {
     private final Node root;
 
 
+
+    public static <K,V> AtomicHashStore<K,V> of() {
+        return new AtomicHashStore<>();
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4).put(k5, v5);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4).put(k5, v5)
+                .put(k6, v6);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4).put(k5, v5)
+                .put(k6, v6).put(k7, v7);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7, K k8, V v8) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4).put(k5, v5)
+                .put(k6, v6).put(k7, v7).put(k8, v8);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4).put(k5, v5)
+                .put(k6, v6).put(k7, v7).put(k8, v8).put(k9, v9);
+    }
+
+    public static <K,V> AtomicHashStore<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9, K k10, V v10) {
+        final AtomicHashStore<K,V> store = new AtomicHashStore<>();
+        return store
+                .put(k1, v1).put(k2, v2).put(k3, v3).put(k4, v4).put(k5, v5)
+                .put(k6, v6).put(k7, v7).put(k8, v8).put(k9, v9).put(k10, v10);
+    }
+
+
+
     public AtomicHashStore() {
         this.root = Node.EMPTY_NODE;
     }

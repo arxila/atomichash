@@ -1,20 +1,20 @@
 /*
  * =========================================================================
- *                                                                          
- *   Copyright (c) 2019-2025 Aquen (https://aquen.io)                  
- *                                                                          
- *   Licensed under the Apache License, Version 2.0 (the "License");        
- *   you may not use this file except in compliance with the License.       
- *   You may obtain a copy of the License at                                
- *                                                                          
- *       http://www.apache.org/licenses/LICENSE-2.0                         
- *                                                                          
- *   Unless required by applicable law or agreed to in writing, software    
- *   distributed under the License is distributed on an "AS IS" BASIS,      
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        
- *   implied. See the License for the specific language governing           
- *   permissions and limitations under the License.                         
- *                                                                          
+ *
+ *   Copyright (c) 2019-2025 Aquen (https://aquen.io)
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ *   implied. See the License for the specific language governing
+ *   permissions and limitations under the License.
+ *
  * =========================================================================
  */
 package io.aquen.atomichash;
@@ -42,6 +42,142 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     private final AtomicReference<Node> root;
 
 
+    public static <K,V> AtomicHashMap<K,V> of() {
+        return new AtomicHashMap<>();
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4))
+                    .put(new io.aquen.atomichash.Entry(k5, v5)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4))
+                    .put(new io.aquen.atomichash.Entry(k5, v5))
+                    .put(new io.aquen.atomichash.Entry(k6, v6)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4))
+                    .put(new io.aquen.atomichash.Entry(k5, v5))
+                    .put(new io.aquen.atomichash.Entry(k6, v6))
+                    .put(new io.aquen.atomichash.Entry(k7, v7)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7, K k8, V v8) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4))
+                    .put(new io.aquen.atomichash.Entry(k5, v5))
+                    .put(new io.aquen.atomichash.Entry(k6, v6))
+                    .put(new io.aquen.atomichash.Entry(k7, v7))
+                    .put(new io.aquen.atomichash.Entry(k8, v8)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4))
+                    .put(new io.aquen.atomichash.Entry(k5, v5))
+                    .put(new io.aquen.atomichash.Entry(k6, v6))
+                    .put(new io.aquen.atomichash.Entry(k7, v7))
+                    .put(new io.aquen.atomichash.Entry(k8, v8))
+                    .put(new io.aquen.atomichash.Entry(k9, v9)));
+        return map;
+    }
+
+    public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                                              K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9, K k10, V v10) {
+        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
+        map.root.set(
+                Node.EMPTY_NODE
+                    .put(new io.aquen.atomichash.Entry(k1, v1))
+                    .put(new io.aquen.atomichash.Entry(k2, v2))
+                    .put(new io.aquen.atomichash.Entry(k3, v3))
+                    .put(new io.aquen.atomichash.Entry(k4, v4))
+                    .put(new io.aquen.atomichash.Entry(k5, v5))
+                    .put(new io.aquen.atomichash.Entry(k6, v6))
+                    .put(new io.aquen.atomichash.Entry(k7, v7))
+                    .put(new io.aquen.atomichash.Entry(k8, v8))
+                    .put(new io.aquen.atomichash.Entry(k9, v9))
+                    .put(new io.aquen.atomichash.Entry(k10, v10)));
+        return map;
+    }
+
+
+
     public AtomicHashMap() {
         this.root = new AtomicReference<>();
         this.root.set(Node.EMPTY_NODE);
@@ -51,11 +187,9 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public AtomicHashMap(final Map<? extends K, ? extends V> map) {
         this.root = new AtomicReference<>();
         Node node = Node.EMPTY_NODE;
-        io.aquen.atomichash.Entry entry;
         if (map != null) {
             for (final Entry<? extends K, ? extends V> mapEntry : map.entrySet()) {
-                entry = new io.aquen.atomichash.Entry(mapEntry.getKey(), mapEntry.getValue());
-                node = node.put(entry);
+                node = node.put(new io.aquen.atomichash.Entry(mapEntry.getKey(), mapEntry.getValue()));
             }
         }
         this.root.set(node);
