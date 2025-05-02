@@ -37,14 +37,12 @@ import java.util.function.Function;
 /**
  * A thread-safe implementation of the {@link java.util.Map} interface providing advanced concurrency features.
  * <p>
- * This implementation:
- * <ul>
- *     <li>Is thread-safe.</li>
- *     <li>Provides 100% non-blocking operation, including both reads and writes.</li>
- *     <li>Provides atomic {@link #putAll(Map)} and {@link #getAll(Object...)} methods, as well as all its
- *     derivatives ({@link #putIfAbsent(Object, Object)}, etc).</li>
- *     <li>Provides atomic iteration, replace, remove, compute... methods.</li>
- * </ul>
+ * This implementation is <strong>thread-safe</strong>, <strong>atomic</strong> and <strong>non-blocking</strong> for
+ * all of its methods, including both reads and writes. This includes multi-element methods such
+ * as {@link #putAll(Map)} and {@link #getAll(Object...)} (the latter not a part of
+ * the {@link java.util.Map} interface), as well as all other methods for retrieving, adding, modifying or
+ * removing mappings, iteration, etc.
+ * <p>
  * This is achieved by internally implementing an immutable variation of a CTRIE
  * (<a href="https://en.wikipedia.org/wiki/Ctrie">Concurrent Hash-Trie</a>). This structure is composed of a tree of
  * compact (bitmap-managed) arrays that map keys to positions in each of the tree levels depending on the value of
@@ -59,6 +57,10 @@ import java.util.function.Function;
  * <p>
  * Note that, given this implementation is based on immutable tree structures, modifications typically need a higher
  * use of memory than other common implementations of the {@link java.util.Map} interface.
+ * <p>
+ * New instances of this class can be created by either calling its constructor {@link #AtomicHashMap()} or by
+ * calling any of its static convenience factory <kbd>AtomicHashMap.of(...)</kbd> methods: <kbd>of()</kbd>,
+ * <kbd>of(k1, v1)</kbd>, <kbd>of(k1, v1, k2, v2)</kbd>, <kbd>of(k1, v1, k2, v2, k3, v3)</kbd>, etc.
  *
  *
  * @param <K> the type of keys maintained by this map

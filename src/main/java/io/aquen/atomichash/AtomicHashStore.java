@@ -32,6 +32,33 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * A thread-safe, immutable key-value store.
+ * <p>
+ * This class corresponds to the internal data store used by {@link AtomicHashMap}. All of its operations
+ * are <strong>thread-safe</strong>, <strong>atomic</strong> and <strong>non-blocking</strong>, including both reads
+ * and writes. All modifications return a new instance of {@link AtomicHashStore} containing the modified data.
+ * <p>
+ * This class internall implements an immutable variation of a CTRIE
+ * (<a href="https://en.wikipedia.org/wiki/Ctrie">Concurrent Hash-Trie</a>). This structure is composed of a tree of
+ * compact (bitmap-managed) arrays that map keys to positions in each of the tree levels depending on the value of
+ * a range of bits of its (modified) hash code.
+ * <p>
+ * Key hash codes (32-bit <kbd>int</kbd>s) are divided into five 6-bit segments plus one final 2-bit segment. Each
+ * of these segments is used, at each level of depth, to compute the position assigned to the key in the compact array
+ * living at that level of depth in the ctrie structure. These are compact arrays with a maximum of 64 positions
+ * (bitmaps are <kbd>long</kbd> values), each of which can contain either a data entry or a link to another node
+ * at level + 1. A maximum of 6 levels can exist (0 to 5), and hash collisions only need to be managed at the deepest
+ * level.
+ * <p>
+ * New instances of this class can be created by either calling its constructor {@link #AtomicHashStore()} or by
+ * calling any of its static convenience factory <kbd>AtomicHashStore.of(...)</kbd> methods: <kbd>of()</kbd>,
+ * <kbd>of(k1, v1)</kbd>, <kbd>of(k1, v1, k2, v2)</kbd>, <kbd>of(k1, v1, k2, v2, k3, v3)</kbd>, etc.
+ *
+ *
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ */
 @SuppressWarnings("unchecked")
 public final class AtomicHashStore<K,V> implements Serializable {
 

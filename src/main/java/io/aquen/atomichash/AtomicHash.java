@@ -22,6 +22,11 @@ package io.aquen.atomichash;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * Class meant to keep some constants related to the version of the AtomicHash library being used, build date, etc.
+ * <p>
+ * This can be used in conditional code that requires a specific version of the library to be present.
+ */
 public final class AtomicHash {
 
     public static final String VERSION;
