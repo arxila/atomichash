@@ -69,7 +69,7 @@ generated in dist/target should be uploaded to the GitHub repository as a new re
 along with a gpg signature (.asc) generated with:
 
 ```shell
-gpg -ab --default-key key_ID_for_releases@aquen.io atomichash-X.Y.Z-dist.zip
+gpg -ab --default-key key_ID_for_releases@arxila.io atomichash-X.Y.Z-dist.zip
 ```
 
 

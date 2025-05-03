@@ -7,7 +7,7 @@
  a dependency with:
 
      <dependency>
-       <groupId>io.aquen</groupId>
+       <groupId>io.arxila</groupId>
        <artifactId>atomichash</artifactId>
        <version>{version}</version>
        <scope>compile</scope>

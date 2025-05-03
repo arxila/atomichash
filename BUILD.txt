@@ -14,7 +14,7 @@
  And you will get a fresh target/atomichash-{version}.jar file.
  You will also get it installed in your local repository at:
  
-     $M2_REPO/io/aquen/atomichash/{version}/atomichash-{version}.jar
+     $M2_REPO/io/arxila/atomichash/{version}/atomichash-{version}.jar
 
 
 
