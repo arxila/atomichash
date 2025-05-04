@@ -7,7 +7,7 @@ a similar immutable implementation of a data store that does not implement such 
   * `io.arxila.atomichash.AtomicHashMap`
   * `io.arxila.atomichash.AtomicHashStore`
 
-All operations in AtomicHash are **thread-safe**, **atomic** and **non-blocking**, including both reads and
+All operations in AtomicHash are <u>**thread-safe**, **atomic** and **non-blocking**</u>, including both reads and
 writes, and including multi-element operations such as `putAll(...)` or `getAll(...)`. This means the map can never
 be read in a partially-modified state, and its exact _snapshot_ state for an arbitrary number of mappings can be
 obtained at any time.
@@ -45,7 +45,8 @@ final Object theValue = m.get("one key");
 Instances can also be created using the convenient `of(...)` factory methods that allow up to 10 mappings to
 be directly used to create a map:
 ```java
-final Map<String, Object> m = AtomicHashMap.of("one key", oneValue, "two keys", twoValues, "three keys", threeValues);
+final Map<String, Object> m = 
+        AtomicHashMap.of("one key", oneValue, "two keys");
 ```
 
 `AtomicHashStore` is a data store that works exactly like a map (stores key-value mappings) but, contrary to how
@@ -62,7 +63,8 @@ final Object theValue = s.get("one key");
 
 Or also using `of(...)` factory methods:
 ```java
-final AtomicHashStore<String, Object> s = AtomicHashStore.of("one key", oneValue, "two keys", twoValues, "three keys", threeValues);
+final AtomicHashStore<String, Object> s = 
+        AtomicHashStore.of("one key", oneValue, "two keys", twoValues);
 ```
 
 
@@ -70,12 +72,12 @@ final AtomicHashStore<String, Object> s = AtomicHashStore.of("one key", oneValue
 Features of `AtomicHashMap` and `AtomicHashStore`
 -------------------------------------------------
 
-Instances are **thread-safe** and can be used concurrently by any number of threads.
+Instances are <u>**thread-safe**</u> and can be used concurrently by any number of threads.
 
-All operations are **non-blocking**: no threads will ever be blocked waiting at any locks during any 
+All operations are <u>**non-blocking**</u>: no threads will ever be blocked waiting at any locks during any 
 read or write operations.
 
-All operations are **atomic**, including multi-element operations such as `putAll(...)` and the equivalent
+All operations are <u>**atomic**, including multi-element operations</u> such as `putAll(...)` and the equivalent
 read operation `getAll(...)` (custom operation not present in the `java.util.Map` interface).
 
 This means that the map can never be read in a partially-modified state as could happen with other concurrent
