@@ -86,9 +86,9 @@ while this modification is taking place.
 
 Equivalently, `getAll(...)` allows a number of keys to be atomically read, making sure the obtained mappings do
 not belong to a mix of different states through which the map is transitioning while the read operation
-takes place. All mappings returned by `getAll(...)` are guaranteed to be the result of one or
-more `put`/`putAll` operations, but never a partial state obtained while the map is being modified by one
-of these (or any other) operations.
+takes place. Mappings returned by `getAll(...)` are guaranteed to be the result the `put`/`putAll` operations
+that were completed before, and will not include any mappings set during the execution of the `getAll(...)`
+operation itself.
 
 Reads and writes can therefore be made in a way that only **consistent** states are ever represented and returned
 by `AtomicHashMap` and `AtomicHashStore` objects. In fact, a _snapshot_ of the state of an `AtomicHashMap`
