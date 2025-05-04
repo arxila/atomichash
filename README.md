@@ -72,15 +72,15 @@ final AtomicHashStore<String, Object> s =
 Features of `AtomicHashMap` and `AtomicHashStore`
 -------------------------------------------------
 
-Instances are <ins>**thread-safe**</ins> and can be used concurrently by any number of threads.
+* Instances are <ins>**thread-safe**</ins> and can be used concurrently by any number of threads.
 
-All operations are <ins>**non-blocking**</ins>: no threads will ever be blocked waiting at any locks during any 
+* All operations are <ins>**non-blocking**</ins>: no threads will ever be blocked waiting at any locks during any 
 read or write operations.
 
-All operations are <ins>**atomic**, including multi-element operations</ins> such as `putAll(...)` and the
+* All operations are <ins>**atomic**, including multi-element operations</ins> such as `putAll(...)` and the
 equivalent read operation `getAll(...)` (custom operation not present in the `java.util.Map` interface).
 
-This means that the map can never be read in a partially-modified state as could happen with other concurrent
+A map can never be read in a partially-modified state as could happen in some scenarios with other concurrent
 implementations of `Map` if a `putAll(...)` was being executed by one thread and a second one read the map
 while this modification is taking place.
 
