@@ -46,7 +46,7 @@ import java.util.function.Function;
  * <p>
  * Key hash codes (32-bit <kbd>int</kbd>s) are divided into five 6-bit segments plus one final 2-bit segment. Each
  * of these segments is used, at each level of depth, to compute the position assigned to the key in the compact array
- * living at that level of depth in the ctrie structure. These are compact arrays with a maximum of 64 positions
+ * (node) living at that level of depth in the ctrie structure. These are compact arrays with a maximum of 64 positions
  * (bitmaps are <kbd>long</kbd> values), each of which can contain either a data entry or a link to another node
  * at level + 1. A maximum of 6 levels can exist (0 to 5), and hash collisions only need to be managed at the deepest
  * level.
@@ -54,6 +54,9 @@ import java.util.function.Function;
  * New instances of this class can be created by either calling its constructor {@link #AtomicHashStore()} or by
  * calling any of its static convenience factory <kbd>AtomicHashStore.of(...)</kbd> methods: <kbd>of()</kbd>,
  * <kbd>of(k1, v1)</kbd>, <kbd>of(k1, v1, k2, v2)</kbd>, <kbd>of(k1, v1, k2, v2, k3, v3)</kbd>, etc.
+ * <p>
+ * Note that this implementation does not keep the insertion order. Iteration order is not guaranteed to be
+ * consistent.
  *
  *
  * @param <K> the type of keys maintained by this map

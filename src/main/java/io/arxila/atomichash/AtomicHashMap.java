@@ -43,6 +43,9 @@ import java.util.function.Function;
  * the {@link java.util.Map} interface), as well as all other methods for retrieving, adding, modifying or
  * removing mappings, iteration, etc.
  * <p>
+ * The map can therefore never be read in a partially-modified state, and its exact <em>snapshot</em> state for
+ * an arbitrary number of mappings can be obtained at any time.
+ * <p>
  * This is achieved by internally implementing an immutable variation of a CTRIE
  * (<a href="https://en.wikipedia.org/wiki/Ctrie">Concurrent Hash-Trie</a>). This structure is composed of a tree of
  * compact (bitmap-managed) arrays that map keys to positions in each of the tree levels depending on the value of
@@ -50,10 +53,12 @@ import java.util.function.Function;
  * <p>
  * Key hash codes (32-bit <kbd>int</kbd>s) are divided into five 6-bit segments plus one final 2-bit segment. Each
  * of these segments is used, at each level of depth, to compute the position assigned to the key in the compact array
- * living at that level of depth in the ctrie structure. These are compact arrays with a maximum of 64 positions
+ * (node) living at that level of depth in the ctrie structure. These are compact arrays with a maximum of 64 positions
  * (bitmaps are <kbd>long</kbd> values), each of which can contain either a data entry or a link to another node
  * at level + 1. A maximum of 6 levels can exist (0 to 5), and hash collisions only need to be managed at the deepest
- * level.
+ * level. All structures are kept immutable, so modifications in an array (node) at a specific level mean the creation
+ * of new nodes from that point up to the root of the tree, and the replacement of the old root with the new one
+ * using an atomic compare-and-swap operation.
  * <p>
  * Note that, given this implementation is based on immutable tree structures, modifications typically need a higher
  * use of memory than other common implementations of the {@link java.util.Map} interface.
@@ -61,6 +66,9 @@ import java.util.function.Function;
  * New instances of this class can be created by either calling its constructor {@link #AtomicHashMap()} or by
  * calling any of its static convenience factory <kbd>AtomicHashMap.of(...)</kbd> methods: <kbd>of()</kbd>,
  * <kbd>of(k1, v1)</kbd>, <kbd>of(k1, v1, k2, v2)</kbd>, <kbd>of(k1, v1, k2, v2, k3, v3)</kbd>, etc.
+ * <p>
+ * Note that this implementation does not keep the insertion order. Iteration order is not guaranteed to be
+ * consistent.
  *
  *
  * @param <K> the type of keys maintained by this map
