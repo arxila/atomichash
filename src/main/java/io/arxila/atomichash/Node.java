@@ -197,26 +197,11 @@ final class Node implements Serializable {
 
         final int hash = entry.hash;
         final long mask = mask(hash, this.level);
+
         final int nodePos = pos(mask, this.nodesBitMap);
-        final int entryPos = pos(mask, this.entriesBitMap);
-
-        if (nodePos < 0 && entryPos < 0) {
-            // There was nothing at the selected position: an entry will be created
-
-            final int newEntryPos = (entryPos ^ NEG_MASK);
-
-            final long newEntriesBitMap = this.entriesBitMap | mask;
-            final Entry[] newEntries = new Entry[this.entries.length + 1];
-            System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
-            newEntries[newEntryPos] = entry;
-            System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
-
-            return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
-
-        }
 
         if (nodePos >= 0) {
-            // There was a node at the selected position, therefore the put operation will be delegated
+            // There is a node at the selected position: the put operation will be delegated
 
             final Node oldNode = this.nodes[nodePos];
             final Node newNode = oldNode.put(entry);
@@ -228,6 +213,23 @@ final class Node implements Serializable {
             newNodeValues[nodePos] = newNode;
 
             return new Node(this.level, this.size + (newNode.size - oldNode.size), this.nodesBitMap, newNodeValues, this.entriesBitMap, this.entries);
+
+        }
+
+        final int entryPos = pos(mask, this.entriesBitMap);
+
+        if (entryPos < 0) {
+            // There is nothing at the selected position: an entry will be created
+
+            final int newEntryPos = (entryPos ^ NEG_MASK);
+
+            final long newEntriesBitMap = this.entriesBitMap | mask;
+            final Entry[] newEntries = new Entry[this.entries.length + 1];
+            System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
+            newEntries[newEntryPos] = entry;
+            System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
+
+            return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
 
         }
 
