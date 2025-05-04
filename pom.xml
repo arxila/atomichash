@@ -44,6 +44,10 @@
     <developerConnection>scm:git:git@github.com:arxila/atomichash</developerConnection>
   </scm>
 
+  <properties>
+    <java.version>11</java.version>
+  </properties>
+
   <build>
 
     <resources>
