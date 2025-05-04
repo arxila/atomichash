@@ -7,10 +7,10 @@ a similar immutable implementation of a data store that does not implement such 
   * `io.arxila.atomichash.AtomicHashMap`
   * `io.arxila.atomichash.AtomicHashStore`
 
-All operations in AtomicHash are <u>**thread-safe**, **atomic** and **non-blocking**</u>, including both reads and
-writes, and including multi-element operations such as `putAll(...)` or `getAll(...)`. This means the map can never
-be read in a partially-modified state, and its exact _snapshot_ state for an arbitrary number of mappings can be
-obtained at any time.
+All operations in AtomicHash are <ins>**thread-safe**, **atomic** and **non-blocking**</ins>, including both reads
+and writes, and including multi-element operations such as `putAll(...)` or `getAll(...)`. This means the map can
+never be read in a partially-modified state, and its exact _snapshot_ state for an arbitrary number of mappings can
+be obtained at any time.
 
 See the _Features_ section below for more detail on these concurrency capabilities.
 
@@ -72,13 +72,13 @@ final AtomicHashStore<String, Object> s =
 Features of `AtomicHashMap` and `AtomicHashStore`
 -------------------------------------------------
 
-Instances are <u>**thread-safe**</u> and can be used concurrently by any number of threads.
+Instances are <ins>**thread-safe**</ins> and can be used concurrently by any number of threads.
 
-All operations are <u>**non-blocking**</u>: no threads will ever be blocked waiting at any locks during any 
+All operations are <ins>**non-blocking**</ins>: no threads will ever be blocked waiting at any locks during any 
 read or write operations.
 
-All operations are <u>**atomic**, including multi-element operations</u> such as `putAll(...)` and the equivalent
-read operation `getAll(...)` (custom operation not present in the `java.util.Map` interface).
+All operations are <ins>**atomic**, including multi-element operations</ins> such as `putAll(...)` and the
+equivalent read operation `getAll(...)` (custom operation not present in the `java.util.Map` interface).
 
 This means that the map can never be read in a partially-modified state as could happen with other concurrent
 implementations of `Map` if a `putAll(...)` was being executed by one thread and a second one read the map
