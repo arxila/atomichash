@@ -246,7 +246,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
     public AtomicHashStore<K,V> remove(final Object key, final Object oldValue) {
-        final boolean matches = Objects.equals(oldValue, this.root.get(key));
+        final boolean matches = Objects.equals(oldValue, this.root.get(key)); // No need to worry about NOT_FOUND
         final Node newNode = (matches) ? this.root.remove(Entry.hash(key), key) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
@@ -282,7 +282,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
 
     public AtomicHashStore<K,V> replace(final K key, final V oldValue, final V newValue) {
         final V value = (V) this.root.get(key);
-        final boolean matches = Objects.equals(oldValue, value);
+        final boolean matches = Objects.equals(oldValue, value); // No need to worry about NOT_FOUND
         final Node newNode = (matches) ? this.root.put(new Entry(key, newValue)) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }

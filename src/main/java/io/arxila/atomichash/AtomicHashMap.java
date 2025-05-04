@@ -371,7 +371,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Node node, newNode;
         do {
             node = this.root.get();
-            matches = Objects.equals(oldValue, node.get(key));
+            matches = Objects.equals(oldValue, node.get(key)); // No need to worry about NOT_FOUND (requires a mapping)
             newNode = (matches) ? node.remove(hash, key) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
@@ -418,7 +418,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Node node, newNode;
         do {
             node = this.root.get();
-            matches = Objects.equals(oldValue, node.get(key));
+            matches = Objects.equals(oldValue, node.get(key)); // No need to worry about NOT_FOUND (requires a mapping)
             newNode = (matches) ? node.put(newEntry) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
