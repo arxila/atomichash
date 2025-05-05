@@ -221,8 +221,7 @@ final class Node implements Serializable {
 
         }
 
-        Node newNode = node;
-
+        Node newNode;
         final int entryPos = pos(mask, node.entriesBitMap);
 
         if (entryPos < 0) {
@@ -247,14 +246,15 @@ final class Node implements Serializable {
                 // There is a match (key exists): entry needs to be replaced
 
                 final Entry newEntry = oldEntry.set(entry);
-                if (oldEntry != newEntry) { // Will not set a new node if no changes were made
-
-                    final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
-                    newEntries[entryPos] = newEntry;
-
-                    newNode = new Node(node.level, node.size, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
-
+                if (newEntry == oldEntry) {
+                    // No need to change anything at any level if changes were not made
+                    return root;
                 }
+
+                final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
+                newEntries[entryPos] = newEntry;
+
+                newNode = new Node(node.level, node.size, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
 
             } else if (node.level == MAX_LEVEL) {
                 // No new levels can be created, so a collision entry will be created or expanded
@@ -286,10 +286,6 @@ final class Node implements Serializable {
 
             }
 
-        }
-
-        if (newNode == node) {
-            return root;
         }
 
         if (nodeStack == null) {
