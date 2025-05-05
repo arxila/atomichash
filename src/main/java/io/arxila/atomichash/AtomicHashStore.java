@@ -192,12 +192,12 @@ public final class AtomicHashStore<K,V> implements Serializable {
 
 
     public V get(final Object key) {
-        final Object value = this.root.get(key);
+        final Object value = Node.get(this.root, key);
         return (V) normalizeAbsentValue(value);
     }
 
     public V getOrDefault(final Object key, final V defaultValue) {
-        final Object value = this.root.get(key);
+        final Object value = Node.get(this.root, key);
         // The definition of java.util.Map#getOrDefault() returns the default value only if key is not mapped
         return (value == io.arxila.atomichash.Entry.NOT_FOUND) ? defaultValue : (V) value;
     }
@@ -210,7 +210,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
         final Map<K,V> map = new HashMap<>(keys.length + 1, 1.0f);
         Object value;
         for (final Object key : keys) {
-            value = this.root.get(key);
+            value = Node.get(this.root, key);
             if (value != io.arxila.atomichash.Entry.NOT_FOUND) {
                 map.put((K)key, (V)value);
             }
@@ -220,13 +220,13 @@ public final class AtomicHashStore<K,V> implements Serializable {
 
 
     public AtomicHashStore<K,V> put(final K key, final V newValue) {
-        final Node newNode = this.root.put(new Entry(key, newValue));
+        final Node newNode = Node.put(this.root, new Entry(key, newValue));
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
     public AtomicHashStore<K,V> putIfAbsent(final K key, final V newValue) {
-        final Object value = (V) normalizeAbsentValue(this.root.get(key));
-        final Node newNode = (value == null) ? this.root.put(new Entry(key, newValue)) : this.root;
+        final Object value = (V) normalizeAbsentValue(Node.get(this.root, key));
+        final Node newNode = (value == null) ? Node.put(this.root, new Entry(key, newValue)) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
@@ -234,7 +234,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
         Objects.requireNonNull(newMappings);
         Node newNode = this.root;
         for (final Map.Entry<? extends K, ? extends V> entry : newMappings.entrySet()) {
-            newNode = newNode.put(new Entry(entry.getKey(), entry.getValue()));
+            newNode = Node.put(newNode, new Entry(entry.getKey(), entry.getValue()));
         }
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
@@ -246,7 +246,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
     public AtomicHashStore<K,V> remove(final Object key, final Object oldValue) {
-        final boolean matches = Objects.equals(oldValue, this.root.get(key)); // No need to worry about NOT_FOUND
+        final boolean matches = Objects.equals(oldValue, Node.get(this.root, key)); // No need to worry about NOT_FOUND
         final Node newNode = (matches) ? this.root.remove(Entry.hash(key), key) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
@@ -281,14 +281,14 @@ public final class AtomicHashStore<K,V> implements Serializable {
 
 
     public AtomicHashStore<K,V> replace(final K key, final V oldValue, final V newValue) {
-        final V value = (V) this.root.get(key);
+        final V value = (V) Node.get(this.root, key);
         final boolean matches = Objects.equals(oldValue, value); // No need to worry about NOT_FOUND
-        final Node newNode = (matches) ? this.root.put(new Entry(key, newValue)) : this.root;
+        final Node newNode = (matches) ? Node.put(this.root, new Entry(key, newValue)) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
     public AtomicHashStore<K,V> replace(final K key, final V newValue) {
-        final Node newNode = (this.root.containsKey(key)) ? this.root.put(new Entry(key, newValue)) : this.root;
+        final Node newNode = (this.root.containsKey(key)) ? Node.put(this.root, new Entry(key, newValue)) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
@@ -296,7 +296,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
         Objects.requireNonNull(function);
         Node newNode = this.root;
         for (io.arxila.atomichash.Entry entry : this.root.allEntries()) {
-            newNode = newNode.put(new Entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
+            newNode = Node.put(newNode, new Entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
         }
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
@@ -304,30 +304,30 @@ public final class AtomicHashStore<K,V> implements Serializable {
 
     public AtomicHashStore<K,V> computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
         Objects.requireNonNull(mappingFunction);
-        final V value = (V) normalizeAbsentValue(this.root.get(key));
+        final V value = (V) normalizeAbsentValue(Node.get(this.root, key));
         final V mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-        final Node newNode = (mappedValue != null) ? this.root.put(new Entry(key, mappedValue)) : this.root;
+        final Node newNode = (mappedValue != null) ? Node.put(this.root, new Entry(key, mappedValue)) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
     public AtomicHashStore<K,V> computeIfPresent(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
-        final V value = (V) normalizeAbsentValue(this.root.get(key));
+        final V value = (V) normalizeAbsentValue(Node.get(this.root, key));
         final V remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
         final int hash = Entry.hash(key);
         final Node newNode =
                 (value == null) ?
                         this.root :
-                        (remappedValue == null) ? this.root.remove(hash, key) : this.root.put(new Entry(hash, key, remappedValue));
+                        (remappedValue == null) ? this.root.remove(hash, key) : Node.put(this.root, new Entry(hash, key, remappedValue));
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
     public AtomicHashStore<K,V> compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
-        final V value = (V) normalizeAbsentValue(this.root.get(key));
+        final V value = (V) normalizeAbsentValue(Node.get(this.root, key));
         final V remappedValue = remappingFunction.apply(key, value);
         final int hash = Entry.hash(key);
-        final Node newNode = (remappedValue == null) ? this.root.remove(hash, key) : this.root.put(new Entry(hash, key, remappedValue));
+        final Node newNode = (remappedValue == null) ? this.root.remove(hash, key) : Node.put(this.root, new Entry(hash, key, remappedValue));
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 
@@ -335,10 +335,10 @@ public final class AtomicHashStore<K,V> implements Serializable {
     public AtomicHashStore<K,V> merge(final K key, final V newValue, final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
         Objects.requireNonNull(newValue);
-        final V value = (V) normalizeAbsentValue(this.root.get(key));
+        final V value = (V) normalizeAbsentValue(Node.get(this.root, key));
         final V remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
         final int hash = Entry.hash(key);
-        final Node newNode = (remappedValue == null) ? this.root.remove(hash, key) : this.root.put(new Entry(hash, key, remappedValue));
+        final Node newNode = (remappedValue == null) ? this.root.remove(hash, key) : Node.put(this.root, new Entry(hash, key, remappedValue));
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 

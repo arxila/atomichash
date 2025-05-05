@@ -179,9 +179,9 @@ final class Node implements Serializable {
 
 
     // May return Entry.NOT_FOUND if not found (so that it can be differentiated from a null value)
-    Object get(final Object key) {
+    static Object get(final Node root, final Object key) {
         final int hash = Entry.hash(key);
-        Node node = this; long mask;
+        Node node = root; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
@@ -193,91 +193,123 @@ final class Node implements Serializable {
 
 
 
-    Node put(final Entry entry) {
+    static Node put(final Node root, final Entry entry) {
 
         final int hash = entry.hash;
-        final long mask = mask(hash, this.level);
 
-        final int nodePos = pos(mask, this.nodesBitMap);
+        Node[] nodeStack = null;
+        int[] posStack = null;
+        int stackSize = 0;
 
-        if (nodePos >= 0) {
-            // There is a node at the selected position: the put operation will be delegated
+        Node node = root;
+        long mask = mask(hash, node.level);
 
-            final Node oldNode = this.nodes[nodePos];
-            final Node newNode = oldNode.put(entry);
-            if (oldNode == newNode) {
-                return this;
-            }
+        if ((mask & node.nodesBitMap) != 0L) {
+            // There is a node at the selected position: nodes will be stacked until reaching the level
+            // at which the data is or should be
 
-            final Node[] newNodeValues = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
-            newNodeValues[nodePos] = newNode;
+            nodeStack = new Node[MAX_LEVEL + 1];
+            posStack = new int[MAX_LEVEL + 1];
 
-            return new Node(this.level, this.size + (newNode.size - oldNode.size), this.nodesBitMap, newNodeValues, this.entriesBitMap, this.entries);
+            int pos;
+            do {
+                nodeStack[stackSize] = node;
+                posStack[stackSize] = pos = pos(mask, node.nodesBitMap);
+                stackSize++;
+                node = node.nodes[pos];
+            } while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L);
 
         }
 
-        final int entryPos = pos(mask, this.entriesBitMap);
+        Node newNode = node;
+
+        final int entryPos = pos(mask, node.entriesBitMap);
 
         if (entryPos < 0) {
             // There is nothing at the selected position: an entry will be created
 
             final int newEntryPos = (entryPos ^ NEG_MASK);
 
-            final long newEntriesBitMap = this.entriesBitMap | mask;
-            final Entry[] newEntries = new Entry[this.entries.length + 1];
-            System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
+            final long newEntriesBitMap = node.entriesBitMap | mask;
+            final Entry[] newEntries = new Entry[node.entries.length + 1];
+            System.arraycopy(node.entries, 0, newEntries, 0, newEntryPos);
             newEntries[newEntryPos] = entry;
-            System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
+            System.arraycopy(node.entries, newEntryPos, newEntries, newEntryPos + 1, node.entries.length - newEntryPos);
 
-            return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
+            newNode = new Node(node.level, node.size + 1, node.nodesBitMap, node.nodes, newEntriesBitMap, newEntries);
 
-        }
+        } else {
+            // There is an entry at the selected position: either replace (if keys match) or create level / collision
 
-        // There was an entry at the selected position: either replace (if keys match) or create level / collision
-        final Entry oldEntry = this.entries[entryPos];
+            final Entry oldEntry = node.entries[entryPos];
 
-        if (oldEntry.containsKey(hash, entry.key)) {
-            // There is a match (key exists): entry needs to be replaced
+            if (oldEntry.containsKey(hash, entry.key)) {
+                // There is a match (key exists): entry needs to be replaced
 
-            final Entry newEntry = oldEntry.set(entry);
-            if (oldEntry == newEntry) {
-                return this;
+                final Entry newEntry = oldEntry.set(entry);
+                if (oldEntry != newEntry) { // Will not set a new node if no changes were made
+
+                    final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
+                    newEntries[entryPos] = newEntry;
+
+                    newNode = new Node(node.level, node.size, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
+
+                }
+
+            } else if (node.level == MAX_LEVEL) {
+                // No new levels can be created, so a collision entry will be created or expanded
+
+                final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
+                newEntries[entryPos] = oldEntry.add(entry);
+
+                newNode = new Node(node.level, node.size + 1, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
+
+            } else {
+                // A new level will be created, a node will replace the existing entry
+
+                final Node deeperNode = new Node(node.level + 1, oldEntry, entry);
+                final int deeperNodePos = (pos(mask, node.nodesBitMap) ^ NEG_MASK);
+
+                final long newNodesBitMap = node.nodesBitMap ^ mask;
+                final long newEntriesBitMap = node.entriesBitMap ^ mask;
+
+                final Node[] newNodes = new Node[node.nodes.length + 1];
+                System.arraycopy(node.nodes, 0, newNodes, 0, deeperNodePos);
+                newNodes[deeperNodePos] = deeperNode;
+                System.arraycopy(node.nodes, deeperNodePos, newNodes, deeperNodePos + 1, node.nodes.length - deeperNodePos);
+
+                final Entry[] newEntries = new Entry[node.entries.length - 1];
+                System.arraycopy(node.entries, 0, newEntries, 0, entryPos);
+                System.arraycopy(node.entries, entryPos + 1, newEntries, entryPos, node.entries.length - (entryPos + 1));
+
+                newNode = new Node(node.level, node.size + 1, newNodesBitMap, newNodes, newEntriesBitMap, newEntries);
+
             }
 
-            final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-            newEntries[entryPos] = newEntry;
+        }
 
-            return new Node(this.level, this.size, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
+        if (newNode == node) {
+            return root;
+        }
+
+        if (nodeStack == null) {
+            return newNode;
+        }
+
+        Node oldNode;
+        for (int i = stackSize - 1; i >= 0; i--) {
+
+            oldNode = node;
+            node = nodeStack[i];
+
+            final Node[] newNodes = Arrays.copyOf(node.nodes, node.nodes.length, Node[].class);
+            newNodes[posStack[i]] = newNode;
+
+            newNode = new Node(node.level, node.size + (newNode.size - oldNode.size), node.nodesBitMap, newNodes, node.entriesBitMap, node.entries);
 
         }
 
-        if (this.level == MAX_LEVEL) {
-            // No new levels can be created, so a collision entry will be created or expanded
-
-            final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-            newEntries[entryPos] = oldEntry.add(entry);
-
-            return new Node(this.level, this.size + 1, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
-
-        }
-
-        // A new level will be created, a node will replace the existing entry
-        final Node newNode = new Node(this.level + 1, (Entry)oldEntry, entry);
-        final int newNodePos = (nodePos ^ NEG_MASK);
-
-        final long newNodeBitMap = this.nodesBitMap ^ mask;
-        final long newEntryBitMap = this.entriesBitMap ^ mask;
-
-        final Node[] newNodes = new Node[this.nodes.length + 1];
-        System.arraycopy(this.nodes, 0, newNodes, 0, newNodePos);
-        newNodes[newNodePos] = newNode;
-        System.arraycopy(this.nodes, newNodePos, newNodes, newNodePos + 1, this.nodes.length - newNodePos);
-
-        final Entry[] newEntries = new Entry[this.entries.length - 1];
-        System.arraycopy(this.entries, 0, newEntries, 0, entryPos);
-        System.arraycopy(this.entries, entryPos + 1, newEntries, entryPos, this.entries.length - (entryPos + 1));
-
-        return new Node(this.level, this.size + 1, newNodeBitMap, newNodes, newEntryBitMap, newEntries);
+        return newNode;
 
     }
 
