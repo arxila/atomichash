@@ -207,7 +207,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
         if (keys == null || keys.length == 0) {
             return Collections.EMPTY_MAP;
         }
-        final Map<K,V> map = new HashMap<>();
+        final Map<K,V> map = new HashMap<>(keys.length + 1, 1.0f);
         Object value;
         for (final Object key : keys) {
             value = this.root.get(key);

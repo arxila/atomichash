@@ -295,7 +295,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             return Collections.EMPTY_MAP;
         }
         final Node node = this.root.get();
-        final Map<K,V> map = new HashMap<>();
+        final Map<K,V> map = new HashMap<>(keys.length + 1, 1.0f);
         Object value;
         for (final Object key : keys) {
             value = node.get(key);
