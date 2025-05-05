@@ -252,7 +252,7 @@ final class Node implements Serializable {
         }
 
         if (this.level == MAX_LEVEL) {
-            // No new levels can be created, so a CollisionEntry will be created or expanded
+            // No new levels can be created, so a collision entry will be created or expanded
 
             final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
             newEntries[entryPos] = oldEntry.add(entry);
