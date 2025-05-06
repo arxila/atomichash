@@ -199,7 +199,7 @@ final class Node implements Serializable {
 
         Node[] nodeStack = null;
         int[] posStack = null;
-        int stackSize = 0;
+        int stackIdx = -1;
 
         Node node = root;
         long mask = mask(hash, node.level);
@@ -208,14 +208,14 @@ final class Node implements Serializable {
             // There is a node at the selected position: nodes will be stacked until reaching the level
             // at which the data is or should be
 
-            nodeStack = new Node[MAX_LEVEL + 1];
-            posStack = new int[MAX_LEVEL + 1];
+            nodeStack = new Node[MAX_LEVEL];
+            posStack = new int[MAX_LEVEL];
 
             int pos;
             do {
-                nodeStack[stackSize] = node;
-                posStack[stackSize] = pos = pos(mask, node.nodesBitMap);
-                stackSize++;
+                stackIdx++;
+                nodeStack[stackIdx] = node;
+                posStack[stackIdx] = pos = pos(mask, node.nodesBitMap);
                 node = node.nodes[pos];
             } while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L);
 
@@ -227,13 +227,13 @@ final class Node implements Serializable {
         if (entryPos < 0) {
             // There is nothing at the selected position: an entry will be created
 
-            final int newEntryPos = (entryPos ^ NEG_MASK);
+            final int newEntryPos = (entryPos ^ NEG_MASK); // Turn negative entryPos positive
 
             final long newEntriesBitMap = node.entriesBitMap | mask;
             final Entry[] newEntries = new Entry[node.entries.length + 1];
             System.arraycopy(node.entries, 0, newEntries, 0, newEntryPos);
-            newEntries[newEntryPos] = entry;
             System.arraycopy(node.entries, newEntryPos, newEntries, newEntryPos + 1, node.entries.length - newEntryPos);
+            newEntries[newEntryPos] = entry;
 
             newNode = new Node(node.level, node.size + 1, node.nodesBitMap, node.nodes, newEntriesBitMap, newEntries);
 
@@ -275,8 +275,8 @@ final class Node implements Serializable {
 
                 final Node[] newNodes = new Node[node.nodes.length + 1];
                 System.arraycopy(node.nodes, 0, newNodes, 0, deeperNodePos);
-                newNodes[deeperNodePos] = deeperNode;
                 System.arraycopy(node.nodes, deeperNodePos, newNodes, deeperNodePos + 1, node.nodes.length - deeperNodePos);
+                newNodes[deeperNodePos] = deeperNode;
 
                 final Entry[] newEntries = new Entry[node.entries.length - 1];
                 System.arraycopy(node.entries, 0, newEntries, 0, entryPos);
@@ -288,18 +288,14 @@ final class Node implements Serializable {
 
         }
 
-        if (nodeStack == null) {
-            return newNode;
-        }
-
         Node oldNode;
-        for (int i = stackSize - 1; i >= 0; i--) {
+        for ( ; stackIdx >= 0; stackIdx--) {
 
             oldNode = node;
-            node = nodeStack[i];
+            node = nodeStack[stackIdx];
 
             final Node[] newNodes = Arrays.copyOf(node.nodes, node.nodes.length, Node[].class);
-            newNodes[posStack[i]] = newNode;
+            newNodes[posStack[stackIdx]] = newNode;
 
             newNode = new Node(node.level, node.size + (newNode.size - oldNode.size), node.nodesBitMap, newNodes, node.entriesBitMap, node.entries);
 
