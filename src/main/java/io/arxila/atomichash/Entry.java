@@ -22,7 +22,6 @@ package io.arxila.atomichash;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 final class Entry implements Map.Entry<Object,Object>, Serializable {
@@ -89,7 +88,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
             return false;
         }
         for (final Entry collision : this.collisions) {
-            if (Objects.equals(collision.key, key)) {
+            if (eq(key, collision.key)) {
                 return true;
             }
         }
@@ -102,7 +101,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
             return eq(this.value, value);
         }
         for (final Entry collision : this.collisions) {
-            if (Objects.equals(collision.value, value)) {
+            if (eq(value, collision.value)) {
                 return true;
             }
         }
@@ -116,7 +115,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
             return eq(this.key, key) ? this.value : NOT_FOUND;
         }
         for (final Entry collision : this.collisions) {
-            if (Objects.equals(collision.key, key)) {
+            if (eq(key, collision.key)) {
                 return collision.value;
             }
         }
@@ -138,7 +137,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
         Entry collision;
         for (int i = 0; i < this.collisions.length; i++) {
             collision = this.collisions[i];
-            if (Objects.equals(collision.key, entry.key)) {
+            if (eq(entry.key, collision.key)) {
                 if (collision.key == entry.key && collision.value == entry.value) {
                     return this;
                 }
@@ -167,7 +166,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
             return (this.hash == hash && eq(this.key, key)) ? null : this;
         }
         for (int i = 0; i < this.collisions.length; i++) {
-            if (this.hash == hash && Objects.equals(this.collisions[i].key, key)) {
+            if (this.hash == hash && eq(key, this.collisions[i].key)) {
                 if (this.collisions.length == 2) {
                     return this.collisions[1 - i];
                 }
@@ -189,7 +188,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
      * Do not replace with Objects.equals() until JDK-8015417 is resolved.
      */
     private static boolean eq(final Object o1, final Object o2) {
-        return o1 == null ? o2 == null : o1.equals(o2);
+        return (o1 == o2) || (o1 != null && o1.equals(o2));
     }
 
 
@@ -228,7 +227,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
             if (otherEntry.collisions == null) {
                 return false;
             }
-            return Objects.equals(Set.of(this.collisions), Set.of(otherEntry.collisions));
+            return Set.of(this.collisions).equals(Set.of(otherEntry.collisions));
         }
         final Map.Entry<?,?> otherEntry = (Map.Entry<?,?>) other;
         return eq(this.key, otherEntry.getKey()) && eq(this.value, otherEntry.getValue());
