@@ -146,9 +146,9 @@ final class Node implements Serializable {
     }
 
 
-    boolean containsKey(final Object key) {
+    static boolean containsKey(final Node root, final Object key) {
         final int hash = Entry.hash(key);
-        Node node = this; long mask;
+        Node node = root; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }

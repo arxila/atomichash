@@ -183,7 +183,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
 
 
     public boolean containsKey(final Object key) {
-        return this.root.containsKey(key);
+        return Node.containsKey(this.root, key);
     }
 
     public boolean containsValue(final Object value) {
@@ -288,7 +288,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
     public AtomicHashStore<K,V> replace(final K key, final V newValue) {
-        final Node newNode = (this.root.containsKey(key)) ? Node.put(this.root, new Entry(key, newValue)) : this.root;
+        final Node newNode = (Node.containsKey(this.root, key)) ? Node.put(this.root, new Entry(key, newValue)) : this.root;
         return (this.root != newNode) ? new AtomicHashStore<>(newNode) : this;
     }
 

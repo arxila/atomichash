@@ -266,7 +266,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean containsKey(final Object key) {
-        return this.root.get().containsKey(key);
+        return Node.containsKey(this.root.get(), key);
     }
 
     @Override
@@ -431,7 +431,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Node node, newNode;
         do {
             node = this.root.get();
-            mapped = node.containsKey(key);
+            mapped = Node.containsKey(node, key);
             newNode = (mapped) ? Node.put(node, newEntry) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return (mapped) ? (V) Node.get(node, key) : null;
