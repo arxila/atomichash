@@ -19,7 +19,6 @@
  */
 package io.arxila.atomichash;
 
-import java.util.Map;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +33,7 @@ public class BaseAtomicHashMapTest {
     @Test
     void testEmptyMap() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         // Test size
         assertEquals(0, map.size(), "Size of empty map should be 0");
@@ -49,6 +48,7 @@ public class BaseAtomicHashMapTest {
 
         // Test remove
         assertNull(map.remove("key"), "Removing a key from an empty map should return null");
+        TestUtils.validate(map.innerRoot());
 
     }
 
@@ -56,7 +56,7 @@ public class BaseAtomicHashMapTest {
     @Test
     void testSize() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         // Initially the map is empty
         assertEquals(0, map.size());
@@ -64,22 +64,27 @@ public class BaseAtomicHashMapTest {
         // Add a key-value pair
         map.put("key1", "value1");
         assertEquals(1, map.size(), "Size should increment after put");
+        TestUtils.validate(map.innerRoot());
 
         // Add another key-value pair
         map.put("key2", "value2");
         assertEquals(2, map.size(), "Size should reflect the number of keys");
+        TestUtils.validate(map.innerRoot());
 
         // Update an existing key
         map.put("key1", "newValue");
         assertEquals(2, map.size(), "Updating an existing key should not change the size");
+        TestUtils.validate(map.innerRoot());
 
         // Remove a key
         map.remove("key1");
         assertEquals(1, map.size(), "Size should decrement after remove");
+        TestUtils.validate(map.innerRoot());
 
         // Remove all keys
         map.remove("key2");
         assertEquals(0, map.size(), "Size should be 0 after all keys are removed");
+        TestUtils.validate(map.innerRoot());
 
     }
 
@@ -87,7 +92,7 @@ public class BaseAtomicHashMapTest {
     @Test
     void testContainsKeyAndValue() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         // Initially, the map should not contain any key or value
         assertFalse(map.containsKey(null), "Empty map should not contain null key");
@@ -112,34 +117,40 @@ public class BaseAtomicHashMapTest {
         map.put("key2", "value2");
         assertTrue(map.containsKey("key2"), "Map should contain key2 after adding it");
         assertTrue(map.containsValue("value2"), "Map should contain value2 after adding it");
+        TestUtils.validate(map.innerRoot());
 
         // Remove key and check again
         map.remove(null);
         assertFalse(map.containsKey(null), "Map should not contain null key after removal");
         assertFalse(map.containsValue("value1"), "Map should not contain value1 after null key removal");
+        TestUtils.validate(map.innerRoot());
     }
 
 
     @Test
     void testPutAndGetWithNullKeysAndValues() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         // Insert a null key with a non-null value
         assertNull(map.put(null, "value1"), "Put should return null for a new key");
         assertEquals("value1", map.get(null), "Get should return the value for a null key");
+        TestUtils.validate(map.innerRoot());
 
         // Update a null key's value
         assertEquals("value1", map.put(null, "value2"), "Put should return the old value when updating");
         assertEquals("value2", map.get(null), "Get should return the updated value for a null key");
+        TestUtils.validate(map.innerRoot());
 
         // Insert a non-null key with a null value
         assertNull(map.put("key1", null), "Put should return null for a new key with a null value");
         assertNull(map.get("key1"), "Get should return null for a key with a null value");
+        TestUtils.validate(map.innerRoot());
 
         // Update the null value for an existing key
         assertNull(map.put("key1", "value1"), "Put should return the old null value");
         assertEquals("value1", map.get("key1"), "Get should return updated value for a key");
+        TestUtils.validate(map.innerRoot());
 
     }
 
@@ -147,9 +158,10 @@ public class BaseAtomicHashMapTest {
     @Test
     void testRemove() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
         map.put("key1", "value1");
         map.put("key2", "value2");
+        TestUtils.validate(map.innerRoot());
 
         // Remove a key and check return value
         assertEquals("value1", map.remove("key1"), "Remove should return the value associated with the key");
@@ -157,29 +169,33 @@ public class BaseAtomicHashMapTest {
 
         // Removing a non-existent key should return null
         assertNull(map.remove("key3"), "Removing a non-existent key should return null");
+        TestUtils.validate(map.innerRoot());
 
         // Remove remaining keys
         assertEquals("value2", map.remove("key2"));
         assertTrue(map.isEmpty(), "Map should be empty after removing all keys");
+        TestUtils.validate(map.innerRoot());
 
     }
 
 
     @Test
     void testPutAndReplaceValues() {
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
         assertNull(map.put("key1", "value1"), "Put should return null for a new key");
+        TestUtils.validate(map.innerRoot());
 
         // Replace the value for an existing key
         assertEquals("value1", map.put("key1", "value2"), "Put should return the old value when replacing");
         assertEquals("value2", map.get("key1"), "Get should reflect the updated value");
+        TestUtils.validate(map.innerRoot());
     }
 
 
     @Test
     void testGetNonexistentKeys() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         map.put("key1", "value1");
 
@@ -218,7 +234,7 @@ public class BaseAtomicHashMapTest {
             }
         }
 
-        final Map<CollidingObject, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<CollidingObject, String> map = new AtomicHashMap<>();
         CollidingObject key1 = new CollidingObject("key1");
         CollidingObject key2 = new CollidingObject("key2");
         CollidingObject key3 = new CollidingObject("key3");
@@ -227,15 +243,19 @@ public class BaseAtomicHashMapTest {
         // Insert all colliding keys
         map.put(key1, "value1");
         assertEquals(1, map.size(), "Size should be 1 after inserting key1");
+        TestUtils.validate(map.innerRoot());
 
         map.put(key2, "value2");
         assertEquals(2, map.size(), "Size should be 2 after inserting key2");
+        TestUtils.validate(map.innerRoot());
 
         map.put(key3, "value3");
         assertEquals(3, map.size(), "Size should be 3 after inserting key3");
+        TestUtils.validate(map.innerRoot());
 
         map.put(key4, "value4");
         assertEquals(4, map.size(), "Size should be 4 after inserting key4");
+        TestUtils.validate(map.innerRoot());
 
         // Ensure all keys are stored and retrievable
         assertEquals("value1", map.get(key1), "Should retrieve value associated with key1");
@@ -250,6 +270,7 @@ public class BaseAtomicHashMapTest {
         assertEquals("value2", map.get(key2), "Key2 should still be retrievable after collision");
         assertEquals("value3", map.get(key3), "Key3 should still be retrievable after collision");
         assertEquals("value4", map.get(key4), "Key4 should still be retrievable after collision");
+        TestUtils.validate(map.innerRoot());
 
         // Remove all keys one by one and validate map state
         map.remove(key2);
@@ -257,22 +278,25 @@ public class BaseAtomicHashMapTest {
         assertNull(map.get(key2), "Removed key should no longer exist");
         assertEquals("value3", map.get(key3), "Key3 should still be retrievable after collision");
         assertEquals("value4", map.get(key4), "Key4 should still be retrievable after collision");
+        TestUtils.validate(map.innerRoot());
 
         map.remove(key3);
         assertEquals(1, map.size(), "Size should be 1 after removing key3");
         assertNull(map.get(key3), "Removed key should no longer exist");
         assertEquals("value4", map.get(key4), "Key4 should still be retrievable after collision");
+        TestUtils.validate(map.innerRoot());
 
         map.remove(key4);
         assertEquals(0, map.size(), "Size should be 0 after removing all keys");
         assertNull(map.get(key4), "Removed key should no longer exist");
         assertTrue(map.isEmpty(), "Map should be empty after removing all keys");
+        TestUtils.validate(map.innerRoot());
     }
 
     @Test
     void testGetOrDefault() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         // Test default value for nonexistent key
         assertEquals("default", map.getOrDefault("key", "default"), "Should return default value for nonexistent key");
@@ -286,14 +310,16 @@ public class BaseAtomicHashMapTest {
     @Test
     void testPutAll() {
 
-        final Map<String, String> map1 = new AtomicHashMap<>();
-        final Map<String, String> map2 = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map1 = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map2 = new AtomicHashMap<>();
 
         map1.put("key1", "value1");
         map1.put("key2", "value2");
+        TestUtils.validate(map1.innerRoot());
 
         // Use putAll
         map2.putAll(map1);
+        TestUtils.validate(map2.innerRoot());
 
         // Validate map2 contains all values from map1
         assertEquals(2, map2.size(), "Map2 size should match map1 after putAll");
@@ -305,25 +331,28 @@ public class BaseAtomicHashMapTest {
     @Test
     void testPutIfAbsent() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         // Add a new entry if absent
         assertNull(map.putIfAbsent("key1", "value1"), "Should return null for a new key");
         assertEquals("value1", map.get("key1"), "Key1 should be added with the correct value");
+        TestUtils.validate(map.innerRoot());
 
         // Test putIfAbsent for an existing key
         assertEquals("value1", map.putIfAbsent("key1", "value2"), "Should return existing value when key is already present");
         assertEquals("value1", map.get("key1"), "Value should not be updated for an existing key");
+        TestUtils.validate(map.innerRoot());
 
     }
 
     @Test
     void testClear() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
 
         map.put("key1", "value1");
         map.put("key2", "value2");
+        TestUtils.validate(map.innerRoot());
 
         assertFalse(map.isEmpty(), "Map should not be empty before clear");
 
@@ -336,9 +365,10 @@ public class BaseAtomicHashMapTest {
     @Test
     void testRemoveKeyValue() {
 
-        final Map<String, String> map = new AtomicHashMap<>();
+        final AtomicHashMap<String, String> map = new AtomicHashMap<>();
         map.put("key1", "value1");
         map.put("key2", "value2");
+        TestUtils.validate(map.innerRoot());
 
         // Test remove with matching key and value
         assertTrue(map.remove("key1", "value1"), "Remove should return true for matching key and value");

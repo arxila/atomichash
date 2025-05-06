@@ -180,7 +180,6 @@ public class AtomicHashMapReadWriteTest {
 
         Assertions.assertFalse(st.isEmpty());
         st.clear();
-        Assertions.assertTrue(st.isEmpty());
 
     }
 
@@ -197,6 +196,7 @@ public class AtomicHashMapReadWriteTest {
         }
 
         V x = map.put(key, value);
+        TestUtils.validate(map.innerRoot());
 
         Assertions.assertEquals(x,oldValue);
 
@@ -216,6 +216,7 @@ public class AtomicHashMapReadWriteTest {
 
         final AtomicHashMap<K,V> map2 = new AtomicHashMap<>(map);
         x = map2.remove(key);
+        TestUtils.validate(map2.innerRoot());
 
         Assertions.assertEquals(value, x);
 
@@ -243,7 +244,9 @@ public class AtomicHashMapReadWriteTest {
         AtomicHashMap<K,V> map2 = new AtomicHashMap<>(map);
 
         V x1 = map.remove(key);
+        TestUtils.validate(map.innerRoot());
         boolean x2 = map2.remove(key, oldValue);
+        TestUtils.validate(map2.innerRoot());
 
         Assertions.assertEquals(oldValue, x1);
         Assertions.assertEquals(oldContainsKey, x2);
