@@ -307,7 +307,7 @@ final class Node implements Serializable {
 
 
 
-    public static Node remove(final Node root, final int hash, final Object key) {
+    static Node remove(final Node root, final int hash, final Object key) {
 
         Node[] nodeStack = null;
         int[] posStack = null;
