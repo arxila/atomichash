@@ -358,7 +358,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Node node, newNode;
         do {
             node = this.root.get();
-            newNode = node.remove(hash, key);
+            newNode = Node.remove(node, hash, key);
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         final Object oldValue = Node.get(node, key);
         return (V) normalizeAbsentValue(oldValue);
@@ -372,7 +372,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         do {
             node = this.root.get();
             matches = Objects.equals(oldValue, Node.get(node, key)); // No need to worry about NOT_FOUND (requires a mapping)
-            newNode = (matches) ? node.remove(hash, key) : node;
+            newNode = (matches) ? Node.remove(node, hash, key) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return matches;
     }
@@ -477,7 +477,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
             newNode = (value == null) ?
                             node :  // Absent, no changes
-                            ((remappedValue == null) ? node.remove(hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue)));
+                            ((remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue)));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
@@ -492,7 +492,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             value = (V) normalizeAbsentValue(Node.get(node, key));
             remappedValue = remappingFunction.apply(key, value);
-            newNode = (remappedValue == null) ? node.remove(hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue));
+            newNode = (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
@@ -509,7 +509,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             value = (V) normalizeAbsentValue(Node.get(node, key));
             remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
-            newNode =  (remappedValue == null) ? node.remove(hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue));
+            newNode =  (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }

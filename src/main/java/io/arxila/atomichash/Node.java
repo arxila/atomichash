@@ -307,83 +307,122 @@ final class Node implements Serializable {
 
 
 
-    Node remove(final int hash, final Object key) {
+    public static Node remove(final Node root, final int hash, final Object key) {
 
-        final long mask = mask(hash, this.level);
+        Node[] nodeStack = null;
+        int[] posStack = null;
+        int stackIdx = -1;
 
-        final int entryPos = pos(mask, this.entriesBitMap);
-        if (entryPos >= 0) {
+        Node node = root;
+        long mask = mask(hash, node.level);
 
-            final Entry oldEntry = this.entries[entryPos];
-            final Entry newEntry = oldEntry.remove(hash, key);
-            if (newEntry == oldEntry) {
-                return this;
-            }
+        if ((mask & node.nodesBitMap) != 0L) {
+            // There is a node at the selected position: nodes will be stacked until reaching the level
+            // at which the data is or should be
 
-            if (newEntry != null) {
-                final Entry[] newEntries = Arrays.copyOf(this.entries, this.entries.length, Entry[].class);
-                newEntries[entryPos] = newEntry;
-                return new Node(this.level, this.size - 1, this.nodesBitMap, this.nodes, this.entriesBitMap, newEntries);
-            }
+            nodeStack = new Node[MAX_LEVEL];
+            posStack = new int[MAX_LEVEL];
 
-            final long newEntriesBitMap = this.entriesBitMap ^ mask;
+            int pos;
+            do {
+                stackIdx++;
+                nodeStack[stackIdx] = node;
+                posStack[stackIdx] = pos = pos(mask, node.nodesBitMap);
+                node = node.nodes[pos];
+            } while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L);
+
+        }
+
+        Node newNode;
+        final int entryPos = pos(mask, node.entriesBitMap);
+
+        if (entryPos < 0) {
+            // There is nothing at the position that the removed key should be at: nothing to remove
+            return root;
+        }
+
+        final Entry oldEntry = node.entries[entryPos];
+        final Entry newEntry = oldEntry.remove(hash, key);
+
+        if (newEntry == oldEntry) {
+            // No need to change anything at any level if changes were not made (key was not found)
+            return root;
+        }
+
+        if (newEntry != null) {
+            // This was a collision entry from which a collision mapping was removed
+
+            final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
+            newEntries[entryPos] = newEntry;
+            newNode = new Node(node.level, node.size - 1, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
+
+        } else {
+
+            final long newEntriesBitMap = node.entriesBitMap ^ mask;
             final Entry[] newEntries;
             if (newEntriesBitMap == 0L) {
-                if (this.nodesBitMap == 0L) {
+                newEntries = EMPTY_ENTRIES;
+                if (node.nodesBitMap == 0L) {
+                    // Empty node: this can only happen at the root node (no stack), when the map gets cleared
+                    // At any other level, we would reduce nodes upwards when they have only one (non-collision) entry
                     return EMPTY_NODE;
                 }
-                newEntries = EMPTY_ENTRIES;
             } else {
-                newEntries = new Entry[this.entries.length - 1];
-                System.arraycopy(this.entries, 0, newEntries, 0, entryPos);
-                System.arraycopy(this.entries, entryPos + 1, newEntries, entryPos, this.entries.length - (entryPos + 1));
+                newEntries = new Entry[node.entries.length - 1];
+                System.arraycopy(node.entries, 0, newEntries, 0, entryPos);
+                System.arraycopy(node.entries, entryPos + 1, newEntries, entryPos, node.entries.length - (entryPos + 1));
             }
 
-            return new Node(this.level, this.size - 1, this.nodesBitMap, this.nodes, newEntriesBitMap, newEntries);
+            newNode = new Node(node.level, node.size - 1, node.nodesBitMap, node.nodes, newEntriesBitMap, newEntries);
 
         }
 
-        final int nodePos = pos(mask, this.nodesBitMap);
-        if (nodePos < 0) {
-            return this;
+        int nodePos;
+        for ( ; stackIdx >= 0; stackIdx--) {
+
+            node = nodeStack[stackIdx];
+            nodePos = posStack[stackIdx];
+
+            if (newNode.nodes.length > 0 || newNode.entries.length > 1 || newNode.entries[0].collisions != null) {
+                // The new node has at least one node, or two entries, or one collision entry that must live at level 5
+                // There is no possibility to "reduce" the node into the upper level. The node will be simply replaced
+
+                final Node[] newNodes = Arrays.copyOf(node.nodes, node.nodes.length, Node[].class);
+                newNodes[nodePos] = newNode;
+
+                newNode = new Node(node.level, node.size - 1, node.nodesBitMap, newNodes, node.entriesBitMap, node.entries);
+
+            } else {
+                // The new node can be reduced into the upper level as a mere Entry
+
+                final Entry reducedEntry = newNode.entries[0];
+                final long reducedEntryMask = mask(reducedEntry.hash, node.level);
+                // The pos computed below cannot be positive because there is no entry at that index given there is a node
+                final int reducedEntryPos = (pos(reducedEntryMask, node.entriesBitMap) ^ NEG_MASK);
+
+                final long newNodesBitMap = node.nodesBitMap ^ reducedEntryMask;      // Remove mask from node bitmap
+                final long newEntriesBitMap = node.entriesBitMap ^ reducedEntryMask;  // Add mask to entry bitmap
+
+                final Entry[] newEntries = new Entry[node.entries.length + 1];
+                System.arraycopy(node.entries, 0, newEntries, 0, reducedEntryPos);
+                System.arraycopy(node.entries, reducedEntryPos, newEntries, reducedEntryPos + 1, node.entries.length - reducedEntryPos);
+                newEntries[reducedEntryPos] = reducedEntry;
+
+                final Node[] newNodes = new Node[node.nodes.length - 1];
+                System.arraycopy(node.nodes, 0, newNodes, 0, nodePos);
+                System.arraycopy(node.nodes, nodePos + 1, newNodes, nodePos, node.nodes.length - (nodePos + 1));
+
+                newNode = new Node(node.level, node.size - 1, newNodesBitMap, newNodes, newEntriesBitMap, newEntries);
+
+            }
+
         }
 
-        final Node oldNode = this.nodes[nodePos];
-        final Node newNode = oldNode.remove(hash, key);
+        return newNode;
 
-        if (oldNode == newNode) {
-            return this;
-        }
-
-        if (newNode.nodes.length > 0 || newNode.entries.length > 1 || newNode.entries[0].collisions != null) {
-
-            final Node[] newNodes = Arrays.copyOf(this.nodes, this.nodes.length, Node[].class);
-            newNodes[nodePos] = newNode;
-
-            return new Node(this.level, this.size - 1, this.nodesBitMap, newNodes, this.entriesBitMap, this.entries);
-
-        }
-
-        // The new Node at level + 1 now has a single non-collision Entry, so we need to link that Entry instead
-
-        final Entry newEntry = newNode.entries[0];
-        final int newEntryPos = (entryPos ^ NEG_MASK);
-
-        final long newNodeBitMap = this.nodesBitMap ^ mask;
-        final long newEntryBitMap = this.entriesBitMap ^ mask;
-
-        final Entry[] newEntries = new Entry[this.entries.length + 1];
-        System.arraycopy(this.entries, 0, newEntries, 0, newEntryPos);
-        newEntries[newEntryPos] = newEntry;
-        System.arraycopy(this.entries, newEntryPos, newEntries, newEntryPos + 1, this.entries.length - newEntryPos);
-
-        final Node[] newNodes = new Node[this.nodes.length - 1];
-        System.arraycopy(this.nodes, 0, newNodes, 0, nodePos);
-        System.arraycopy(this.nodes, nodePos + 1, newNodes, nodePos, this.nodes.length - (nodePos + 1));
-
-        return new Node(this.level, this.size - 1, newNodeBitMap, newNodes, newEntryBitMap, newEntries);
 
     }
+
 
 
     Set<Entry> allEntries() {
