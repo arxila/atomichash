@@ -70,7 +70,7 @@ final class PrettyPrinter {
             stringBuilder.append('\n');
             for (int i = 0; i < entry.collisions.length; i++) {
                 stringBuilder.append(indentForLevel(indentLevel + 1));
-                stringBuilder.append(String.format("( <%s> <%s> )", entry.key, entry.value));
+                stringBuilder.append(String.format("( <%s> <%s> )", entry.collisions[i].key, entry.collisions[i].value));
                 stringBuilder.append('\n');
             }
             stringBuilder.append(indentForLevel(indentLevel));

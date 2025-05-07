@@ -404,8 +404,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public void forEach(final BiConsumer<? super K, ? super V> action) {
         // This implementation applies minor optimizations on the default (e.g. entrySet is immutable)
         Objects.requireNonNull(action);
-        final Set<io.arxila.atomichash.Entry> entrySet = (Set<io.arxila.atomichash.Entry>)(Set<?>)entrySet();
-        for (io.arxila.atomichash.Entry entry : entrySet) {
+        for (io.arxila.atomichash.Entry entry : this.root.get().allEntries()) {
             action.accept((K)entry.key, (V)entry.value);
         }
     }

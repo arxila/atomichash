@@ -46,7 +46,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
      * This mirrors what the standard implementation of hashCode() in java.util.HashMap does to try to improve
      * uniformity of hashes by performing a bitwise XOR of the 16 most significant bits on the 16 less significant,
      * assuming that due to how memory assignment works in the JVM, in cases when the identity hash code is used,
-     * the 16 most significant ones will probably show a higher entropy.
+     * the 16 most significant ones will probably show higher entropy.
      */
     static int hash(final Object object) {
         int h;

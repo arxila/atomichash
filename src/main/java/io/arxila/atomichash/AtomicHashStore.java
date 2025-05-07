@@ -273,8 +273,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     public void forEach(final BiConsumer<? super K, ? super V> action) {
         // This implementation applies minor optimizations on the default (e.g. entrySet is immutable)
         Objects.requireNonNull(action);
-        final Set<io.arxila.atomichash.Entry> entrySet = (Set<io.arxila.atomichash.Entry>)(Set<?>)entrySet();
-        for (io.arxila.atomichash.Entry entry : entrySet) {
+        for (io.arxila.atomichash.Entry entry : this.root.allEntries()) {
             action.accept((K)entry.key, (V)entry.value);
         }
     }
