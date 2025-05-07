@@ -159,22 +159,44 @@ final class Node implements Serializable {
     }
 
 
-    boolean containsValue(final Object value) {
-        if (this.entriesBitMap != 0L) {
-            for (final Entry entry : this.entries) {
-                if (entry.containsValue(value)) {
-                    return true;
+    static boolean containsValue(final Node root, final Object value) {
+
+        Node[] nodeStack = null;
+        int[] posStack = null;
+
+        Node node = root;
+        int nodeLevel = 0;
+
+        do {
+
+            if (node.entriesBitMap != 0L) {
+                for (final Entry entry : node.entries) {
+                    if (entry.containsValue(value)) {
+                        return true;
+                    }
                 }
             }
-        }
-        if (this.nodesBitMap != 0L) {
-            for (final Node node : this.nodes) {
-                if (node.containsValue(value)) {
-                    return true;
+
+            if (node.nodesBitMap != 0L) {
+                if (nodeStack == null) {
+                    nodeStack = new Node[MAX_LEVEL];
+                    posStack = new int[MAX_LEVEL];
                 }
+                nodeStack[nodeLevel] = node;
+                posStack[nodeLevel] = 0;
+            } else {
+                while (--nodeLevel >= 0 && (++posStack[nodeLevel] >= nodeStack[nodeLevel].nodes.length));
             }
-        }
+
+            if (nodeLevel >= 0) {
+                node = nodeStack[nodeLevel].nodes[posStack[nodeLevel]];
+                nodeLevel++;
+            }
+
+        } while (nodeLevel >= 0);
+
         return false;
+
     }
 
 

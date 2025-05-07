@@ -271,7 +271,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean containsValue(final Object value) {
-        return this.root.get().containsValue(value);
+        return Node.containsValue(this.root.get(), value);
     }
 
 

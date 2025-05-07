@@ -187,7 +187,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
     public boolean containsValue(final Object value) {
-        return this.root.containsValue(value);
+        return Node.containsValue(this.root, value);
     }
 
 
