@@ -53,7 +53,7 @@ git commit -m "Prepare for next development iteration"
 git push
 ```
 
-## 6. Create tag and set to new development version
+## 6. Reset dependency snapshots
 
 If any SNAPSHOT dependencies had to have their versions fixed before building, go
 back to SNAPSHOT versions wherever needed and commit.
