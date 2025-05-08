@@ -23,18 +23,18 @@ final class PrettyPrinter {
 
 
     static <K,V> String print(final AtomicHashMap<K,V> map) {
-        return printNode(map.innerRoot());
+        return printRoot(map.innerRoot());
     }
 
 
     static <K,V> String print(final AtomicHashStore<K,V> store) {
-        return printNode(store.innerRoot());
+        return printRoot(store.innerRoot());
     }
 
 
-    static <K,V> String printNode(final Node node) {
+    static <K,V> String printRoot(final Root root) {
         final StringBuilder stringBuilder = new StringBuilder();
-        printNode(0, 0, 0, stringBuilder, node);
+        printNode(0, 0, 0, stringBuilder, root.node);
         return stringBuilder.toString();
     }
 

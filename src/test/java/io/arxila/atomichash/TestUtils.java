@@ -143,17 +143,22 @@ public final class TestUtils {
 
 
     public static <K,V> void validate(final AtomicHashStore<K,V> store) {
-        validateNode(store.innerRoot(), 0);
+        validateRoot(store.innerRoot(), 0);
     }
 
 
     public static <K,V> void validate(final AtomicHashMap<K,V> map) {
-        validateNode(map.innerRoot(), 0);
+        validateRoot(map.innerRoot(), 0);
     }
 
 
-    public static void validate(final Node node) {
-        validateNode(node, 0);
+    public static void validate(final Root root) {
+        validateRoot(root, 0);
+    }
+
+
+    private static void validateRoot(final Root root, int parentMask) {
+        validateNode(root.node, parentMask);
     }
 
 

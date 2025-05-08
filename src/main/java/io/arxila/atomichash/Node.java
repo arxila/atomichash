@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 final class Node implements Serializable {
+    // NOTE that this class is meant to be totally immutable so that, in future versions, it can become
+    // a record (JDK17) and even a value type (Valhalla)
 
     private static final long serialVersionUID = 5892440116260222326L;
 
@@ -40,6 +42,7 @@ final class Node implements Serializable {
     static final Entry[] EMPTY_ENTRIES = new Entry[0];
     static final Node EMPTY_NODE = new Node(0, 0, 0L, EMPTY_NODES, 0L, EMPTY_ENTRIES);
 
+
     final int level;
     final int size;
     final long nodesBitMap;
@@ -49,9 +52,9 @@ final class Node implements Serializable {
 
 
 
-    public Node(final int level, final int size,
-                final long nodesBitMap, final Node[] nodes,
-                final long entriesBitMap, final Entry[] entries) {
+    Node(final int level, final int size,
+         final long nodesBitMap, final Node[] nodes,
+         final long entriesBitMap, final Entry[] entries) {
         super();
         this.level = level;
         this.size = size;
@@ -60,6 +63,7 @@ final class Node implements Serializable {
         this.entriesBitMap = entriesBitMap;
         this.entries = entries;
     }
+
 
 
     static Node createNewLevel(final int level, final Entry entry0, final Entry entry1) {
@@ -92,7 +96,7 @@ final class Node implements Serializable {
                 newNodes = EMPTY_NODES;
 
                 newEntriesBitMap = mask0;
-                newEntries = new Entry[] { Entry.add(entry0, entry1) };
+                newEntries = new Entry[] { entry0.add(entry1) };
 
             } else {
                 // We need an additional level to further differentiate entries
@@ -136,32 +140,32 @@ final class Node implements Serializable {
     }
 
 
-    static boolean containsKey(final Node root, final Object key) {
+    boolean containsKey(final Object key) {
         final int hash = Entry.hash(key);
-        Node node = root; long mask;
+        Node node = this; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
-            return Entry.containsKey(node.entries[pos(mask, node.entriesBitMap)], hash, key);
+            return node.entries[pos(mask, node.entriesBitMap)].containsKey(hash, key);
         }
         return false;
     }
 
 
-    static boolean containsValue(final Node root, final Object value) {
+    boolean containsValue(final Object value) {
 
         Node[] nodeStack = null;
         int[] posStack = null;
 
-        Node node = root;
+        Node node = this;
         int nodeLevel = 0;
 
         do {
 
             if (node.entriesBitMap != 0L) {
                 for (final Entry entry : node.entries) {
-                    if (Entry.containsValue(entry, value)) {
+                    if (entry.containsValue(value)) {
                         return true;
                     }
                 }
@@ -191,21 +195,21 @@ final class Node implements Serializable {
 
 
     // May return Entry.NOT_FOUND if not found (so that it can be differentiated from a null value)
-    static Object get(final Node root, final Object key) {
+    Object get(final Object key) {
         final int hash = Entry.hash(key);
-        Node node = root; long mask;
+        Node node = this; long mask;
         while(((mask = mask(hash, node.level)) & node.nodesBitMap) != 0L) {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
-            return Entry.get(node.entries[pos(mask, node.entriesBitMap)], key);
+            return node.entries[pos(mask, node.entriesBitMap)].get(key);
         }
         return Entry.NOT_FOUND;
     }
 
 
 
-    static Node put(final Node root, final Entry entry) {
+    Node put(final Entry entry) {
 
         final int hash = entry.hash;
 
@@ -213,7 +217,7 @@ final class Node implements Serializable {
         int[] posStack = null;
         int stackIdx = -1;
 
-        Node node = root;
+        Node node = this;
         long mask = mask(hash, node.level);
 
         if ((mask & node.nodesBitMap) != 0L) {
@@ -254,13 +258,13 @@ final class Node implements Serializable {
 
             final Entry oldEntry = node.entries[entryPos];
 
-            if (Entry.containsKey(oldEntry, hash, entry.key)) {
+            if (oldEntry.containsKey(hash, entry.key)) {
                 // There is a match (key exists): entry needs to be replaced
 
-                final Entry newEntry = Entry.set(oldEntry, entry);
+                final Entry newEntry = oldEntry.set(entry);
                 if (newEntry == oldEntry) {
                     // No need to change anything at any level if changes were not made
-                    return root;
+                    return this;
                 }
 
                 final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
@@ -272,7 +276,7 @@ final class Node implements Serializable {
                 // No new levels can be created, so a collision entry will be created or expanded
 
                 final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
-                newEntries[entryPos] = Entry.add(oldEntry, entry);
+                newEntries[entryPos] = oldEntry.add(entry);
 
                 newNode = new Node(node.level, node.size + 1, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
 
@@ -319,13 +323,13 @@ final class Node implements Serializable {
 
 
 
-    static Node remove(final Node root, final int hash, final Object key) {
+    Node remove(final int hash, final Object key) {
 
         Node[] nodeStack = null;
         int[] posStack = null;
         int stackIdx = -1;
 
-        Node node = root;
+        Node node = this;
         long mask = mask(hash, node.level);
 
         if ((mask & node.nodesBitMap) != 0L) {
@@ -350,15 +354,15 @@ final class Node implements Serializable {
 
         if (entryPos < 0) {
             // There is nothing at the position that the removed key should be at: nothing to remove
-            return root;
+            return this;
         }
 
         final Entry oldEntry = node.entries[entryPos];
-        final Entry newEntry = Entry.remove(oldEntry, hash, key);
+        final Entry newEntry = oldEntry.remove(hash, key);
 
         if (newEntry == oldEntry) {
             // No need to change anything at any level if changes were not made (key was not found)
-            return root;
+            return this;
         }
 
         if (newEntry != null) {
@@ -436,14 +440,14 @@ final class Node implements Serializable {
     }
 
 
-    static Set<Entry> allEntries(final Node root) {
+    Set<Entry> allEntries() {
 
-        final Set<Entry> entrySet = new HashSet<>(root.size + 1, 1.0f);
+        final Set<Entry> entrySet = new HashSet<>(this.size + 1, 1.0f);
 
         Node[] nodeStack = null;
         int[] posStack = null;
 
-        Node node = root;
+        Node node = this;
         int nodeLevel = 0;
 
         Entry[] collisions;
@@ -483,14 +487,14 @@ final class Node implements Serializable {
     }
 
 
-    static Set<Object> allKeys(final Node root) {
+    Set<Object> allKeys() {
 
-        final Set<Object> keySet = new HashSet<>(root.size + 1, 1.0f);
+        final Set<Object> keySet = new HashSet<>(this.size + 1, 1.0f);
 
         Node[] nodeStack = null;
         int[] posStack = null;
 
-        Node node = root;
+        Node node = this;
         int nodeLevel = 0;
 
         Entry[] collisions;
@@ -531,14 +535,15 @@ final class Node implements Serializable {
 
     }
 
-    static List<Object> allValues(final Node root) {
 
-        final List<Object> valueList = new ArrayList<>(root.size);
+    List<Object> allValues() {
+
+        final List<Object> valueList = new ArrayList<>(this.size);
 
         Node[] nodeStack = null;
         int[] posStack = null;
 
-        Node node = root;
+        Node node = this;
         int nodeLevel = 0;
 
         Entry[] collisions;

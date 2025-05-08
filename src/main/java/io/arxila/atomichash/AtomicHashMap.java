@@ -43,7 +43,7 @@ import java.util.function.Function;
  * the {@link java.util.Map} interface), as well as all other methods for retrieving, adding, modifying or
  * removing mappings, iteration, etc.
  * <p>
- * The map can therefore never be read in a partially-modified state, and its exact <em>snapshot</em> state for
+ * The map can therefore never be read in a partially modified state, and its exact <em>snapshot</em> state for
  * an arbitrary number of mappings can be obtained at any time.
  * <p>
  * This is achieved by internally implementing an immutable variation of a CTRIE
@@ -79,7 +79,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     private static final long serialVersionUID = 6117491851316897982L;
 
-    private final AtomicReference<Node> root;
+    private final AtomicReference<Root> root;
 
 
     
@@ -97,156 +97,105 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        node = Node.put(node, entry(k5, v5));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4), entry(k5, v5));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
                                               K k6, V v6) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        node = Node.put(node, entry(k5, v5));
-        node = Node.put(node, entry(k6, v6));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4), entry(k5, v5),
+                        entry(k6, v6));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
                                               K k6, V v6, K k7, V v7) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        node = Node.put(node, entry(k5, v5));
-        node = Node.put(node, entry(k6, v6));
-        node = Node.put(node, entry(k7, v7));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4), entry(k5, v5),
+                        entry(k6, v6), entry(k7, v7));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
                                               K k6, V v6, K k7, V v7, K k8, V v8) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        node = Node.put(node, entry(k5, v5));
-        node = Node.put(node, entry(k6, v6));
-        node = Node.put(node, entry(k7, v7));
-        node = Node.put(node, entry(k8, v8));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4), entry(k5, v5),
+                        entry(k6, v6), entry(k7, v7), entry(k8, v8));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
                                               K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        node = Node.put(node, entry(k5, v5));
-        node = Node.put(node, entry(k6, v6));
-        node = Node.put(node, entry(k7, v7));
-        node = Node.put(node, entry(k8, v8));
-        node = Node.put(node, entry(k9, v9));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4), entry(k5, v5),
+                        entry(k6, v6), entry(k7, v7), entry(k8, v8), entry(k9, v9));
+        return new AtomicHashMap<>(root);
     }
 
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
                                               K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9, K k10, V v10) {
-        final AtomicHashMap<K,V> map = new AtomicHashMap<>();
-        Node node = Node.EMPTY_NODE;
-        node = Node.put(node, entry(k1, v1));
-        node = Node.put(node, entry(k2, v2));
-        node = Node.put(node, entry(k3, v3));
-        node = Node.put(node, entry(k4, v4));
-        node = Node.put(node, entry(k5, v5));
-        node = Node.put(node, entry(k6, v6));
-        node = Node.put(node, entry(k7, v7));
-        node = Node.put(node, entry(k8, v8));
-        node = Node.put(node, entry(k9, v9));
-        node = Node.put(node, entry(k10, v10));
-        map.root.set(node);
-        return map;
+        final Root root =
+                Root.of(entry(k1, v1), entry(k2, v2), entry(k3, v3), entry(k4, v4), entry(k5, v5),
+                        entry(k6, v6), entry(k7, v7), entry(k8, v8), entry(k9, v9), entry(k10, v10));
+        return new AtomicHashMap<>(root);
     }
 
 
 
     public AtomicHashMap() {
+        super();
         this.root = new AtomicReference<>();
-        this.root.set(Node.EMPTY_NODE);
+        this.root.set(Root.EMPTY_ROOT);
     }
 
 
     public AtomicHashMap(final Map<? extends K, ? extends V> map) {
-        this.root = new AtomicReference<>();
-        Node node = Node.EMPTY_NODE;
-        if (map != null) {
-            for (final Entry<? extends K, ? extends V> mapEntry : map.entrySet()) {
-                node = Node.put(node, entry(mapEntry.getKey(), mapEntry.getValue()));
-            }
+        super();
+        final Set<io.arxila.atomichash.Entry> mapEntries = new HashSet<>();
+        for (final Entry<? extends K, ? extends V> entry : map.entrySet()) {
+            mapEntries.add(entry(entry.getKey(), entry.getValue()));
         }
-        this.root.set(node);
+        this.root = new AtomicReference<>();
+        this.root.set(Root.EMPTY_ROOT.putAll(mapEntries));
     }
 
 
-    Node innerRoot() {
+    private AtomicHashMap(final Root root) {
+        super();
+        this.root = new AtomicReference<>();
+        this.root.set(root);
+    }
+
+
+
+
+    Root innerRoot() {
         return this.root.get();
     }
 
@@ -264,36 +213,36 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public int size() {
-        return this.root.get().size;
+        return this.root.get().size();
     }
 
 
     @Override
     public boolean isEmpty() {
-        return this.root.get() == Node.EMPTY_NODE;
+        return this.root.get().isEmpty();
     }
 
 
     @Override
     public boolean containsKey(final Object key) {
-        return Node.containsKey(this.root.get(), key);
+        return this.root.get().containsKey(key);
     }
 
     @Override
     public boolean containsValue(final Object value) {
-        return Node.containsValue(this.root.get(), value);
+        return this.root.get().containsValue(value);
     }
 
 
     @Override
     public V get(final Object key) {
-        final Object value = Node.get(this.root.get(), key);
+        final Object value = this.root.get().get(key);
         return (V) normalizeAbsentValue(value);
     }
 
     @Override
     public V getOrDefault(final Object key, final V defaultValue) {
-        final Object value = Node.get(this.root.get(), key);
+        final Object value = this.root.get().get(key);
         // The definition of java.util.Map#getOrDefault() returns the default value only if key is not mapped
         return (value == io.arxila.atomichash.Entry.NOT_FOUND) ? defaultValue : (V) value;
     }
@@ -304,11 +253,11 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         if (keys == null || keys.length == 0) {
             return Collections.EMPTY_MAP;
         }
-        final Node node = this.root.get();
+        final Root root = this.root.get();
         final Map<K,V> map = new HashMap<>(keys.length + 1, 1.0f);
         Object value;
         for (final Object key : keys) {
-            value = Node.get(node, key);
+            value = root.get(key);
             if (value != io.arxila.atomichash.Entry.NOT_FOUND) {
                 map.put((K)key, (V)value);
             }
@@ -320,12 +269,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public V put(final K key, final V newValue) {
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            newNode = Node.put(node, newEntry);
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
-        final Object oldValue = Node.get(node, key);
+            root = this.root.get();
+            newRoot = root.put(newEntry);
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
+        final Object oldValue = root.get(key);
         return (V) normalizeAbsentValue(oldValue);
     }
 
@@ -333,12 +282,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public V putIfAbsent(final K key, final V newValue) {
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         V value;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            value = (V) normalizeAbsentValue(Node.get(node, key));
-            newNode = (value == null) ? Node.put(node, newEntry) : node;
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            root = this.root.get();
+            value = (V) normalizeAbsentValue(root.get(key));
+            newRoot = (value == null) ? root.put(newEntry) : root;
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return value;
     }
 
@@ -347,30 +296,27 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Objects.requireNonNull(newMappings);
         // Building a set of entries needs an iteration on the new mappings, but it pays off because
         // the Entry objects will already be instanced outside the critical (and repeatable) region.
-        final Set<io.arxila.atomichash.Entry> newEntrySet = new HashSet<>();
+        final Set<io.arxila.atomichash.Entry> newEntries = new HashSet<>();
         for (final Entry<? extends K, ? extends V> entry : newMappings.entrySet()) {
-            newEntrySet.add(entry(entry.getKey(), entry.getValue()));
+            newEntries.add(entry(entry.getKey(), entry.getValue()));
         }
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            newNode = node;
-            for (final io.arxila.atomichash.Entry entry : newEntrySet) {
-                newNode = Node.put(newNode, entry);
-            }
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            root = this.root.get();
+            newRoot = root.putAll(newEntries);
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
     }
 
 
     @Override
     public V remove(final Object key) {
         final int hash = io.arxila.atomichash.Entry.hash(key);
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            newNode = Node.remove(node, hash, key);
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
-        final Object oldValue = Node.get(node, key);
+            root = this.root.get();
+            newRoot = root.remove(hash, key);
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
+        final Object oldValue = root.get(key);
         return (V) normalizeAbsentValue(oldValue);
     }
 
@@ -378,35 +324,35 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public boolean remove(final Object key, final Object oldValue) {
         final int hash = io.arxila.atomichash.Entry.hash(key);
         boolean matches;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            matches = Objects.equals(oldValue, Node.get(node, key)); // No need to worry about NOT_FOUND (requires a mapping)
-            newNode = (matches) ? Node.remove(node, hash, key) : node;
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            root = this.root.get();
+            matches = Objects.equals(oldValue, root.get(key)); // No need to worry about NOT_FOUND (requires a mapping)
+            newRoot = (matches) ? root.remove(hash, key) : root;
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return matches;
     }
 
 
     @Override
     public void clear() {
-        this.root.set(Node.EMPTY_NODE);
+        this.root.set(Root.EMPTY_ROOT);
     }
 
 
     @Override
     public Set<K> keySet() {
-        return (Set<K>) Node.allKeys(this.root.get());
+        return (Set<K>) this.root.get().keySet();
     }
 
     @Override
     public Collection<V> values() {
-        return (List<V>) Node.allValues(this.root.get());
+        return (List<V>) this.root.get().values();
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return Collections.unmodifiableSet((Set<Entry<K,V>>) (Set<?>) Node.allEntries(this.root.get()));
+        return (Set<Entry<K,V>>) (Set<?>) this.root.get().entrySet();
     }
 
 
@@ -414,7 +360,8 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public void forEach(final BiConsumer<? super K, ? super V> action) {
         // This implementation applies minor optimizations on the default (e.g. entrySet is immutable)
         Objects.requireNonNull(action);
-        for (io.arxila.atomichash.Entry entry : Node.allEntries(this.root.get())) {
+        // We try to benefit from entrySet being cached to iterate
+        for (io.arxila.atomichash.Entry entry : this.root.get().entrySet()) {
             action.accept((K)entry.key, (V)entry.value);
         }
     }
@@ -424,12 +371,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public boolean replace(final K key, final V oldValue, final V newValue) {
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         boolean matches;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            matches = Objects.equals(oldValue, Node.get(node, key)); // No need to worry about NOT_FOUND (requires a mapping)
-            newNode = (matches) ? Node.put(node, newEntry) : node;
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            root = this.root.get();
+            matches = Objects.equals(oldValue, root.get(key)); // No need to worry about NOT_FOUND (requires a mapping)
+            newRoot = (matches) ? root.put(newEntry) : root;
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return matches;
     }
 
@@ -437,26 +384,26 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public V replace(final K key, final V newValue) {
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         boolean mapped;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            mapped = Node.containsKey(node, key);
-            newNode = (mapped) ? Node.put(node, newEntry) : node;
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
-        return (mapped) ? (V) Node.get(node, key) : null;
+            root = this.root.get();
+            mapped = root.containsKey(key);
+            newRoot = (mapped) ? root.put(newEntry) : root;
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
+        return (mapped) ? (V) root.get(key) : null;
     }
 
     @Override
     public void replaceAll(final BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            newNode = node;
-            for (io.arxila.atomichash.Entry entry : Node.allEntries(node)) {
-                newNode = Node.put(newNode, entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
+            root = this.root.get();
+            newRoot = root;
+            for (io.arxila.atomichash.Entry entry : root.entrySet()) {
+                newRoot = newRoot.put(entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
             }
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
     }
 
 
@@ -464,13 +411,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
         Objects.requireNonNull(mappingFunction);
         V value, mappedValue;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            value = (V) normalizeAbsentValue(Node.get(node, key));
+            root = this.root.get();
+            value = (V) normalizeAbsentValue(root.get(key));
             mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-            newNode = (mappedValue != null) ? Node.put(node, entry(key, mappedValue)) : node;
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            newRoot = (mappedValue != null) ? root.put(entry(key, mappedValue)) : root;
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return (mappedValue != null) ? mappedValue : value;
     }
 
@@ -479,15 +426,15 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Objects.requireNonNull(remappingFunction);
         final int hash = io.arxila.atomichash.Entry.hash(key);
         V value, remappedValue;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            value = (V) normalizeAbsentValue(Node.get(node, key));
+            root = this.root.get();
+            value = (V) normalizeAbsentValue(root.get(key));
             remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
-            newNode = (value == null) ?
-                            node :  // Absent, no changes
-                            ((remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, entry(hash, key, remappedValue)));
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            newRoot = (value == null) ?
+                            root :  // Absent, no changes
+                            ((remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue)));
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return remappedValue;
     }
 
@@ -496,13 +443,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Objects.requireNonNull(remappingFunction);
         final int hash = io.arxila.atomichash.Entry.hash(key);
         V value, remappedValue;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            value = (V) normalizeAbsentValue(Node.get(node, key));
+            root = this.root.get();
+            value = (V) normalizeAbsentValue(root.get(key));
             remappedValue = remappingFunction.apply(key, value);
-            newNode = (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, entry(hash, key, remappedValue));
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            newRoot = (remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue));
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return remappedValue;
     }
 
@@ -513,13 +460,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Objects.requireNonNull(newValue);
         final int hash = io.arxila.atomichash.Entry.hash(key);
         V value, remappedValue;
-        Node node, newNode;
+        Root root, newRoot;
         do {
-            node = this.root.get();
-            value = (V) normalizeAbsentValue(Node.get(node, key));
+            root = this.root.get();
+            value = (V) normalizeAbsentValue(root.get(key));
             remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
-            newNode =  (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, entry(hash, key, remappedValue));
-        } while (node != newNode && !this.root.compareAndSet(node, newNode));
+            newRoot =  (remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue));
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return remappedValue;
     }
 
@@ -533,8 +480,8 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         if (!(other instanceof Map)) {
             return false;
         }
-        // In order to ensure consistency of the operation, only one call (".entrySet()") will be performed
-        // on "this" and on the "other" variable. This avoids possible issues that could arise if first "other.size()"
+        // To ensure consistency of the operation, only one call (".entrySet()") will be performed on "this" and
+        // on the "other" variable. This avoids possible issues that could arise if first "other.size()"
         // was checked and then "other.entrySet()", but "other" was modified in between.
         final Set<Entry<K,V>> entrySet = entrySet();
         final Map<?,?> otherMap = (Map<?,?>) other;

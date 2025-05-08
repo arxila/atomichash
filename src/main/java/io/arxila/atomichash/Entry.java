@@ -25,10 +25,13 @@ import java.util.Map;
 import java.util.Set;
 
 final class Entry implements Map.Entry<Object,Object>, Serializable {
+    // NOTE that this class is meant to be totally immutable so that, in future versions, it can become
+    // a record (JDK17) and even a value type (Valhalla)
 
     private static final long serialVersionUID = -5401891463106165174L;
 
     static final Object NOT_FOUND = new Object(); // Always to be checked using reference equality
+
 
     final int hash;
     final Object key;
@@ -37,7 +40,7 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
 
 
 
-    public Entry(final int hash, final Object key, final Object value, final Entry[] collisions) {
+    Entry(final int hash, final Object key, final Object value, final Entry[] collisions) {
         super();
         this.hash = hash;
         this.key = key;
@@ -65,19 +68,19 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
 
 
 
-    static boolean containsKey(final Entry entry, final int hash, final Object key) {
-        return (entry.collisions == null) ? containsKeySimple(entry, hash, key) : containsKeyMultiple(entry, hash, key);
+    boolean containsKey(final int hash, final Object key) {
+        return (this.collisions == null) ? containsKeySimple(hash, key) : containsKeyMultiple(hash, key);
     }
 
-    private static boolean containsKeySimple(final Entry entry, final int hash, final Object key) {
-        return entry.hash == hash && eq(entry.key, key);
+    private boolean containsKeySimple(final int hash, final Object key) {
+        return this.hash == hash && eq(this.key, key);
     }
 
-    private static boolean containsKeyMultiple(final Entry entry, final int hash, final Object key) {
-        if (entry.hash != hash) {
+    private boolean containsKeyMultiple(final int hash, final Object key) {
+        if (this.hash != hash) {
             return false;
         }
-        for (final Entry collision : entry.collisions) {
+        for (final Entry collision : this.collisions) {
             if (eq(key, collision.key)) {
                 return true;
             }
@@ -86,16 +89,16 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     }
 
 
-    static boolean containsValue(final Entry entry, final Object value) {
-        return (entry.collisions == null) ? containsValueSimple(entry, value) : containsValueMultiple(entry, value);
+    boolean containsValue(final Object value) {
+        return (this.collisions == null) ? containsValueSimple(value) : containsValueMultiple(value);
     }
 
-    private static boolean containsValueSimple(final Entry entry, final Object value) {
-        return eq(entry.value, value);
+    private boolean containsValueSimple(final Object value) {
+        return eq(this.value, value);
     }
 
-    private static boolean containsValueMultiple(final Entry entry, final Object value) {
-        for (final Entry collision : entry.collisions) {
+    private boolean containsValueMultiple(final Object value) {
+        for (final Entry collision : this.collisions) {
             if (eq(value, collision.value)) {
                 return true;
             }
@@ -104,16 +107,16 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     }
 
 
-    static Object get(final Entry entry, final Object key) {
-        return (entry.collisions == null) ? getSimple(entry, key) : getMultiple(entry, key);
+    Object get(final Object key) {
+        return (this.collisions == null) ? getSimple(key) : getMultiple(key);
     }
 
-    private static Object getSimple(final Entry entry, final Object key) {
-        return eq(entry.key, key) ? entry.value : NOT_FOUND;
+    private Object getSimple(final Object key) {
+        return eq(this.key, key) ? this.value : NOT_FOUND;
     }
 
-    private static Object getMultiple(final Entry entry, final Object key) {
-        for (final Entry collision : entry.collisions) {
+    private Object getMultiple(final Object key) {
+        for (final Entry collision : this.collisions) {
             if (eq(key, collision.key)) {
                 return collision.value;
             }
@@ -122,73 +125,73 @@ final class Entry implements Map.Entry<Object,Object>, Serializable {
     }
 
 
-    static Entry set(final Entry entry, final Entry newEntry) {
+    Entry set(final Entry newEntry) {
         // In order to determine whether a mapping already exists, key and value will be applied
         // referential equality and not object equality. This leaves room for the possibility of a mapping
         // (key and/or value) to be replaced by other new objects even if these are "equals" to the old ones.
-        return (entry.collisions == null) ? setSimple(entry, newEntry) : setMultiple(entry, newEntry);
+        return (this.collisions == null) ? setSimple(newEntry) : setMultiple(newEntry);
     }
 
-    private static Entry setSimple(final Entry entry, final Entry newEntry) {
-        return (entry.key == newEntry.key && entry.value == newEntry.value) ? entry : newEntry;
+    private Entry setSimple(final Entry newEntry) {
+        return (this.key == newEntry.key && this.value == newEntry.value) ? this : newEntry;
     }
 
-    private static Entry setMultiple(final Entry entry, final Entry newEntry) {
+    private Entry setMultiple(final Entry newEntry) {
         Entry collision;
-        for (int i = 0; i < entry.collisions.length; i++) {
-            collision = entry.collisions[i];
+        for (int i = 0; i < this.collisions.length; i++) {
+            collision = this.collisions[i];
             if (eq(newEntry.key, collision.key)) {
                 if (collision.key == newEntry.key && collision.value == newEntry.value) {
-                    return entry;
+                    return this;
                 }
-                final Entry[] newCollisions = Arrays.copyOf(entry.collisions, entry.collisions.length);
+                final Entry[] newCollisions = Arrays.copyOf(this.collisions, this.collisions.length);
                 newCollisions[i] = newEntry;
-                return new Entry(entry.hash, null, null, newCollisions);
+                return new Entry(this.hash, null, null, newCollisions);
             }
         }
         throw new IllegalStateException(); // Should never happen
     }
 
 
-    static Entry add(final Entry entry, final Entry newEntry) {
-        return (entry.collisions == null) ? addSimple(entry, newEntry) : addMultiple(entry, newEntry);
+    Entry add(final Entry newEntry) {
+        return (this.collisions == null) ? addSimple(newEntry) : addMultiple(newEntry);
     }
 
-    private static Entry addSimple(final Entry entry, final Entry newEntry) {
-        return new Entry(entry.hash, null, null, new Entry[]{entry, newEntry});
+    private Entry addSimple(final Entry newEntry) {
+        return new Entry(this.hash, null, null, new Entry[]{ this, newEntry });
     }
 
-    private static Entry addMultiple(final Entry entry, final Entry newEntry) {
-        final Entry[] newCollisions = new Entry[entry.collisions.length + 1];
-        System.arraycopy(entry.collisions, 0, newCollisions, 0, entry.collisions.length);
-        newCollisions[entry.collisions.length] = newEntry;
-        return new Entry(entry.hash, null, null, newCollisions);
+    private Entry addMultiple(final Entry newEntry) {
+        final Entry[] newCollisions = new Entry[this.collisions.length + 1];
+        System.arraycopy(this.collisions, 0, newCollisions, 0, this.collisions.length);
+        newCollisions[this.collisions.length] = newEntry;
+        return new Entry(this.hash, null, null, newCollisions);
     }
 
 
-    static Entry remove(final Entry entry, final int hash, final Object key) {
-        return (entry.collisions == null) ? removeSimple(entry, hash, key) : removeMultiple(entry, hash, key);
+    Entry remove(final int hash, final Object key) {
+        return (this.collisions == null) ? removeSimple(hash, key) : removeMultiple(hash, key);
     }
 
-    private static Entry removeSimple(final Entry entry, final int hash, final Object key) {
-        return (entry.hash == hash && eq(entry.key, key)) ? null : entry;
+    private Entry removeSimple(final int hash, final Object key) {
+        return (this.hash == hash && eq(this.key, key)) ? null : this;
     }
 
-    private static Entry removeMultiple(final Entry entry, final int hash, final Object key) {
-        if (entry.hash == hash) {
-            for (int i = 0; i < entry.collisions.length; i++) {
-                if (eq(key, entry.collisions[i].key)) {
-                    if (entry.collisions.length == 2) {
-                        return entry.collisions[1 - i];
+    private Entry removeMultiple(final int hash, final Object key) {
+        if (this.hash == hash) {
+            for (int i = 0; i < this.collisions.length; i++) {
+                if (eq(key, this.collisions[i].key)) {
+                    if (this.collisions.length == 2) {
+                        return this.collisions[1 - i];
                     }
-                    final Entry[] newCollisions = new Entry[entry.collisions.length - 1];
-                    System.arraycopy(entry.collisions, 0, newCollisions, 0, i);
-                    System.arraycopy(entry.collisions, i + 1, newCollisions, i, entry.collisions.length - (i + 1));
-                    return new Entry(entry.hash, null, null, newCollisions);
+                    final Entry[] newCollisions = new Entry[this.collisions.length - 1];
+                    System.arraycopy(this.collisions, 0, newCollisions, 0, i);
+                    System.arraycopy(this.collisions, i + 1, newCollisions, i, this.collisions.length - (i + 1));
+                    return new Entry(this.hash, null, null, newCollisions);
                 }
             }
         }
-        return entry;
+        return this;
     }
 
 
