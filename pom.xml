@@ -29,7 +29,7 @@
   <parent>
     <groupId>io.arxila</groupId>
     <artifactId>arxila-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
 
   <groupId>io.arxila.atomichash</groupId>
