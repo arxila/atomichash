@@ -38,7 +38,7 @@ final class Node implements Serializable {
 
     static final Node[] EMPTY_NODES = new Node[0];
     static final Entry[] EMPTY_ENTRIES = new Entry[0];
-    static final Node EMPTY_NODE = new Node();
+    static final Node EMPTY_NODE = new Node(0, 0, 0L, EMPTY_NODES, 0L, EMPTY_ENTRIES);
 
     final int level;
     final int size;
@@ -47,24 +47,11 @@ final class Node implements Serializable {
     final long entriesBitMap;
     final Entry[] entries;
 
-    private transient Set<Entry> entrySet;
-    private transient Set<Object> keySet;
-    private transient List<Object> valueList;
 
 
-
-    private Node() {
-        super();
-        this.level = 0;
-        this.size = 0;
-        this.nodesBitMap = 0L;
-        this.nodes = EMPTY_NODES;
-        this.entriesBitMap = 0L;
-        this.entries = EMPTY_ENTRIES;
-    }
-
-
-    private Node(final int level, final int size, final long nodesBitMap, final Node[] nodes, final long entriesBitMap, final Entry[] entries) {
+    public Node(final int level, final int size,
+                final long nodesBitMap, final Node[] nodes,
+                final long entriesBitMap, final Entry[] entries) {
         super();
         this.level = level;
         this.size = size;
@@ -75,49 +62,52 @@ final class Node implements Serializable {
     }
 
 
-    private Node(final int level, final Entry entry0, final Entry entry1) {
+    static Node createNewLevel(final int level, final Entry entry0, final Entry entry1) {
 
-        super();
+        final long newNodesBitMap;
+        final long newEntriesBitMap;
+        final Node[] newNodes;
+        final Entry[] newEntries;
 
-        this.level = level;
-        this.size = 2;
-
-        final long mask0 = mask(entry0.hash, this.level);
-        final long mask1 = mask(entry1.hash, this.level);
+        final long mask0 = mask(entry0.hash, level);
+        final long mask1 = mask(entry1.hash, level);
 
         if (mask0 != mask1) {
 
-            final int index0 = index(entry0.hash, this.level);
-            final int index1 = index(entry1.hash, this.level);
+            final int index0 = index(entry0.hash, level);
+            final int index1 = index(entry1.hash, level);
 
-            this.nodesBitMap = 0L;
-            this.nodes = EMPTY_NODES;
+            newNodesBitMap = 0L;
+            newNodes = EMPTY_NODES;
 
-            this.entriesBitMap = (mask0 | mask1);
-            this.entries = (index0 < index1) ? new Entry[] {entry0, entry1} : new Entry[] {entry1, entry0};
+            newEntriesBitMap = (mask0 | mask1);
+            newEntries = (index0 < index1) ? new Entry[] {entry0, entry1} : new Entry[] {entry1, entry0};
 
         } else {
             // We have an index match at this level, so we will need to (try) to create a new level
-            if (this.level == MAX_LEVEL) {
+            if (level == MAX_LEVEL) {
                 // We have no more levels, so we need an Entry with collisions
 
-                this.nodesBitMap = 0L;
-                this.nodes = EMPTY_NODES;
+                newNodesBitMap = 0L;
+                newNodes = EMPTY_NODES;
 
-                this.entriesBitMap = mask0;
-                this.entries = new Entry[] { entry0.add(entry1) };
+                newEntriesBitMap = mask0;
+                newEntries = new Entry[] { Entry.add(entry0, entry1) };
 
             } else {
                 // We need an additional level to further differentiate entries
 
-                this.nodesBitMap = mask0;
-                this.nodes = new Node[]{ new Node(this.level + 1, entry0, entry1) };
+                newNodesBitMap = mask0;
+                newNodes = new Node[] { createNewLevel(level + 1, entry0, entry1) };
 
-                this.entriesBitMap = 0L;
-                this.entries = EMPTY_ENTRIES;
+                newEntriesBitMap = 0L;
+                newEntries = EMPTY_ENTRIES;
 
             }
         }
+
+        return new Node(level, 2, newNodesBitMap, newNodes, newEntriesBitMap, newEntries);
+
     }
 
 
@@ -153,7 +143,7 @@ final class Node implements Serializable {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
-            return node.entries[pos(mask, node.entriesBitMap)].containsKey(hash, key);
+            return Entry.containsKey(node.entries[pos(mask, node.entriesBitMap)], hash, key);
         }
         return false;
     }
@@ -171,7 +161,7 @@ final class Node implements Serializable {
 
             if (node.entriesBitMap != 0L) {
                 for (final Entry entry : node.entries) {
-                    if (entry.containsValue(value)) {
+                    if (Entry.containsValue(entry, value)) {
                         return true;
                     }
                 }
@@ -208,7 +198,7 @@ final class Node implements Serializable {
             node = node.nodes[pos(mask, node.nodesBitMap)];
         }
         if ((mask & node.entriesBitMap) != 0L) {
-            return node.entries[pos(mask, node.entriesBitMap)].get(key);
+            return Entry.get(node.entries[pos(mask, node.entriesBitMap)], key);
         }
         return Entry.NOT_FOUND;
     }
@@ -264,10 +254,10 @@ final class Node implements Serializable {
 
             final Entry oldEntry = node.entries[entryPos];
 
-            if (oldEntry.containsKey(hash, entry.key)) {
+            if (Entry.containsKey(oldEntry, hash, entry.key)) {
                 // There is a match (key exists): entry needs to be replaced
 
-                final Entry newEntry = oldEntry.set(entry);
+                final Entry newEntry = Entry.set(oldEntry, entry);
                 if (newEntry == oldEntry) {
                     // No need to change anything at any level if changes were not made
                     return root;
@@ -282,14 +272,14 @@ final class Node implements Serializable {
                 // No new levels can be created, so a collision entry will be created or expanded
 
                 final Entry[] newEntries = Arrays.copyOf(node.entries, node.entries.length, Entry[].class);
-                newEntries[entryPos] = oldEntry.add(entry);
+                newEntries[entryPos] = Entry.add(oldEntry, entry);
 
                 newNode = new Node(node.level, node.size + 1, node.nodesBitMap, node.nodes, node.entriesBitMap, newEntries);
 
             } else {
                 // A new level will be created, a node will replace the existing entry
 
-                final Node deeperNode = new Node(node.level + 1, oldEntry, entry);
+                final Node deeperNode = createNewLevel(node.level + 1, oldEntry, entry);
                 final int deeperNodePos = (pos(mask, node.nodesBitMap) ^ NEG_MASK);
 
                 final long newNodesBitMap = node.nodesBitMap ^ mask;
@@ -364,7 +354,7 @@ final class Node implements Serializable {
         }
 
         final Entry oldEntry = node.entries[entryPos];
-        final Entry newEntry = oldEntry.remove(hash, key);
+        final Entry newEntry = Entry.remove(oldEntry, hash, key);
 
         if (newEntry == oldEntry) {
             // No need to change anything at any level if changes were not made (key was not found)
@@ -446,94 +436,147 @@ final class Node implements Serializable {
     }
 
 
+    static Set<Entry> allEntries(final Node root) {
 
-    Set<Entry> allEntries() {
-        Set<Entry> entrySet;
-        if ((entrySet = this.entrySet) != null) {
-            return entrySet;
-        }
-        entrySet = new HashSet<>(this.size + 1, 1.0f);
-        addEntries(entrySet);
-        return this.entrySet = Collections.unmodifiableSet(entrySet);
-    }
+        final Set<Entry> entrySet = new HashSet<>(root.size + 1, 1.0f);
 
-    private void addEntries(final Set<Entry> entrySet) {
-        if (this.entriesBitMap != 0L) {
-            for (final Entry entry : this.entries) {
-                if (entry.collisions == null) {
-                    entrySet.add(entry);
-                } else {
-                    Collections.addAll(entrySet, entry.collisions);
-                }
-            }
-        }
-        if (this.nodesBitMap != 0L) {
-            for (final Node node : this.nodes) {
-                node.addEntries(entrySet);
-            }
-        }
-    }
+        Node[] nodeStack = null;
+        int[] posStack = null;
 
+        Node node = root;
+        int nodeLevel = 0;
 
+        Entry[] collisions;
+        do {
 
-    Set<Object> allKeys() {
-        Set<Object> keySet;
-        if ((keySet = this.keySet) != null) {
-            return keySet;
-        }
-        keySet = new HashSet<>(this.size + 1, 1.0f);
-        addKeys(keySet);
-        return this.keySet = Collections.unmodifiableSet(keySet);
-    }
-
-    private void addKeys(final Set<Object> keySet) {
-        if (this.entriesBitMap != 0L) {
-            for (final Entry entry : this.entries) {
-                if (entry.collisions == null) {
-                    keySet.add(entry.key);
-                } else {
-                    for (final Entry collision : entry.collisions) {
-                        keySet.add(collision.key);
+            if (node.entriesBitMap != 0L) {
+                for (final Entry entry : node.entries) {
+                    collisions = entry.collisions;
+                    if (collisions == null) {
+                        entrySet.add(entry);
+                    } else {
+                        Collections.addAll(entrySet, collisions);
                     }
                 }
             }
-        }
-        if (this.nodesBitMap != 0L) {
-            for (final Node node : this.nodes) {
-                node.addKeys(keySet);
+
+            if (node.nodesBitMap != 0L) {
+                if (nodeStack == null) {
+                    nodeStack = new Node[MAX_LEVEL];
+                    posStack = new int[MAX_LEVEL];
+                }
+                nodeStack[nodeLevel] = node;
+                posStack[nodeLevel] = 0;
+            } else {
+                while (--nodeLevel >= 0 && (++posStack[nodeLevel] >= nodeStack[nodeLevel].nodes.length));
             }
-        }
+
+            if (nodeLevel >= 0) {
+                node = nodeStack[nodeLevel].nodes[posStack[nodeLevel]];
+                nodeLevel++;
+            }
+
+        } while (nodeLevel >= 0);
+
+        return entrySet;
+
     }
 
 
+    static Set<Object> allKeys(final Node root) {
 
-    List<Object> allValues() {
-        List<Object> valueList;
-        if ((valueList = this.valueList) != null) {
-            return valueList;
-        }
-        valueList = new ArrayList<>(this.size);
-        addValues(valueList);
-        return this.valueList = Collections.unmodifiableList(valueList);
-    }
+        final Set<Object> keySet = new HashSet<>(root.size + 1, 1.0f);
 
-    private void addValues(final List<Object> valueList) {
-        if (this.entriesBitMap != 0L) {
-            for (final Entry entry : this.entries) {
-                if (entry.collisions == null) {
-                    valueList.add(entry.value);
-                } else {
-                    for (final Entry collision : entry.collisions) {
-                        valueList.add(collision.value);
+        Node[] nodeStack = null;
+        int[] posStack = null;
+
+        Node node = root;
+        int nodeLevel = 0;
+
+        Entry[] collisions;
+        do {
+
+            if (node.entriesBitMap != 0L) {
+                for (final Entry entry : node.entries) {
+                    collisions = entry.collisions;
+                    if (collisions == null) {
+                        keySet.add(entry.key);
+                    } else {
+                        for (final Entry collision : collisions) {
+                            keySet.add(collision.key);
+                        }
                     }
                 }
             }
-        }
-        if (this.nodesBitMap != 0L) {
-            for (final Node node : this.nodes) {
-                node.addValues(valueList);
+
+            if (node.nodesBitMap != 0L) {
+                if (nodeStack == null) {
+                    nodeStack = new Node[MAX_LEVEL];
+                    posStack = new int[MAX_LEVEL];
+                }
+                nodeStack[nodeLevel] = node;
+                posStack[nodeLevel] = 0;
+            } else {
+                while (--nodeLevel >= 0 && (++posStack[nodeLevel] >= nodeStack[nodeLevel].nodes.length));
             }
-        }
+
+            if (nodeLevel >= 0) {
+                node = nodeStack[nodeLevel].nodes[posStack[nodeLevel]];
+                nodeLevel++;
+            }
+
+        } while (nodeLevel >= 0);
+
+        return keySet;
+
+    }
+
+    static List<Object> allValues(final Node root) {
+
+        final List<Object> valueList = new ArrayList<>(root.size);
+
+        Node[] nodeStack = null;
+        int[] posStack = null;
+
+        Node node = root;
+        int nodeLevel = 0;
+
+        Entry[] collisions;
+        do {
+
+            if (node.entriesBitMap != 0L) {
+                for (final Entry entry : node.entries) {
+                    collisions = entry.collisions;
+                    if (collisions == null) {
+                        valueList.add(entry.value);
+                    } else {
+                        for (final Entry collision : collisions) {
+                            valueList.add(collision.value);
+                        }
+                    }
+                }
+            }
+
+            if (node.nodesBitMap != 0L) {
+                if (nodeStack == null) {
+                    nodeStack = new Node[MAX_LEVEL];
+                    posStack = new int[MAX_LEVEL];
+                }
+                nodeStack[nodeLevel] = node;
+                posStack[nodeLevel] = 0;
+            } else {
+                while (--nodeLevel >= 0 && (++posStack[nodeLevel] >= nodeStack[nodeLevel].nodes.length));
+            }
+
+            if (nodeLevel >= 0) {
+                node = nodeStack[nodeLevel].nodes[posStack[nodeLevel]];
+                nodeLevel++;
+            }
+
+        } while (nodeLevel >= 0);
+
+        return valueList;
+
     }
 
 

@@ -82,6 +82,16 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     private final AtomicReference<Node> root;
 
 
+    
+    private static io.arxila.atomichash.Entry entry(final Object key, final Object value) {
+        return entry(io.arxila.atomichash.Entry.hash(key), key, value);
+    }
+
+    private static io.arxila.atomichash.Entry entry(final int hash, final Object key, final Object value) {
+        return new io.arxila.atomichash.Entry(hash, key, value, null);
+    }
+
+
     public static <K,V> AtomicHashMap<K,V> of() {
         return new AtomicHashMap<>();
     }
@@ -89,7 +99,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
+        node = Node.put(node, entry(k1, v1));
         map.root.set(node);
         return map;
     }
@@ -97,8 +107,8 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
         map.root.set(node);
         return map;
     }
@@ -106,9 +116,9 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
         map.root.set(node);
         return map;
     }
@@ -116,10 +126,10 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
         map.root.set(node);
         return map;
     }
@@ -127,11 +137,11 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public static <K,V> AtomicHashMap<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k5, v5));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
+        node = Node.put(node, entry(k5, v5));
         map.root.set(node);
         return map;
     }
@@ -140,12 +150,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                                               K k6, V v6) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k5, v5));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k6, v6));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
+        node = Node.put(node, entry(k5, v5));
+        node = Node.put(node, entry(k6, v6));
         map.root.set(node);
         return map;
     }
@@ -154,13 +164,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                                               K k6, V v6, K k7, V v7) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k5, v5));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k6, v6));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k7, v7));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
+        node = Node.put(node, entry(k5, v5));
+        node = Node.put(node, entry(k6, v6));
+        node = Node.put(node, entry(k7, v7));
         map.root.set(node);
         return map;
     }
@@ -169,14 +179,14 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                                               K k6, V v6, K k7, V v7, K k8, V v8) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k5, v5));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k6, v6));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k7, v7));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k8, v8));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
+        node = Node.put(node, entry(k5, v5));
+        node = Node.put(node, entry(k6, v6));
+        node = Node.put(node, entry(k7, v7));
+        node = Node.put(node, entry(k8, v8));
         map.root.set(node);
         return map;
     }
@@ -185,15 +195,15 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                                               K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k5, v5));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k6, v6));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k7, v7));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k8, v8));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k9, v9));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
+        node = Node.put(node, entry(k5, v5));
+        node = Node.put(node, entry(k6, v6));
+        node = Node.put(node, entry(k7, v7));
+        node = Node.put(node, entry(k8, v8));
+        node = Node.put(node, entry(k9, v9));
         map.root.set(node);
         return map;
     }
@@ -202,16 +212,16 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
                                               K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9, K k10, V v10) {
         final AtomicHashMap<K,V> map = new AtomicHashMap<>();
         Node node = Node.EMPTY_NODE;
-        node = Node.put(node, new io.arxila.atomichash.Entry(k1, v1));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k2, v2));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k3, v3));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k4, v4));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k5, v5));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k6, v6));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k7, v7));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k8, v8));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k9, v9));
-        node = Node.put(node, new io.arxila.atomichash.Entry(k10, v10));
+        node = Node.put(node, entry(k1, v1));
+        node = Node.put(node, entry(k2, v2));
+        node = Node.put(node, entry(k3, v3));
+        node = Node.put(node, entry(k4, v4));
+        node = Node.put(node, entry(k5, v5));
+        node = Node.put(node, entry(k6, v6));
+        node = Node.put(node, entry(k7, v7));
+        node = Node.put(node, entry(k8, v8));
+        node = Node.put(node, entry(k9, v9));
+        node = Node.put(node, entry(k10, v10));
         map.root.set(node);
         return map;
     }
@@ -229,7 +239,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Node node = Node.EMPTY_NODE;
         if (map != null) {
             for (final Entry<? extends K, ? extends V> mapEntry : map.entrySet()) {
-                node = Node.put(node, new io.arxila.atomichash.Entry(mapEntry.getKey(), mapEntry.getValue()));
+                node = Node.put(node, entry(mapEntry.getKey(), mapEntry.getValue()));
             }
         }
         this.root.set(node);
@@ -309,7 +319,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V put(final K key, final V newValue) {
-        final io.arxila.atomichash.Entry newEntry = new io.arxila.atomichash.Entry(key, newValue);
+        final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         Node node, newNode;
         do {
             node = this.root.get();
@@ -321,7 +331,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V putIfAbsent(final K key, final V newValue) {
-        final io.arxila.atomichash.Entry newEntry = new io.arxila.atomichash.Entry(key, newValue);
+        final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         V value;
         Node node, newNode;
         do {
@@ -339,7 +349,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         // the Entry objects will already be instanced outside the critical (and repeatable) region.
         final Set<io.arxila.atomichash.Entry> newEntrySet = new HashSet<>();
         for (final Entry<? extends K, ? extends V> entry : newMappings.entrySet()) {
-            newEntrySet.add(new io.arxila.atomichash.Entry(entry.getKey(), entry.getValue()));
+            newEntrySet.add(entry(entry.getKey(), entry.getValue()));
         }
         Node node, newNode;
         do {
@@ -386,17 +396,17 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public Set<K> keySet() {
-        return (Set<K>) this.root.get().allKeys();
+        return (Set<K>) Node.allKeys(this.root.get());
     }
 
     @Override
     public Collection<V> values() {
-        return (List<V>) this.root.get().allValues();
+        return (List<V>) Node.allValues(this.root.get());
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return (Set<Entry<K,V>>) (Set<?>) this.root.get().allEntries();
+        return Collections.unmodifiableSet((Set<Entry<K,V>>) (Set<?>) Node.allEntries(this.root.get()));
     }
 
 
@@ -404,7 +414,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     public void forEach(final BiConsumer<? super K, ? super V> action) {
         // This implementation applies minor optimizations on the default (e.g. entrySet is immutable)
         Objects.requireNonNull(action);
-        for (io.arxila.atomichash.Entry entry : this.root.get().allEntries()) {
+        for (io.arxila.atomichash.Entry entry : Node.allEntries(this.root.get())) {
             action.accept((K)entry.key, (V)entry.value);
         }
     }
@@ -412,7 +422,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean replace(final K key, final V oldValue, final V newValue) {
-        final io.arxila.atomichash.Entry newEntry = new io.arxila.atomichash.Entry(key, newValue);
+        final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         boolean matches;
         Node node, newNode;
         do {
@@ -425,7 +435,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V replace(final K key, final V newValue) {
-        final io.arxila.atomichash.Entry newEntry = new io.arxila.atomichash.Entry(key, newValue);
+        final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         boolean mapped;
         Node node, newNode;
         do {
@@ -443,8 +453,8 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         do {
             node = this.root.get();
             newNode = node;
-            for (io.arxila.atomichash.Entry entry : node.allEntries()) {
-                newNode = Node.put(newNode, new io.arxila.atomichash.Entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
+            for (io.arxila.atomichash.Entry entry : Node.allEntries(node)) {
+                newNode = Node.put(newNode, entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
             }
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
     }
@@ -459,7 +469,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             value = (V) normalizeAbsentValue(Node.get(node, key));
             mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-            newNode = (mappedValue != null) ? Node.put(node, new io.arxila.atomichash.Entry(key, mappedValue)) : node;
+            newNode = (mappedValue != null) ? Node.put(node, entry(key, mappedValue)) : node;
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return (mappedValue != null) ? mappedValue : value;
     }
@@ -476,7 +486,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
             newNode = (value == null) ?
                             node :  // Absent, no changes
-                            ((remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue)));
+                            ((remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, entry(hash, key, remappedValue)));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
@@ -491,7 +501,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             value = (V) normalizeAbsentValue(Node.get(node, key));
             remappedValue = remappingFunction.apply(key, value);
-            newNode = (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue));
+            newNode = (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, entry(hash, key, remappedValue));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
@@ -508,7 +518,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             node = this.root.get();
             value = (V) normalizeAbsentValue(Node.get(node, key));
             remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
-            newNode =  (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, new io.arxila.atomichash.Entry(hash, key, remappedValue));
+            newNode =  (remappedValue == null) ? Node.remove(node, hash, key) : Node.put(node, entry(hash, key, remappedValue));
         } while (node != newNode && !this.root.compareAndSet(node, newNode));
         return remappedValue;
     }
