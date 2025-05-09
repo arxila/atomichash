@@ -21,8 +21,6 @@ package io.arxila.atomichash;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -213,9 +211,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
     public AtomicHashStore<K,V> putIfAbsent(final K key, final V newValue) {
-        // Map#putIfAbsent() considers null equivalent to absence
-        final Object value = this.root.get(key);
-        final Root newRoot = (value == null) ? this.root.put(entry(key, newValue)) : this.root;
+        final Root newRoot = this.root.putIfAbsent(entry(key, newValue));
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
@@ -235,8 +231,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
     public AtomicHashStore<K,V> remove(final Object key, final Object oldValue) {
-        final boolean matches = Objects.equals(oldValue, this.root.get(key));
-        final Root newRoot = (matches) ? this.root.remove(Entry.hash(key), key) : this.root;
+        final Root newRoot = this.root.remove(Entry.hash(key), key, oldValue);
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
@@ -269,55 +264,38 @@ public final class AtomicHashStore<K,V> implements Serializable {
     }
 
 
-    public AtomicHashStore<K,V> replace(final K key, final V oldValue, final V newValue) {
-        final V value = (V) this.root.get(key);
-        final boolean matches = Objects.equals(oldValue, value);
-        final Root newRoot = (matches) ? this.root.put(entry(key, newValue)) : this.root;
+    public AtomicHashStore<K,V> replace(final K key, final V newValue) {
+        final Root newRoot = this.root.replace(entry(key, newValue));
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
-    public AtomicHashStore<K,V> replace(final K key, final V newValue) {
-        final Root newRoot = (this.root.containsKey(key)) ? this.root.put(entry(key, newValue)) : this.root;
+    public AtomicHashStore<K,V> replace(final K key, final V oldValue, final V newValue) {
+        final Root newRoot = this.root.replace(entry(key, newValue), oldValue);
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
     public AtomicHashStore<K,V> replaceAll(final BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
-        Root newRoot = this.root;
-        // We try to benefit from entrySet being cached to iterate
-        for (Entry entry : ((Set<Entry>)(Set<?>) entrySet())) {
-            newRoot = newRoot.put(entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
-        }
+        final Root newRoot = this.root.replaceAll((BiFunction<Object,Object,Object>)function);
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
 
+    public AtomicHashStore<K,V> compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        final Root newRoot = this.root.compute(Entry.hash(key), key, ((BiFunction<Object,Object,Object>)remappingFunction));
+        return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
+    }
+
     public AtomicHashStore<K,V> computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
         Objects.requireNonNull(mappingFunction);
-        final V value = (V) this.root.get(key);
-        final V mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-        final Root newRoot = (mappedValue != null) ? this.root.put(entry(key, mappedValue)) : this.root;
+        final Root newRoot = this.root.computeIfAbsent(Entry.hash(key), key, ((Function<Object,Object>)mappingFunction));
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
     public AtomicHashStore<K,V> computeIfPresent(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
-        final V value = (V) this.root.get(key);
-        final V remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
-        final int hash = Entry.hash(key);
-        final Root newRoot =
-                (value == null) ?
-                        this.root :
-                        (remappedValue == null) ? this.root.remove(hash, key) : this.root.put(entry(hash, key, remappedValue));
-        return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
-    }
-
-    public AtomicHashStore<K,V> compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
-        final V value = (V) this.root.get(key);
-        final V remappedValue = remappingFunction.apply(key, value);
-        final int hash = Entry.hash(key);
-        final Root newRoot = (remappedValue == null) ? this.root.remove(hash, key) : this.root.put(entry(hash, key, remappedValue));
+        final Root newRoot = this.root.computeIfPresent(Entry.hash(key), key, ((BiFunction<Object,Object,Object>)remappingFunction));
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 

@@ -256,16 +256,13 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V putIfAbsent(final K key, final V newValue) {
-        // Map#putIfAbsent() considers null equivalent to absence
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
-        V value;
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) root.get(key);
-            newRoot = (value == null) ? root.put(newEntry) : root;
+            newRoot = root.putIfAbsent(newEntry);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return value;
+        return (V) root.get(key);
     }
 
     @Override
@@ -299,14 +296,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     @Override
     public boolean remove(final Object key, final Object oldValue) {
         final int hash = io.arxila.atomichash.Entry.hash(key);
-        boolean matches;
         Root root, newRoot;
         do {
             root = this.root.get();
-            matches = Objects.equals(oldValue, root.get(key));
-            newRoot = (matches) ? root.remove(hash, key) : root;
+            newRoot = root.remove(hash, key, oldValue);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return matches;
+        return (root != newRoot);
     }
 
 
@@ -344,29 +339,25 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
 
     @Override
-    public boolean replace(final K key, final V oldValue, final V newValue) {
+    public V replace(final K key, final V newValue) {
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
-        boolean matches;
         Root root, newRoot;
         do {
             root = this.root.get();
-            matches = Objects.equals(oldValue, root.get(key));
-            newRoot = (matches) ? root.put(newEntry) : root;
+            newRoot = root.replace(newEntry);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return matches;
+        return (root != newRoot) ? (V) root.get(key) : null;
     }
 
     @Override
-    public V replace(final K key, final V newValue) {
+    public boolean replace(final K key, final V oldValue, final V newValue) {
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
-        boolean mapped;
         Root root, newRoot;
         do {
             root = this.root.get();
-            mapped = root.containsKey(key);
-            newRoot = (mapped) ? root.put(newEntry) : root;
+            newRoot = root.replace(newEntry, oldValue);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return (mapped) ? (V) root.get(key) : null;
+        return (root != newRoot);
     }
 
     @Override
@@ -375,58 +366,45 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            newRoot = root;
-            for (io.arxila.atomichash.Entry entry : root.entrySet()) {
-                newRoot = newRoot.put(entry(entry.key, function.apply((K)entry.key, (V)entry.value)));
-            }
+            newRoot = root.replaceAll((BiFunction<Object,Object,Object>)function);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
     }
 
 
     @Override
-    public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
-        Objects.requireNonNull(mappingFunction);
-        V value, mappedValue;
+    public V compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        final int hash = io.arxila.atomichash.Entry.hash(key);
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) root.get(key);
-            mappedValue = (value == null) ? mappingFunction.apply(key) : null;
-            newRoot = (mappedValue != null) ? root.put(entry(key, mappedValue)) : root;
+            newRoot = root.compute(hash, key, ((BiFunction<Object,Object,Object>)remappingFunction));
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return (mappedValue != null) ? mappedValue : value;
+        return (V) newRoot.get(key);
+    }
+
+    @Override
+    public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
+        Objects.requireNonNull(mappingFunction);
+        final int hash = io.arxila.atomichash.Entry.hash(key);
+        Root root, newRoot;
+        do {
+            root = this.root.get();
+            newRoot = root.computeIfAbsent(hash, key, ((Function<Object,Object>)mappingFunction));
+        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
+        return (V) newRoot.get(key);
     }
 
     @Override
     public V computeIfPresent(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
         final int hash = io.arxila.atomichash.Entry.hash(key);
-        V value, remappedValue;
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) root.get(key);
-            remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
-            newRoot = (value == null) ?
-                            root :  // Absent, no changes
-                            ((remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue)));
+            newRoot = root.computeIfPresent(hash, key, ((BiFunction<Object,Object,Object>)remappingFunction));
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return remappedValue;
-    }
-
-    @Override
-    public V compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
-        final int hash = io.arxila.atomichash.Entry.hash(key);
-        V value, remappedValue;
-        Root root, newRoot;
-        do {
-            root = this.root.get();
-            value = (V) root.get(key);
-            remappedValue = remappingFunction.apply(key, value);
-            newRoot = (remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue));
-        } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return remappedValue;
+        return (V) newRoot.get(key);
     }
 
 

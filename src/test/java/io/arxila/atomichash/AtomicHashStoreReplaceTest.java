@@ -23,6 +23,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
 public class AtomicHashStoreReplaceTest {
 
     private AtomicHashStore<String, String> store;
@@ -40,7 +44,7 @@ public class AtomicHashStoreReplaceTest {
         // Replace in an empty store (should return the same instance as no modification happens)
         st2 = st.replace("one", "ONE", "[x]ONE");
         Assertions.assertTrue(st2.isEmpty());
-        Assertions.assertSame(st, st2); // Assert they reference the same object
+        assertSame(st, st2); // Assert they reference the same object
 
         // Add a value to the store
         st = st.put("one", "ONE");
@@ -55,7 +59,7 @@ public class AtomicHashStoreReplaceTest {
         st = st2.replace("one", "INVALID", "[y]ONE");
         Assertions.assertEquals(1, st.size());
         Assertions.assertEquals("[x]ONE", st.get("one"));
-        Assertions.assertSame(st, st2); // Assert they reference the same object
+        assertSame(st, st2); // Assert they reference the same object
     }
 
     @Test
@@ -66,7 +70,7 @@ public class AtomicHashStoreReplaceTest {
         // Replace in an empty store (no effect)
         st2 = st.replace("one", "[x]ONE");
         Assertions.assertTrue(st2.isEmpty());
-        Assertions.assertSame(st, st2); // Assert same instance is returned due to no changes
+        assertSame(st, st2); // Assert same instance is returned due to no changes
 
         // Add a value to the store
         st = st.put("one", "ONE");
@@ -78,10 +82,16 @@ public class AtomicHashStoreReplaceTest {
         Assertions.assertNotSame(st, st2); // New instance should be created
 
         // Replace again with the same value (should return the same instance)
+        st = st2.replace("one2", "[x]ONE");
+        Assertions.assertEquals(1, st.size());
+        Assertions.assertEquals("[x]ONE", st.get("one"));
+        assertSame(st, st2); // Same instance returned as no changes were made
+
+        // Replace again with the same value (should return the same instance)
         st = st2.replace("one", "[x]ONE");
         Assertions.assertEquals(1, st.size());
         Assertions.assertEquals("[x]ONE", st.get("one"));
-        Assertions.assertSame(st, st2); // Same instance returned as no changes were made
+        Assertions.assertNotSame(st, st2); // Different instance returned as the key was mapped (coherence with Map interface)
     }
 
     @Test
@@ -103,7 +113,7 @@ public class AtomicHashStoreReplaceTest {
 
         // Replace in an empty store using null key (should do nothing)
         st2 = st.replace(null, "[x]ONE");
-        Assertions.assertSame(st, st2); // Same instance should be returned due to no changes
+        assertSame(st, st2); // Same instance should be returned due to no changes
     }
 
     @Test
@@ -163,14 +173,41 @@ public class AtomicHashStoreReplaceTest {
         // Add an entry to the store
         st = st.put("key", "value");
 
-        // Replace with the same value (should return the same instance)
+        // Replace with the same value (should not return the same instance for consistence with the Map interface)
         AtomicHashStore<String, String> st2 = st.replace("key", "value", "value");
+        Assertions.assertNotSame(st, st2);
+
+        // Replace an unmapped value (should return the same instance)
+        st2 = st.replace("key2", "value", "value");
         Assertions.assertSame(st, st2);
 
         // Replace with a different value (should return a new instance)
         st2 = st.replace("key", "value", "newValue");
         Assertions.assertNotSame(st, st2);
         Assertions.assertEquals("newValue", st2.get("key"));
+    }
+
+    @Test
+    void testReplaceKeyWithOldValueAndNewValue_OldValueDoesNotExist() {
+        AtomicHashStore<String, String> st = this.store;
+        st = st.put("key1", "value1");
+
+        AtomicHashStore<String, String> st2 = st.replace("key1", "nonexistentValue", "newValue");
+
+        assertSame(st, st2, "Replace should return false when we seek for a null old value but there is no mapping");
+        assertEquals("value1", st.get("key1"), "Value should remain unchanged when old value is null but stored value is not");
+    }
+
+    @Test
+    void testReplaceKeyWithOldValueAndNewValue_StoredValueNotNull() {
+        AtomicHashStore<String, String> st = this.store;
+        st = st.put("key1", "value1");
+
+        AtomicHashStore<String, String> st2 = st.replace("key2", null, "newValue");
+
+        assertSame(st, st2, "Replace should return false when we seek for a null old value but there is no mapping");
+        assertEquals("value1", st.get("key1"), "Value should remain unchanged when old value is null but stored value is not");
+        assertFalse(st.containsKey("key2"), "Key should not be present when old value is null but stored value is not");
     }
 
 }

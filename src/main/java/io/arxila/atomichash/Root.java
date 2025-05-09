@@ -25,7 +25,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 final class Root implements Serializable {
 
@@ -155,6 +158,14 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
+    private static Entry entry(final Object key, final Object value) {
+        return entry(Entry.hash(key), key, value);
+    }
+
+    private static Entry entry(final int hash, final Object key, final Object value) {
+        return new Entry(hash, key, value, null);
+    }
+
 
     private Root(final Node node) {
         this.node = node;
@@ -213,6 +224,12 @@ final class Root implements Serializable {
 
     }
 
+    Root putIfAbsent(final Entry entry) {
+        // Map#putIfAbsent() considers null equivalent to absence
+        final Object value = this.node.get(entry.key);
+        return (value == null || value == Entry.NOT_FOUND) ? new Root(this.node.put(entry)): this;
+    }
+
     Root putAll(final Set<Entry> newEntries) {
         Node newNode = this.node;
         for (final Entry entry : newEntries) {
@@ -222,11 +239,66 @@ final class Root implements Serializable {
     }
 
 
-
     Root remove(final int hash, final Object key) {
         final Node newNode = this.node.remove(hash, key);
         return (this.node == newNode) ? this : new Root(newNode);
     }
+
+    Root remove(final int hash, final Object key, final Object oldValue) {
+        final Object value = this.node.get(key); // May be NOT_FOUND if not mapped
+        return (Objects.equals(value, oldValue)) ? new Root(this.node.remove(hash, key)) : this;
+    }
+
+
+    Root replace(final Entry newEntry) {
+        // If key is mapped, the Map interface considers there is a replacement -> new Root object.
+        return (this.node.containsKey(newEntry.key)) ? new Root(this.node.put(newEntry)) : this;
+    }
+
+    Root replace(final Entry newEntry, final Object oldValue) {
+        final Object value = this.node.get(newEntry.key); // May be NOT_FOUND if not mapped
+        // If oldValue matches, the Map interface considers there is a replacement -> new Root object.
+        return (Objects.equals(value, oldValue)) ? new Root(this.node.put(newEntry)) : this;
+    }
+
+    Root replaceAll(final BiFunction<Object, Object, Object> function) {
+        Node newNode = this.node;
+        for (final Entry entry : entrySet()) {
+            newNode = newNode.put(entry(entry.key, function.apply(entry.key, entry.value)));
+        }
+        return (this.node == newNode) ? this : new Root(newNode);
+    }
+
+
+    Root compute(final int hash, final Object key, final BiFunction<Object,Object,Object> remappingFunction) {
+        final Object value = this.node.get(key);
+        final Object remappedValue = remappingFunction.apply(key, (value == Entry.NOT_FOUND) ? null : value);
+        final Node newNode =
+                (remappedValue == null) ? this.node.remove(hash, key) : this.node.put(entry(hash, key, remappedValue));
+        return (this.node == newNode) ? this : new Root(newNode);
+    }
+
+    Root computeIfAbsent(final int hash, final Object key, final Function<Object,Object> mappingFunction) {
+        Objects.requireNonNull(mappingFunction);
+        final Object value = this.node.get(key);
+        final Object mappedValue =
+                (value == null || value == Entry.NOT_FOUND) ? mappingFunction.apply(key) : null;
+        final Node newNode =
+                (mappedValue == null) ? this.node : this.node.put(entry(hash, key, mappedValue));
+        return (this.node == newNode) ? this : new Root(newNode);
+    }
+
+    Root computeIfPresent(final int hash, final Object key, final BiFunction<Object,Object,Object> remappingFunction) {
+        final Object value = this.node.get(key);
+        final Object remappedValue =
+                (value != null && value != Entry.NOT_FOUND) ? remappingFunction.apply(key, value) : null;
+        final Node newNode =
+                (value == null || value == Entry.NOT_FOUND) ?
+                    this.node :  // Not present -> no changes
+                    ((remappedValue == null) ? this.node.remove(hash, key) : this.node.put(entry(hash, key, remappedValue)));
+        return (this.node == newNode) ? this : new Root(newNode);
+    }
+
 
 
     Set<Object> keySet() {

@@ -124,6 +124,27 @@ public class AtomicHashMapReplaceTest {
     }
 
     @Test
+    void testReplaceKeyWithOldValueAndNewValue_OldValueDoesNotExist() {
+        map.put("key1", "value1");
+
+        boolean replaced = map.replace("key1", "nonexistentValue", "newValue");
+
+        assertFalse(replaced, "Replace should return false when old value doesn't match");
+        assertEquals("value1", map.get("key1"), "Value should remain unchanged when old value doesn't match");
+    }
+
+    @Test
+    void testReplaceKeyWithOldValueAndNewValue_StoredValueNotNull() {
+        map.put("key1", "value1");
+
+        boolean replaced = map.replace("key2", null, "newValue");
+
+        assertFalse(replaced, "Replace should return false when we seek for a null old value but there is no mapping");
+        assertEquals("value1", map.get("key1"), "Value should remain unchanged when old value is null but stored value is not");
+        assertFalse(map.containsKey("key2"), "Key should not be present when old value is null but stored value is not");
+    }
+
+    @Test
     void testReplaceAll_ApplyFunction() {
         map.put("key1", "value1");
         map.put("key2", "value2");
