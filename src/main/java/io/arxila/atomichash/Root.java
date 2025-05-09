@@ -300,6 +300,15 @@ final class Root implements Serializable {
     }
 
 
+    Root merge(final int hash, final Object key, final Object newValue, final BiFunction<Object,Object,Object> remappingFunction) {
+        final Object value = this.node.get(key);
+        final Object remappedValue =
+                (value == null || value == Entry.NOT_FOUND) ? newValue : remappingFunction.apply(value, newValue);
+        final Node newNode =
+                (remappedValue == null) ? this.node.remove(hash, key) : this.node.put(entry(hash, key, remappedValue));
+        return (this.node == newNode) ? this : new Root(newNode);
+    }
+
 
     Set<Object> keySet() {
         Set<Object> keySet;

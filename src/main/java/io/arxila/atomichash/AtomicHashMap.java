@@ -413,15 +413,12 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Objects.requireNonNull(remappingFunction);
         Objects.requireNonNull(newValue);
         final int hash = io.arxila.atomichash.Entry.hash(key);
-        V value, remappedValue;
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) root.get(key);
-            remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
-            newRoot =  (remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue));
+            newRoot =  root.merge(hash, key, newValue, ((BiFunction<Object,Object,Object>)remappingFunction));
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        return remappedValue;
+        return (V) newRoot.get(key);
     }
 
 

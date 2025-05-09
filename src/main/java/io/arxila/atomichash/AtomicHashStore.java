@@ -303,10 +303,7 @@ public final class AtomicHashStore<K,V> implements Serializable {
     public AtomicHashStore<K,V> merge(final K key, final V newValue, final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
         Objects.requireNonNull(newValue);
-        final V value = (V) this.root.get(key);
-        final V remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
-        final int hash = Entry.hash(key);
-        final Root newRoot = (remappedValue == null) ? this.root.remove(hash, key) : this.root.put(entry(hash, key, remappedValue));
+        final Root newRoot = this.root.merge(Entry.hash(key), key, newValue, ((BiFunction<Object,Object,Object>)remappingFunction));
         return (this.root != newRoot) ? new AtomicHashStore<>(newRoot) : this;
     }
 
