@@ -22,7 +22,9 @@ package io.arxila.atomichash;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class Root implements Serializable {
@@ -39,24 +41,24 @@ final class Root implements Serializable {
 
 
 
-    public static Root of() {
+    static Root of() {
         return Root.EMPTY_ROOT;
     }
 
-    public static Root of(final Entry e1) {
+    static Root of(final Entry e1) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2) {
+    static Root of(final Entry e1, final Entry e2) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
         node = node.put(e2);
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3) {
+    static Root of(final Entry e1, final Entry e2, final Entry e3) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
         node = node.put(e2);
@@ -64,7 +66,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4) {
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
         node = node.put(e2);
@@ -73,7 +75,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5) {
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
         node = node.put(e2);
@@ -83,7 +85,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
                           final Entry e6) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
@@ -95,7 +97,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
                           final Entry e6, final Entry e7) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
@@ -108,7 +110,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
                           final Entry e6, final Entry e7, final Entry e8) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
@@ -122,7 +124,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
                           final Entry e6, final Entry e7, final Entry e8, final Entry e9) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
@@ -137,7 +139,7 @@ final class Root implements Serializable {
         return new Root(node);
     }
 
-    public static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
+    static Root of(final Entry e1, final Entry e2, final Entry e3, final Entry e4, final Entry e5,
                           final Entry e6, final Entry e7, final Entry e8, final Entry e9, final Entry e10) {
         Node node = Node.EMPTY_NODE;
         node = node.put(e1);
@@ -152,15 +154,14 @@ final class Root implements Serializable {
         node = node.put(e10);
         return new Root(node);
     }
-    
-    
+
 
     private Root(final Node node) {
         this.node = node;
     }
 
-    
-    
+
+
     int size() {
         return this.node.size;
     }
@@ -170,22 +171,40 @@ final class Root implements Serializable {
     }
 
 
-
     boolean containsKey(final Object key) {
         return this.node.containsKey(key);
     }
-
 
     boolean containsValue(final Object value) {
         return this.node.containsValue(value);
     }
 
 
-    // May return Entry.NOT_FOUND if not found (so that it can be differentiated from a null value)
     Object get(final Object key) {
-        return this.node.get(key);
+        final Object value = this.node.get(key);
+        return (value == Entry.NOT_FOUND) ? null : this.node.get(key);
     }
 
+    Object getOrDefault(final Object key, final Object defaultValue) {
+        final Object value = this.node.get(key);
+        // The definition of java.util.Map#getOrDefault() returns the default value only if key is not mapped
+        return (value == Entry.NOT_FOUND) ? defaultValue : value;
+    }
+
+    Map<Object,Object> getAll(final Object... keys) {
+        if (keys == null || keys.length == 0) {
+            return Collections.emptyMap();
+        }
+        final Map<Object,Object> map = new HashMap<>(keys.length + 1, 1.0f);
+        Object value;
+        for (final Object key : keys) {
+            value = this.node.get(key);
+            if (value != Entry.NOT_FOUND) {
+                map.put(key, value);
+            }
+        }
+        return map;
+    }
 
 
     Root put(final Entry entry) {
@@ -209,8 +228,8 @@ final class Root implements Serializable {
         return (this.node == newNode) ? this : new Root(newNode);
     }
 
-    
-    public Set<Object> keySet() {
+
+    Set<Object> keySet() {
         Set<Object> keySet;
         if ((keySet = this.keySet) != null) {
             return keySet;
@@ -219,8 +238,7 @@ final class Root implements Serializable {
         return this.keySet = Collections.unmodifiableSet(keySet);
     }
     
-
-    public Collection<Object> values() {
+    Collection<Object> values() {
         List<Object> valueList;
         if ((valueList = this.valueList) != null) {
             return valueList;
@@ -228,9 +246,9 @@ final class Root implements Serializable {
         valueList = this.node.allValues();
         return this.valueList = Collections.unmodifiableList(valueList);
     }
-    
 
-    public Set<Entry> entrySet() {
+
+    Set<Entry> entrySet() {
         Set<Entry> entrySet;
         if ((entrySet = this.entrySet) != null) {
             return entrySet;
@@ -238,7 +256,6 @@ final class Root implements Serializable {
         entrySet = this.node.allEntries();
         return this.entrySet = Collections.unmodifiableSet(entrySet);
     }
-
 
 
 }

@@ -21,8 +21,6 @@ package io.arxila.atomichash;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -200,12 +198,6 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
     }
 
 
-    // Several methods in the java.util.Map interface consider absent values and those mapped to null to be equivalent
-    private static Object normalizeAbsentValue(final Object value) {
-        return (value == io.arxila.atomichash.Entry.NOT_FOUND) ? null : value;
-    }
-
-
     public AtomicHashStore<K,V> store() {
         return new AtomicHashStore<>(this.root.get());
     }
@@ -236,33 +228,18 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
 
     @Override
     public V get(final Object key) {
-        final Object value = this.root.get().get(key);
-        return (V) normalizeAbsentValue(value);
+        return (V) this.root.get().get(key);
     }
 
     @Override
     public V getOrDefault(final Object key, final V defaultValue) {
-        final Object value = this.root.get().get(key);
-        // The definition of java.util.Map#getOrDefault() returns the default value only if key is not mapped
-        return (value == io.arxila.atomichash.Entry.NOT_FOUND) ? defaultValue : (V) value;
+        return (V) this.root.get().getOrDefault(key, defaultValue);
     }
 
 
     // Not a part of the java.util.Map interface
     public Map<K,V> getAll(final Object... keys) {
-        if (keys == null || keys.length == 0) {
-            return Collections.EMPTY_MAP;
-        }
-        final Root root = this.root.get();
-        final Map<K,V> map = new HashMap<>(keys.length + 1, 1.0f);
-        Object value;
-        for (final Object key : keys) {
-            value = root.get(key);
-            if (value != io.arxila.atomichash.Entry.NOT_FOUND) {
-                map.put((K)key, (V)value);
-            }
-        }
-        return map;
+        return (Map<K,V>) this.root.get().getAll(keys);
     }
 
 
@@ -274,18 +251,18 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             root = this.root.get();
             newRoot = root.put(newEntry);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        final Object oldValue = root.get(key);
-        return (V) normalizeAbsentValue(oldValue);
+        return (V) root.get(key);
     }
 
     @Override
     public V putIfAbsent(final K key, final V newValue) {
+        // Map#putIfAbsent() considers null equivalent to absence
         final io.arxila.atomichash.Entry newEntry = entry(key, newValue);
         V value;
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) normalizeAbsentValue(root.get(key));
+            value = (V) root.get(key);
             newRoot = (value == null) ? root.put(newEntry) : root;
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return value;
@@ -316,8 +293,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
             root = this.root.get();
             newRoot = root.remove(hash, key);
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
-        final Object oldValue = root.get(key);
-        return (V) normalizeAbsentValue(oldValue);
+        return (V) root.get(key);
     }
 
     @Override
@@ -327,7 +303,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            matches = Objects.equals(oldValue, root.get(key)); // No need to worry about NOT_FOUND (requires a mapping)
+            matches = Objects.equals(oldValue, root.get(key));
             newRoot = (matches) ? root.remove(hash, key) : root;
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return matches;
@@ -374,7 +350,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            matches = Objects.equals(oldValue, root.get(key)); // No need to worry about NOT_FOUND (requires a mapping)
+            matches = Objects.equals(oldValue, root.get(key));
             newRoot = (matches) ? root.put(newEntry) : root;
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
         return matches;
@@ -414,7 +390,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) normalizeAbsentValue(root.get(key));
+            value = (V) root.get(key);
             mappedValue = (value == null) ? mappingFunction.apply(key) : null;
             newRoot = (mappedValue != null) ? root.put(entry(key, mappedValue)) : root;
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
@@ -429,7 +405,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) normalizeAbsentValue(root.get(key));
+            value = (V) root.get(key);
             remappedValue = (value == null) ? null : remappingFunction.apply(key, value);
             newRoot = (value == null) ?
                             root :  // Absent, no changes
@@ -446,7 +422,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) normalizeAbsentValue(root.get(key));
+            value = (V) root.get(key);
             remappedValue = remappingFunction.apply(key, value);
             newRoot = (remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue));
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
@@ -463,7 +439,7 @@ public final class AtomicHashMap<K,V> implements Map<K, V>, Serializable {
         Root root, newRoot;
         do {
             root = this.root.get();
-            value = (V) normalizeAbsentValue(root.get(key));
+            value = (V) root.get(key);
             remappedValue = (value == null) ? newValue : remappingFunction.apply(value, newValue);
             newRoot =  (remappedValue == null) ? root.remove(hash, key) : root.put(entry(hash, key, remappedValue));
         } while (root != newRoot && !this.root.compareAndSet(root, newRoot));
