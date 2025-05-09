@@ -35,7 +35,7 @@
   <groupId>io.arxila.atomichash</groupId>
   <artifactId>atomichash</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.1</version>
   <name>atomichash</name>
   <description>Atomic, non-blocking, hash-based data structures</description>
 
