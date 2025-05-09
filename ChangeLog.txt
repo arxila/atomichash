@@ -1,3 +1,0 @@
-(current)
-=========
-- First release of atomichash.
