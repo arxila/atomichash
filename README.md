@@ -16,6 +16,13 @@ See the _Features_ section below for more detail on these concurrency capabiliti
 
 AtomicHash is open-source and distributed under the **Apache License 2.0**.
 
+
+Requirements
+------------
+
+AtomicHash requires **Java 11**.
+
+
 Usage
 -----
 
