@@ -29,7 +29,7 @@
   <parent>
     <groupId>io.arxila</groupId>
     <artifactId>arxila-parent</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
   </parent>
 
   <groupId>io.arxila.atomichash</groupId>
@@ -129,13 +129,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-      </plugin>
-
-      <!-- NOTE releases will be performed by means of maven-deploy-plugin. This means that   -->
-      <!-- the maven-releases-plugin will not be needed as a part of the release cycle.       -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
       </plugin>
 
       <plugin>
