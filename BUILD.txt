@@ -2,7 +2,7 @@
  Building atomichash
  -------------------
  
- To build atomichash you will need Maven 2. You can get it at:
+ To build atomichash you will need Maven 2+. You can get it at:
  
      http://maven.apache.org
 
