@@ -23,8 +23,8 @@ Requirements
 AtomicHash requires **Java 11**.
 
 
-Usage
------
+Maven Info
+----------
 
 Library dependency: `io.arxila.atomichash:atomichash:{version}`
 
@@ -36,6 +36,10 @@ From Maven:
   <version>{version}</version>
 </dependency>
 ```
+
+
+Usage
+-----
 
 `AtomicHashMap` can be used just like any other implementation of `java.util.Map`. Its constructor does not
 require the specification of an initial size:
