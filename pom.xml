@@ -29,7 +29,7 @@
   <parent>
     <groupId>io.arxila</groupId>
     <artifactId>arxila-parent</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.5</version>
   </parent>
 
   <groupId>io.arxila.atomichash</groupId>
@@ -49,40 +49,6 @@
   </properties>
 
   <build>
-
-    <resources>
-
-      <resource>
-        <directory>src/main/resources</directory>
-        <excludes>
-          <exclude>io/arxila/atomichash/atomichash.properties</exclude>
-        </excludes>
-      </resource>
-
-      <resource>
-        <directory>src/main/resources</directory>
-        <includes>
-          <include>io/arxila/atomichash/atomichash.properties</include>
-        </includes>
-        <filtering>true</filtering>
-      </resource>
-
-      <resource>
-        <directory>..</directory>
-        <targetPath>META-INF</targetPath>
-        <includes>
-          <include>LICENSE.txt</include>
-          <include>NOTICE.txt</include>
-        </includes>
-      </resource>
-
-    </resources>
-
-    <testResources>
-      <testResource>
-        <directory>src/test/resources</directory>
-      </testResource>
-    </testResources>
 
     <plugins>
 
